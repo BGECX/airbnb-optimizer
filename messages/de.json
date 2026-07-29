@@ -1,0 +1,52 @@
+{
+  "common": {
+    "language": "Sprache",
+    "allRightsReserved": "Alle Rechte vorbehalten"
+  },
+  "home": {
+    "tagline": "Analysieren Sie Ihre Bewertungen, optimieren Sie Ihre Anzeigen",
+    "heroTitle": "Verwandeln Sie Kundenbewertungen in Anzeigen, die konvertieren",
+    "heroSubtitle": "Unsere KI analysiert Ihre Airbnb- und Booking-Bewertungen, um eine optimierte Beschreibung zu generieren, Ihre Stärken zu identifizieren und Ihnen priorisierte Verbesserungen zu empfehlen.",
+    "badgeNLP": "NLP & Sentiment-Analyse",
+    "badge50Lang": "50 Sprachen unterstützt",
+    "formTitle": "Ihre Kundenbewertungen",
+    "formSubtitle": "Fügen Sie die Bewertungen Ihrer Unterkunft ein. Unsere KI erledigt den Rest.",
+    "emptyStateTitle": "Ergebnisse in Echtzeit",
+    "emptyStateText": "Füllen Sie das Formular links aus und klicken Sie auf Analysieren, um die Diagnose und die optimierte Beschreibung angezeigt zu bekommen.",
+    "footerNote": "Internes POC — Daten werden nicht gespeichert"
+  },
+  "form": {
+    "modeIndividual": "Einzeln",
+    "modeBulk": "Massenimport",
+    "bulkHintTitle": "Erwartetes Format",
+    "bulkHintText": "Eine Bewertung pro Zeile. Format: Bewertung - Text (z.B. 5 - Perfekter Aufenthalt, sehr sauber!)",
+    "bulkPlaceholder": "5 - Absolut perfekter Aufenthalt!\\n2 - Enttäuscht, WLAN funktionierte nicht...\\n4 - Gutes Preis-Leistungs-Verhältnis, aber laut...",
+    "parseBulk": "Bewertungen importieren",
+    "review": "Bewertung",
+    "rating": "Bewertung",
+    "text": "Bewertungstext",
+    "reviewPlaceholder": "Geben Sie den Bewertungstext des Kunden ein...",
+    "addReview": "Bewertung hinzufügen",
+    "analyzeButton": "Analysieren & Anzeige generieren",
+    "analyzing": "Analysiere..."
+  },
+  "results": {
+    "resultsTitle": "Analyseergebnisse",
+    "reviews": "Bewertungen",
+    "diagnosticTab": "Diagnose",
+    "listingTab": "Optimierte Anzeige",
+    "healthScore": "Gesundheitspunktzahl",
+    "reviewsAnalyzed": "Bewertungen analysiert",
+    "strengths": "Stärken",
+    "weaknesses": "Verbesserungsbereiche",
+    "mentionedPositively": "positiv von Ihren Gästen erwähnt",
+    "mentionedNegatively": "negativ erwähnt — Korrekturpriorität",
+    "recurringThemes": "Wiederkehrende Themen",
+    "optimizedTitle": "Optimierte Anzeige",
+    "optimizedDescription": "Generierte Beschreibung",
+    "keyAmenities": "Wichtige Anzeigenpunkte",
+    "copy": "Text kopieren",
+    "recommendations": "Empfehlungen für den Gastgeber",
+    "error": "Bei der Analyse ist ein Fehler aufgetreten"
+  }
+}

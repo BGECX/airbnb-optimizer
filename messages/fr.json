@@ -1,0 +1,83 @@
+{
+  "common": {
+    "language": "Langue",
+    "allRightsReserved": "Tous droits réservés"
+  },
+  "home": {
+    "tagline": "Analysez vos avis, optimisez vos annonces",
+    "heroTitle": "Transformez les avis de vos clients en annonces qui convertissent",
+    "heroSubtitle": "Notre IA analyse vos avis Airbnb et Booking pour générer une description optimisée, identifier vos points forts et vous recommander les améliorations prioritaires.",
+    "badgeNLP": "NLP & Sentiment Analysis",
+    "badge50Lang": "50 langues supportées",
+    "formTitle": "Vos avis clients",
+    "formSubtitle": "Collez les avis de votre logement. Notre IA s'occupe du reste.",
+    "emptyStateTitle": "Résultats en temps réel",
+    "emptyStateText": "Remplissez le formulaire à gauche et cliquez sur Analyser pour voir apparaître le diagnostic et la description optimisée.",
+    "footerNote": "POC interne — Données non persistées"
+  },
+  "form": {
+    "modeIndividual": "Avis un par un",
+    "modeBulk": "Coller en masse",
+    "bulkHintTitle": "Format attendu",
+    "bulkHintText": "Un avis par ligne. Format : Note - Texte (ex: 5 - Séjour parfait, très propre !)",
+    "bulkPlaceholder": "5 - Séjour absolument parfait !\\n2 - Déçu, le wifi ne fonctionnait pas...\\n4 - Bon rapport qualité-prix mais bruyant...",
+    "parseBulk": "Importer les avis",
+    "review": "Avis",
+    "rating": "Note",
+    "text": "Texte de l'avis",
+    "reviewPlaceholder": "Saisissez le texte de l'avis client...",
+    "addReview": "Ajouter un avis",
+    "analyzeButton": "Analyser et Générer l'annonce",
+    "analyzing": "Analyse en cours..."
+  },
+  "results": {
+    "resultsTitle": "Résultats de l'analyse",
+    "reviews": "avis",
+    "diagnosticTab": "Diagnostic",
+    "listingTab": "Annonce optimisée",
+    "healthScore": "Score de santé",
+    "reviewsAnalyzed": "avis analysés",
+    "strengths": "Points forts",
+    "weaknesses": "Points à améliorer",
+    "mentionedPositively": "mentionné positivement par vos clients",
+    "mentionedNegatively": "mentionné négativement — priorité de correction",
+    "recurringThemes": "Thèmes récurrents",
+    "optimizedTitle": "Annonce optimisée",
+    "optimizedDescription": "Description générée",
+    "keyAmenities": "Points clés de l'annonce",
+    "copy": "Copier le texte",
+    "recommendations": "Recommandations pour le propriétaire",
+    "error": "Une erreur est survenue lors de l'analyse"
+  },
+  "paywall": {
+    "title": "Vous avez atteint votre limite d'analyses gratuites",
+    "subtitle": "Passez à un abonnement pour des analyses illimitées",
+    "socialProof": "+1 200 propriétaires",
+    "socialProofDetail": "ont déjà augmenté leurs réservations avec notre outil d'optimisation.",
+    "ctaButton": "S'abonner au plan {plan} — {price}€/mois",
+    "guarantee": "7 jours d'essai gratuit",
+    "cancelAnytime": "Annulation à tout moment"
+  },
+  "pricing": {
+    "title": "Choisissez votre formule",
+    "subtitle": "Commencez gratuitement, passez à la vitesse supérieure quand vous êtes prêt.",
+    "freePlan": "Gratuit",
+    "freeDesc": "Pour tester l'outil",
+    "starterDesc": "Pour les propriétaires individuels",
+    "proDesc": "Pour les professionnels et agences",
+    "currentPlan": "Votre plan actuel",
+    "mostPopular": "Le plus populaire",
+    "subscribe": "S'abonner"
+  },
+  "quota": {
+    "remaining": "{count} analyse(s) gratuite(s) restante(s)",
+    "unlimited": "Analyses illimitées",
+    "upgrade": "Passer Premium"
+  },
+  "auth": {
+    "signIn": "Connexion",
+    "signUp": "S'inscrire",
+    "signOut": "Déconnexion",
+    "account": "Mon compte"
+  }
+}

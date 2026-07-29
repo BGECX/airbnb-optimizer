@@ -1,0 +1,53 @@
+{
+  "_comment": "COPY THIS FILE AND RENAME TO YOUR LOCALE CODE (e.g. pt.json, it.json, nl.json...)",
+  "common": {
+    "language": "Language",
+    "allRightsReserved": "All rights reserved"
+  },
+  "home": {
+    "tagline": "Analyze your reviews, optimize your listings",
+    "heroTitle": "Turn customer reviews into listings that convert",
+    "heroSubtitle": "Our AI analyzes your Airbnb and Booking reviews to generate an optimized description, identify your strengths, and recommend priority improvements.",
+    "badgeNLP": "NLP & Sentiment Analysis",
+    "badge50Lang": "50 languages supported",
+    "formTitle": "Your customer reviews",
+    "formSubtitle": "Paste your property reviews. Our AI handles the rest.",
+    "emptyStateTitle": "Real-time results",
+    "emptyStateText": "Fill out the form on the left and click Analyze to see the diagnostic and optimized description appear.",
+    "footerNote": "Internal POC — Data not persisted"
+  },
+  "form": {
+    "modeIndividual": "One by one",
+    "modeBulk": "Bulk paste",
+    "bulkHintTitle": "Expected format",
+    "bulkHintText": "One review per line. Format: Rating - Text (e.g. 5 - Perfect stay, very clean!)",
+    "bulkPlaceholder": "5 - Absolutely perfect stay!\\n2 - Disappointed, wifi didn't work...\\n4 - Good value but noisy...",
+    "parseBulk": "Import reviews",
+    "review": "Review",
+    "rating": "Rating",
+    "text": "Review text",
+    "reviewPlaceholder": "Enter the customer review text...",
+    "addReview": "Add a review",
+    "analyzeButton": "Analyze & Generate Listing",
+    "analyzing": "Analyzing..."
+  },
+  "results": {
+    "resultsTitle": "Analysis results",
+    "reviews": "reviews",
+    "diagnosticTab": "Diagnostic",
+    "listingTab": "Optimized listing",
+    "healthScore": "Health score",
+    "reviewsAnalyzed": "reviews analyzed",
+    "strengths": "Strengths",
+    "weaknesses": "Areas to improve",
+    "mentionedPositively": "mentioned positively by your guests",
+    "mentionedNegatively": "mentioned negatively — priority fix",
+    "recurringThemes": "Recurring themes",
+    "optimizedTitle": "Optimized listing",
+    "optimizedDescription": "Generated description",
+    "keyAmenities": "Key listing highlights",
+    "copy": "Copy text",
+    "recommendations": "Recommendations for the host",
+    "error": "An error occurred during analysis"
+  }
+}
