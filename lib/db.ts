@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 
 export interface AnalysisRecord {
   id?: string;
@@ -23,6 +23,7 @@ export interface SubscriptionRecord {
 // ─── Analyses ───
 
 export async function saveAnalysis(record: AnalysisRecord) {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("analyses")
     .insert(record)
@@ -33,6 +34,7 @@ export async function saveAnalysis(record: AnalysisRecord) {
 }
 
 export async function getUserAnalyses(userId: string, limit = 10) {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("analyses")
     .select("*")
@@ -46,6 +48,7 @@ export async function getUserAnalyses(userId: string, limit = 10) {
 // ─── Subscriptions ───
 
 export async function upsertSubscription(record: SubscriptionRecord) {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("subscriptions")
     .upsert(record, { onConflict: "user_id" })
@@ -56,6 +59,7 @@ export async function upsertSubscription(record: SubscriptionRecord) {
 }
 
 export async function getSubscription(userId: string) {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
@@ -69,6 +73,7 @@ export async function updateSubscriptionStatus(
   stripeSubscriptionId: string,
   updates: Partial<SubscriptionRecord>
 ) {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("subscriptions")
     .update(updates)
