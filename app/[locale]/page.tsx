@@ -113,7 +113,7 @@ export default function HomePage() {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-none">Airbnb Optimizer</h1>
+              <h1 className="text-lg font-bold text-gray-900 leading-none">Kritia</h1>
               <p className="text-xs text-gray-500 mt-0.5">{t("tagline")}</p>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white mt-auto">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">© 2024 Airbnb Optimizer</p>
+          <p className="text-sm text-gray-500">© {new Date().getFullYear()} Kritia</p>
           <p className="text-xs text-gray-400">{t("footerNote")}</p>
         </div>
       </footer>

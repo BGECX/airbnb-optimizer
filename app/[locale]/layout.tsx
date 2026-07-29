@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -20,18 +19,17 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages();
-  const isRTL = ["ar", "he", "ur", "fa", "ps"].includes(locale);
+  const messages = await getMessages({ locale });
 
   return (
-    <ClerkProvider>
-      <html lang={locale} dir={isRTL ? "rtl" : "ltr"}>
-        <body className="min-h-screen bg-gray-50 text-gray-900">
-          <NextIntlClientProvider messages={messages} locale={locale}>
-            {children}
-          </NextIntlClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <div
+      lang={locale}
+      dir={locale === "ar" ? "rtl" : "ltr"}
+      className="min-h-screen bg-gray-50 text-gray-900"
+    >
+      <NextIntlClientProvider messages={messages} locale={locale}>
+        {children}
+      </NextIntlClientProvider>
+    </div>
   );
 }
