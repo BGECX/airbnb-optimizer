@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copie des fichiers de dépendances
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copie du code source
 COPY . .
@@ -21,13 +21,14 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=10000
+ENV HOSTNAME=0.0.0.0
 
 # Copie des fichiers nécessaires depuis le builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 3000
+EXPOSE 10000
 
 CMD ["node", "server.js"]
