@@ -25,7 +25,6 @@ ENV PORT=10000
 ENV HOSTNAME=0.0.0.0
 
 # Copie des fichiers nécessaires depuis le builder
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
