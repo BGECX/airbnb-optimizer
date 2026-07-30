@@ -103,7 +103,7 @@ NEGATIONS = {"pas", "non", "ne", "n'", "sans", "aucun", "aucune", "guère", "jam
 def decouper_phrases(texte: str) -> List[str]:
     texte = re.sub(r"\s+", " ", texte.strip())
     phrases = re.split(r"(?<=[.!?])\s+(?=[A-ZÉÈÀÙÇ])", texte)
-    return [p.strip() for p in phrases if len(p.strip()) > 10]
+    return [p.strip() for p in phrases if len(p.strip()) > 5]
 
 
 def detecter_themes(phrase: str) -> List[str]:
@@ -118,7 +118,9 @@ def detecter_themes(phrase: str) -> List[str]:
 
 
 def analyser_sentiment_phrase(phrase: str) -> Dict[str, Any]:
-    mots = re.findall(r"[\w']+", phrase.lower())
+    # Les anciennes bornes de mots étaient enregistrées comme des caractères
+    # de contrôle, ce qui produisait toujours une liste vide.
+    mots = re.findall(r"\b[\w'’-]+\b", phrase.lower(), flags=re.UNICODE)
     score = 0.0
     mots_trouves = []
     i = 0
@@ -165,12 +167,20 @@ def extraire_citations(texte: str, theme: str, sentiment: str) -> List[str]:
 
 def analyser_avis(avis: Dict) -> Dict[str, Any]:
     texte = avis["texte"]
+    note = int(avis.get("note", 3))
     phrases = decouper_phrases(texte)
     details_phrases = []
     compteur_themes = defaultdict(lambda: {"positif": 0, "négatif": 0, "neutre": 0, "score_total": 0.0})
     for phrase in phrases:
         themes = detecter_themes(phrase)
         sentiment = analyser_sentiment_phrase(phrase)
+        # Si le texte mentionne un thème sans adjectif explicite, la note du
+        # voyageur fournit un signal de repli cohérent.
+        if sentiment["label"] == "neutre" and themes:
+            if note >= 4:
+                sentiment = {**sentiment, "label": "positif", "score": 0.35}
+            elif note <= 2:
+                sentiment = {**sentiment, "label": "négatif", "score": -0.35}
         details_phrases.append({"phrase": phrase, "themes": themes, "sentiment": sentiment["label"], "score": sentiment["score"]})
         for theme in themes:
             compteur_themes[theme][sentiment["label"]] += 1
