@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = auth();
     const body = await request.json();
-    const { reviews, langue = "fr" } = body;
+    const { reviews, langue = "fr", logement_info } = body;
 
     if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
       return NextResponse.json(
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const res = await fetch(`${API_BASE}/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reviews, langue }),
+      body: JSON.stringify({ reviews, langue, logement_info }),
     });
 
     if (!res.ok) {
