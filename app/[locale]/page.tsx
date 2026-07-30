@@ -11,7 +11,7 @@ import ResultsPanel from "@/components/ResultsPanel";
 import PaywallModal from "@/components/PaywallModal";
 import PricingCards from "@/components/PricingCards";
 import { useAnalysisQuota } from "@/hooks/useAnalysisQuota";
-import type { ReviewInput, ApiResponse, PlanKey } from "@/types";
+import type { ReviewInput, LogementInfo, ApiResponse, PlanKey } from "@/types";
 
 export default function HomePage() {
   const t = useTranslations("home");
@@ -39,7 +39,7 @@ export default function HomePage() {
     }
   }, [isSignedIn]);
 
-  async function handleAnalyze(reviews: ReviewInput[]) {
+  async function handleAnalyze(reviews: ReviewInput[], logementInfo: LogementInfo) {
     if (quota.hasReachedLimit && !isSignedIn) {
       setIsPaywallOpen(true);
       return;
@@ -50,7 +50,7 @@ export default function HomePage() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviews, langue: locale }),
+        body: JSON.stringify({ reviews, langue: locale, logement_info: logementInfo }),
       });
       const data: ApiResponse = await res.json();
 
