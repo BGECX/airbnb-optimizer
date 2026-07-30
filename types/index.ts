@@ -4,6 +4,15 @@ export interface ReviewInput {
   texte: string;
 }
 
+export interface LogementInfo {
+  type?: string;
+  ville?: string;
+  quartier?: string;
+  surface?: string;
+  chambres?: number;
+  couchages?: number;
+}
+
 export interface SentimentResult {
   label: string;
   score: number;

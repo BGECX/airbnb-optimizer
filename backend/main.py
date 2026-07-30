@@ -66,6 +66,7 @@ TAXONOMIE_THEMES = {
     "Rapport qualité-prix": ["rapport qualité-prix", "cher", "abordable", "prix", "économique", "bon marché", "coût"],
     "Transports & Accessibilité": ["métro", "bus", "transport", "gare", "autoroute", "parking", "marcher", "accessible"],
     "Décoration & Ambiance": ["décoration", "ambiance", "décor", "cosy", "charme", "moderne", "ancien", "lumineux"],
+    "Aménagement & Agencement": ["agencé", "agencée", "agencement", "aménagement", "fonctionnel", "fonctionnelle", "pratique", "étroit", "exigu"],
     "Extérieur & Vue": ["terrasse", "balcon", "vue", "jardin", "extérieur", "toit", "patio"]
 }
 
@@ -129,7 +130,12 @@ def analyser_sentiment_phrase(phrase: str) -> Dict[str, Any]:
         coeff = 1.0
         if i > 0 and mots[i-1] in INTENSIFIEURS:
             coeff = INTENSIFIEURS[mots[i-1]]
-        negation_active = any(m in NEGATIONS for m in mots[max(0, i-3):i])
+        precedent = mots[i - 1] if i > 0 else ""
+        avant_precedent = mots[i - 2] if i > 1 else ""
+        negation_active = (
+            precedent in NEGATIONS
+            or (precedent in INTENSIFIEURS and avant_precedent in NEGATIONS)
+        )
         if mot in MOTS_POSITIFS:
             val = 1.0 * coeff
             if negation_active:
@@ -176,7 +182,7 @@ def analyser_avis(avis: Dict) -> Dict[str, Any]:
         sentiment = analyser_sentiment_phrase(phrase)
         # Si le texte mentionne un thème sans adjectif explicite, la note du
         # voyageur fournit un signal de repli cohérent.
-        if sentiment["label"] == "neutre" and themes:
+        if sentiment["label"] == "neutre" and themes and not sentiment["mots_cles"]:
             if note >= 4:
                 sentiment = {**sentiment, "label": "positif", "score": 0.35}
             elif note <= 2:
@@ -306,87 +312,108 @@ def choisir_template(templates: List[str]) -> str:
 
 
 def generer_titre(insights: Dict, info: Dict) -> str:
-    atout = insights["atouts"][0] if insights["atouts"] else "confort optimal"
-    atout_court = atout.split(" & ")[0] if " & " in atout else atout
-    ctx = {
-        "type": info["type"].capitalize(),
-        "charme": "charmant",
-        "quartier": info["quartier"],
-        "atout_principal": atout_court.lower(),
-        "qualite": "de qualité",
-        "adjectif": "cosy",
-        "standing": "premium"
-    }
-    return choisir_template(TEMPLATES_TITRE).format(**ctx)
+    type_logement = (info.get("type") or "logement").strip()
+    localisation = (info.get("quartier") or info.get("ville") or "").strip()
+
+    if insights["atouts"]:
+        titre = f"{type_logement.capitalize()} — {insights['atouts'][0].lower()}"
+    elif insights["problemes"]:
+        titre = f"{type_logement.capitalize()} — améliorations prioritaires"
+    else:
+        titre = f"{type_logement.capitalize()} — informations à compléter"
+
+    if localisation:
+        titre += f" | {localisation}"
+    return titre
 
 
 def generer_accroche(insights: Dict, info: Dict) -> str:
-    promesse = "confort et authenticité"
-    if "Emplacement" in str(insights["atouts"]):
-        promesse = "une localisation idéale pour explorer la ville à pied"
-    elif "Propreté" in str(insights["atouts"]):
-        promesse = "une propreté irréprochable et un cadre soigné"
-    ctx = {
-        "type": info["type"],
-        "adjectif": "cosy",
-        "qualite": "soigneusement aménagé",
-        "quartier": info["quartier"],
-        "localisation": "en plein " + info["quartier"],
-        "promesse": promesse
-    }
-    return choisir_template(TEMPLATES_ACCROCHE).format(**ctx)
+    if insights["atouts"]:
+        return "Les voyageurs mettent particulièrement en avant : " + ", ".join(insights["atouts"][:3]) + "."
+    if insights["problemes"]:
+        return "Les avis signalent des points à corriger avant de transformer ce contenu en annonce commerciale."
+    return "Les avis ne contiennent pas encore assez d'éléments fiables pour rédiger une annonce sans inventer d'informations."
 
 
 def generer_corps(insights: Dict, info: Dict) -> str:
     paragraphes = []
-    if any("Emplacement" in a or "Localisation" in a for a in insights["atouts"]):
-        detail = "des monuments historiques, des restaurants et des transports"
-        if "Transports" in str(insights["atouts"]):
-            detail += ", à quelques minutes de la gare"
-        ctx = {"adjectif_emplacement": "stratégique", "detail_emplacement": detail, "quartier": info["quartier"]}
-        paragraphes.append(choisir_template(TEMPLATES_PARAGRAPHES["emplacement"]).format(**ctx))
-    style = "charme ancien et modernité"
-    if "Décoration" in str(insights["atouts"]):
-        style = "une décoration soignée et personnalisée"
-    detail_int = "Les espaces sont spacieux (" + info["surface"] + "), lumineux et parfaitement agencés"
-    if "Literie" in str(insights["atouts"]):
-        detail_int += ", avec une literie hôtelière pour des nuits réparatrices"
-    ctx = {"type": info["type"], "style": style, "detail_interieur": detail_int}
-    paragraphes.append(choisir_template(TEMPLATES_PARAGRAPHES["interieur"]).format(**ctx))
-    equipements = ["cuisine équipée", "Wi-Fi haut débit"]
-    if "Équipements" in str(insights["atouts"]):
-        equipements.append("tous les équipements essentiels")
-    if "Extérieur" in str(insights["atouts"]) or "Vue" in str(insights["atouts"]):
-        equipements.append("une terrasse avec vue panoramique")
-    if "parking" in str(insights["atouts"]).lower():
-        equipements.append("un parking privatif")
-    ctx = {"liste_equipements": ", ".join(equipements[:-1]) + " et " + equipements[-1]}
-    paragraphes.append(choisir_template(TEMPLATES_PARAGRAPHES["equipements"]).format(**ctx))
-    if "Hôte" in str(insights["atouts"]):
-        ctx = {"ville": info["ville"].capitalize()}
-        paragraphes.append(choisir_template(TEMPLATES_PARAGRAPHES["hote"]).format(**ctx))
-    if "Bruit" not in str(insights["problemes"]) and ("Literie" in str(insights["atouts"]) or "Confort" in str(insights["atouts"])):
-        paragraphes.append(choisir_template(TEMPLATES_PARAGRAPHES["confort"]))
+
+    type_logement = (info.get("type") or "").strip()
+    ville = (info.get("ville") or "").strip()
+    quartier = (info.get("quartier") or "").strip()
+    surface = (info.get("surface") or "").strip()
+    chambres = info.get("chambres")
+    couchages = info.get("couchages")
+
+    faits = []
+    if type_logement:
+        faits.append(f"type : {type_logement}")
+    if quartier and ville:
+        faits.append(f"localisation : {quartier}, {ville}")
+    elif quartier or ville:
+        faits.append(f"localisation : {quartier or ville}")
+    if surface:
+        faits.append(f"surface : {surface}")
+    if chambres:
+        faits.append(f"{chambres} chambre(s)")
+    if couchages:
+        faits.append(f"{couchages} couchage(s)")
+
+    if faits:
+        paragraphes.append("Informations fournies sur le logement : " + " · ".join(faits) + ".")
+    else:
+        paragraphes.append(
+            "Les informations factuelles sur le logement restent à compléter "
+            "(type, localisation, surface, chambres et capacité)."
+        )
+
+    if insights["atouts"]:
+        paragraphes.append(
+            "D'après les avis analysés, les qualités réellement observées sont : "
+            + ", ".join(insights["atouts"][:5])
+            + "."
+        )
+
+    if insights["problemes"]:
+        paragraphes.append(
+            "Les points suivants ne doivent pas être présentés comme des qualités tant qu'ils ne sont pas corrigés : "
+            + ", ".join(insights["problemes"][:5])
+            + "."
+        )
+
+    if not insights["atouts"]:
+        paragraphes.append(
+            "Aucune qualité suffisamment étayée n'a été détectée dans les avis fournis. "
+            "L'application n'en invente donc pas dans la description."
+        )
+
     return "\n\n".join(paragraphes)
 
 
 def generer_bullets(insights: Dict, info: Dict) -> List[str]:
     bullets = []
-    if any("Emplacement" in a for a in insights["atouts"]):
-        bullets.append("Emplacement central : à deux pas du centre historique et des transports")
-    if "Propreté" in str(insights["atouts"]):
-        bullets.append("Propreté irréprochable garantie à chaque séjour")
-    if "Wifi" in str(insights["atouts"]):
-        bullets.append("Wi-Fi fibre haut débit — idéal pour télétravailler en toute sérénité")
-    if "Literie" in str(insights["atouts"]):
-        bullets.append("Literie hôtelière premium pour des nuits réparatrices")
-    if "Hôte" in str(insights["atouts"]):
-        bullets.append("Hôte réactif et disponible, conseils locaux personnalisés")
-    if any("Extérieur" in a or "Vue" in a for a in insights["atouts"]):
-        bullets.append("Terrasse privée avec vue dégagée sur les toits de la ville")
-    if "parking" in str(insights["atouts"]).lower():
-        bullets.append("Parking privatif inclus — fini le stress de la place de stationnement")
-    bullets.append(info["surface"] + " · " + str(info["chambres"]) + " chambre(s) · " + str(info["couchages"]) + " couchages")
+    type_logement = (info.get("type") or "").strip()
+    surface = (info.get("surface") or "").strip()
+    chambres = info.get("chambres")
+    couchages = info.get("couchages")
+
+    caracteristiques = []
+    if type_logement:
+        caracteristiques.append(type_logement.capitalize())
+    if surface:
+        caracteristiques.append(surface)
+    if chambres:
+        caracteristiques.append(f"{chambres} chambre(s)")
+    if couchages:
+        caracteristiques.append(f"{couchages} couchage(s)")
+    if caracteristiques:
+        bullets.append(" · ".join(caracteristiques))
+
+    for atout in insights["atouts"][:5]:
+        bullets.append(f"Avis positifs sur : {atout}")
+
+    if not bullets:
+        bullets.append("Informations du logement et qualités vérifiées à compléter")
     return bullets
 
 
@@ -400,6 +427,7 @@ def generer_recommandations(insights: Dict) -> List[Dict]:
         "Check-in & Accueil": {"action": "Automatiser et clarifier le processus d'arrivée", "detail": "Envoyer les instructions 24h avant l'arrivée, prévoir une boîte à clé sécurisée ou une serrure connectée.", "impact": "Moyen"},
         "Literie & Confort": {"action": "Investir dans la literie ou le canapé-lit", "detail": "Un couchage inconfortable est un facteur de déception majeur. Privilégiez un matelas de qualité ou un vrai lit plutôt qu'un canapé-lit pour 2 adultes.", "impact": "Fort"},
         "Équipements & Cuisine": {"action": "Compléter et vérifier les équipements annoncés", "detail": "S'assurer que tout ce qui est mentionné dans l'annonce est bien présent et fonctionnel (machine à laver, vaisselle complète, etc.).", "impact": "Moyen"},
+        "Aménagement & Agencement": {"action": "Revoir l'agencement et la circulation dans le logement", "detail": "Les avis signalent un espace mal agencé ou peu fonctionnel. Dégagez les passages, repositionnez le mobilier et simplifiez l'organisation des pièces.", "impact": "Moyen"},
         "Transports & Accessibilité": {"action": "Préciser l'accessibilité dans l'annonce", "detail": "Si le quartier est éloigné des transports, valorisez d'autres atouts (parking, calme) et indiquez clairement les distances.", "impact": "Faible"}
     }
     for probleme in insights["problemes"][:5]:
@@ -417,16 +445,17 @@ def generer_optimized_listing(insights: Dict, info: Dict, langue: str = "fr") ->
     bullets = generer_bullets(insights, info)
     recommandations = generer_recommandations(insights)
     description_complete = accroche + "\n\n" + corps
-    mots_cles = [info["quartier"], info["ville"], info["type"], "centre ville", "wifi"]
-    if "Propreté" in str(insights["atouts"]):
-        mots_cles.append("propre")
-    if "Literie" in str(insights["atouts"]):
-        mots_cles.append("literie hôtelière")
+    mots_cles = [
+        str(info.get(cle, "")).strip()
+        for cle in ("quartier", "ville", "type")
+        if str(info.get(cle, "")).strip()
+    ]
+    mots_cles.extend([atout.lower() for atout in insights["atouts"][:5]])
     return {
         "meta": {
             "version": "1.0-api",
             "date_generation": datetime.now().isoformat(),
-            "mode": "template_fastapi",
+            "mode": "analyse_avis_factual_v2",
             "langue": langue,
             "note_moyenne_source": insights["note_moyenne"],
             "nb_avis_source": insights["nb_avis"]
@@ -436,7 +465,7 @@ def generer_optimized_listing(insights: Dict, info: Dict, langue: str = "fr") ->
             "accroche": accroche,
             "description": description_complete,
             "bullets_points": bullets,
-            "mots_cles_seo": list(set(mots_cles))
+            "mots_cles_seo": list(dict.fromkeys(mots_cles))
         },
         "recommandations_proprietaire": recommandations,
         "insights_utilises": {
@@ -521,15 +550,16 @@ def analyze_reviews(payload: AnalyzeRequest):
         "recommandation_prioritaire": synthese.get("recommandation_prioritaire", "")
     }
 
-    # 4. Logement info (par défaut ou custom)
-    logement_info = payload.logement_info or {
-        "type": "appartement",
-        "surface": "45 m²",
-        "chambres": 1,
-        "couchages": 2,
-        "quartier": "centre historique",
-        "ville": "la ville",
-        "atouts_bruts": ["terrasse", "vue sur les toits", "parking privatif"]
+    # 4. Informations factuelles fournies par l'utilisateur.
+    # Aucun type, emplacement, équipement ou métrage n'est inventé.
+    logement_info_brut = payload.logement_info or {}
+    logement_info = {
+        "type": str(logement_info_brut.get("type") or "").strip(),
+        "surface": str(logement_info_brut.get("surface") or "").strip(),
+        "chambres": logement_info_brut.get("chambres") or None,
+        "couchages": logement_info_brut.get("couchages") or None,
+        "quartier": str(logement_info_brut.get("quartier") or "").strip(),
+        "ville": str(logement_info_brut.get("ville") or "").strip(),
     }
 
     # 5. Génération

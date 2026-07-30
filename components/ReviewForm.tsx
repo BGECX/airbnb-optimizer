@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Button from "./ui/Button";
-import { Sparkles, Trash2, Plus, FileText } from "lucide-react";
-import type { ReviewInput } from "@/types";
+import { Sparkles, Trash2, Plus, FileText, Home } from "lucide-react";
+import type { LogementInfo, ReviewInput } from "@/types";
 
 interface ReviewFormProps {
-  onSubmit: (reviews: ReviewInput[]) => void;
+  onSubmit: (reviews: ReviewInput[], logementInfo: LogementInfo) => void;
   isLoading: boolean;
 }
 
@@ -18,6 +18,14 @@ export default function ReviewForm({ onSubmit, isLoading }: ReviewFormProps) {
   ]);
   const [bulkText, setBulkText] = useState("");
   const [mode, setMode] = useState<"individual" | "bulk">("individual");
+  const [logement, setLogement] = useState({
+    type: "",
+    ville: "",
+    quartier: "",
+    surface: "",
+    chambres: "",
+    couchages: "",
+  });
 
   function addReview() {
     setReviews([...reviews, { id: Date.now(), note: 5, texte: "" }]);
@@ -46,11 +54,104 @@ export default function ReviewForm({ onSubmit, isLoading }: ReviewFormProps) {
 
   function handleSubmit() {
     const valid = reviews.filter((r) => r.texte.trim().length > 5);
-    if (valid.length > 0) onSubmit(valid);
+    const logementInfo: LogementInfo = {
+      type: logement.type.trim() || undefined,
+      ville: logement.ville.trim() || undefined,
+      quartier: logement.quartier.trim() || undefined,
+      surface: logement.surface.trim() || undefined,
+      chambres: logement.chambres ? parseInt(logement.chambres, 10) : undefined,
+      couchages: logement.couchages ? parseInt(logement.couchages, 10) : undefined,
+    };
+    if (valid.length > 0) onSubmit(valid, logementInfo);
   }
 
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Home className="w-4 h-4 text-blue-700" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900">{t("propertyTitle")}</h4>
+            <p className="text-xs text-gray-600 mt-1">{t("propertySubtitle")}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertyType")}
+            <select
+              value={logement.type}
+              onChange={(e) => setLogement({ ...logement, type: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">{t("propertyTypePlaceholder")}</option>
+              <option value="appartement">{t("propertyApartment")}</option>
+              <option value="maison">{t("propertyHouse")}</option>
+              <option value="gîte">{t("propertyCottage")}</option>
+              <option value="studio">{t("propertyStudio")}</option>
+              <option value="villa">{t("propertyVilla")}</option>
+              <option value="chambre">{t("propertyRoom")}</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertyCity")}
+            <input
+              value={logement.ville}
+              onChange={(e) => setLogement({ ...logement, ville: e.target.value })}
+              placeholder={t("propertyCityPlaceholder")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertyArea")}
+            <input
+              value={logement.quartier}
+              onChange={(e) => setLogement({ ...logement, quartier: e.target.value })}
+              placeholder={t("propertyAreaPlaceholder")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertySurface")}
+            <input
+              value={logement.surface}
+              onChange={(e) => setLogement({ ...logement, surface: e.target.value })}
+              placeholder={t("propertySurfacePlaceholder")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertyBedrooms")}
+            <input
+              type="number"
+              min="0"
+              value={logement.chambres}
+              onChange={(e) => setLogement({ ...logement, chambres: e.target.value })}
+              placeholder="1"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+
+          <label className="text-xs font-medium text-gray-600">
+            {t("propertySleeps")}
+            <input
+              type="number"
+              min="1"
+              value={logement.couchages}
+              onChange={(e) => setLogement({ ...logement, couchages: e.target.value })}
+              placeholder="2"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
+            />
+          </label>
+        </div>
+      </section>
+
       {/* Mode toggle */}
       <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-fit">
         <button
