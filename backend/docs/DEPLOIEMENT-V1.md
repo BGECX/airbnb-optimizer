@@ -11,6 +11,8 @@
 
 Variables minimales : `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `POSTGRES_PASSWORD`, `FRONTEND_URL`. `METRICS_TOKEN` active `/api/operations/metrics`. Les secrets JWT et métriques font au moins 32 caractères.
 
+Pour activer « Mot de passe oublié », définir `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` et `PUBLIC_APP_URL`. Exemple OVH : `SMTP_HOST=smtp.mail.ovh.net`, `SMTP_PORT=587`, `PUBLIC_APP_URL=https://www.getkritia.com`. Le mot de passe SMTP reste exclusivement dans le gestionnaire de secrets de l’hébergeur.
+
 ## Mise en production
 
 1. Exécuter `scripts/release-check.sh` contre une base isolée se terminant par `_test`.

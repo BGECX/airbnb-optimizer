@@ -2,7 +2,7 @@ import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
@@ -22,6 +22,18 @@ export class AuthController {
   @UseGuards(AuthRateLimitGuard)
   login(@Body() dto: LoginDto, @Req() request: Request) {
     return this.authService.login(dto, this.metadata(request));
+  }
+
+  @Post('forgot-password')
+  @UseGuards(AuthRateLimitGuard)
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @UseGuards(AuthRateLimitGuard)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   @Get('me')

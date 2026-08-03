@@ -45,6 +45,10 @@ function validateEnvironment(config: Record<string, unknown>) {
   }
   if (config.PA_WEBHOOK_SECRET && String(config.PA_WEBHOOK_SECRET).length < 32) throw new Error('PA_WEBHOOK_SECRET doit contenir au moins 32 caractères');
   if (config.METRICS_TOKEN && String(config.METRICS_TOKEN).length < 32) throw new Error('METRICS_TOKEN doit contenir au moins 32 caractères');
+  if (config.SMTP_HOST || config.SMTP_USER || config.SMTP_PASSWORD) {
+    if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASSWORD) throw new Error('SMTP_HOST, SMTP_USER et SMTP_PASSWORD doivent être configurés ensemble');
+  }
+  if (config.PUBLIC_APP_URL && new URL(String(config.PUBLIC_APP_URL)).protocol !== 'https:') throw new Error('PUBLIC_APP_URL doit utiliser HTTPS');
   return config;
 }
 

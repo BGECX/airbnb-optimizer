@@ -59,6 +59,7 @@ button, input, select, textarea { font:inherit; } button { cursor:pointer; }
 .auth-switch:hover { text-decoration:underline; }
 .name-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .password-rule { color:var(--muted); font-size:8px; line-height:1.45; margin:-8px 0 4px; }
+.form-notice { background:#e9f8ef; border:1px solid #a8dfbb; color:#17663a; border-radius:6px; padding:10px 12px; font-size:9px; line-height:1.5; }
 @media (max-width:560px){.name-fields{grid-template-columns:1fr}}
 
 /* Atelier DPGF & métrés */

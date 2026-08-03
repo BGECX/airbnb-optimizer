@@ -4,12 +4,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 import { RegisterDto, LoginDto } from './dto';
+import { PasswordResetMailService } from './password-reset-mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private passwordResetMail: PasswordResetMailService,
   ) {}
 
   async register(dto: RegisterDto, metadata?: TokenMetadata) {
@@ -62,6 +64,42 @@ export class AuthService {
       where: { id: userId },
       select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true },
     });
+  }
+
+  async forgotPassword(rawEmail: string) {
+    const email = rawEmail.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    const response = { accepted: true, message: 'Si ce compte existe, un lien de réinitialisation va être envoyé.' };
+    if (!user || !user.isActive) return response;
+    const rawToken = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + 30 * 60_000);
+    const token = await this.prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.updateMany({ where: { userId: user.id, usedAt: null }, data: { usedAt: new Date() } });
+      return tx.passwordResetToken.create({ data: { userId: user.id, tokenHash: this.hashToken(rawToken), expiresAt } });
+    });
+    const baseUrl = String(process.env.PUBLIC_APP_URL ?? 'https://www.getkritia.com').replace(/\/$/, '');
+    try {
+      await this.passwordResetMail.send(user.email, user.firstName, `${baseUrl}/?resetToken=${encodeURIComponent(rawToken)}`);
+    } catch (error) {
+      await this.prisma.passwordResetToken.delete({ where: { id: token.id } }).catch(() => undefined);
+      throw error;
+    }
+    return response;
+  }
+
+  async resetPassword(rawToken: string, password: string) {
+    const tokenHash = this.hashToken(rawToken);
+    const token = await this.prisma.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: true } });
+    if (!token || token.usedAt || token.expiresAt <= new Date() || !token.user.isActive) throw new UnauthorizedException('Lien invalide ou expiré');
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.passwordResetToken.updateMany({ where: { id: token.id, usedAt: null, expiresAt: { gt: new Date() } }, data: { usedAt: new Date() } });
+      if (claimed.count !== 1) throw new UnauthorizedException('Lien déjà utilisé ou expiré');
+      await tx.user.update({ where: { id: token.userId }, data: { password: hashedPassword } });
+      await tx.refreshToken.updateMany({ where: { userId: token.userId, revokedAt: null }, data: { revokedAt: new Date() } });
+      await tx.passwordResetToken.updateMany({ where: { userId: token.userId, usedAt: null }, data: { usedAt: new Date() } });
+    });
+    return { success: true, message: 'Votre mot de passe a été modifié. Vous pouvez vous connecter.' };
   }
 
   private async generateToken(userId: string, email: string, role: string) {

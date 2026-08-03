@@ -41,3 +41,25 @@ export class RefreshTokenDto {
   @MinLength(32)
   refreshToken: string;
 }
+
+export class ForgotPasswordDto {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(32)
+  token: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+    message: 'Le mot de passe doit contenir une minuscule, une majuscule et un chiffre',
+  })
+  password: string;
+}

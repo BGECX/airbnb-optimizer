@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
+import { PasswordResetMailService } from './password-reset-mail.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { AuthRateLimitGuard } from './auth-rate-limit.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, AuthRateLimitGuard],
+  providers: [AuthService, JwtStrategy, AuthRateLimitGuard, PasswordResetMailService],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -64,6 +64,7 @@ export default function KritiaApp() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resetToken, setResetToken] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -71,6 +72,7 @@ export default function KritiaApp() {
       if (savedUrl) setApiUrl(savedUrl);
       const raw = window.sessionStorage.getItem("kritia-session");
       if (raw) try { setSession(JSON.parse(raw)); } catch { window.sessionStorage.removeItem("kritia-session"); }
+      setResetToken(new URLSearchParams(window.location.search).get("resetToken") ?? "");
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -127,7 +129,7 @@ export default function KritiaApp() {
   }
 
   function logout() { window.sessionStorage.removeItem("kritia-session"); setSession(null); setDemo(false); setSection("dashboard"); }
-  if (!session && !demo) return <Login apiUrl={apiUrl} setApiUrl={setApiUrl} login={login} register={register} demo={() => setDemo(true)} busy={busy} error={error} />;
+  if (!session && !demo) return <Login apiUrl={apiUrl} setApiUrl={setApiUrl} login={login} register={register} request={api} resetToken={resetToken} demo={() => setDemo(true)} busy={busy} error={error} />;
 
   const currentUser = session?.user ?? { firstName: "Bruno", lastName: "Martin", role: "ADMIN" };
   const title = nav.find((item) => item.id === section)?.label ?? "Vue d’ensemble";
@@ -160,9 +162,30 @@ export default function KritiaApp() {
   );
 }
 
-function Login({ apiUrl, setApiUrl, login, register, demo, busy, error }: { apiUrl: string; setApiUrl: (value: string) => void; login: (event: FormEvent<HTMLFormElement>) => void; register: (event: FormEvent<HTMLFormElement>) => void; demo: () => void; busy: boolean; error: string }) {
-  const [creating, setCreating] = useState(false);
-  return <main className="login-page"><section className="login-story"><div className="login-brand"><span>K</span> KRITIA</div><div className="story-copy"><p className="eyebrow light">CONSTRUIRE · PILOTER · TRANSMETTRE</p><h1>Le chantier avance.<br />Votre gestion aussi.</h1><p>De la première visite à la réception, gardez la maîtrise des coûts, des équipes et du bâti existant.</p><div className="story-stats"><span><strong>360°</strong>Vision chantier</span><span><strong>1 seul</strong>outil de pilotage</span><span><strong>100%</strong>orienté rénovation</span></div></div><p className="story-quote">« La précision du métré. La clarté du pilotage. »</p></section><section className="login-panel"><form onSubmit={creating ? register : login}><p className="eyebrow">{creating ? "CRÉATION DE COMPTE" : "ESPACE SÉCURISÉ"}</p><h2>{creating ? "Rejoindre KRITIA" : "Bienvenue sur KRITIA"}</h2><p className="muted">{creating ? "Créez votre accès personnel à KRITIA btp." : "Connectez-vous à votre espace de gestion."}</p>{error && <div className="form-error">{error}</div>}{creating && <div className="name-fields"><label>Prénom<input name="firstName" required autoComplete="given-name" /></label><label>Nom<input name="lastName" required autoComplete="family-name" /></label></div>}<label>Adresse e-mail<input name="email" type="email" placeholder="vous@entreprise.fr" required autoComplete="username" /></label><label>Mot de passe<input name="password" type="password" placeholder="••••••••••••" required minLength={8} autoComplete={creating ? "new-password" : "current-password"} /></label>{creating && <><p className="password-rule">8 caractères minimum, avec majuscule, minuscule et chiffre.</p><label>Confirmer le mot de passe<input name="passwordConfirmation" type="password" placeholder="••••••••••••" required minLength={8} autoComplete="new-password" /></label></>}<details><summary>Configuration de l’API</summary><label>Adresse de l’API<input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} type="url" required /></label></details><button className="primary" disabled={busy}>{busy ? "Traitement…" : creating ? "Créer mon compte" : "Se connecter"}<span>→</span></button><button className="auth-switch" type="button" onClick={() => setCreating(!creating)}>{creating ? "J’ai déjà un compte" : "Créer un compte"}</button>{!creating && <><div className="or"><span>ou</span></div><button className="secondary" type="button" onClick={demo}>Découvrir avec les données de démonstration</button></>}<small className="secure-note">Session conservée uniquement dans cet onglet.</small></form></section></main>;
+function Login({ apiUrl, setApiUrl, login, register, request, resetToken, demo, busy, error }: { apiUrl: string; setApiUrl: (value: string) => void; login: (event: FormEvent<HTMLFormElement>) => void; register: (event: FormEvent<HTMLFormElement>) => void; request: ApiRequest; resetToken: string; demo: () => void; busy: boolean; error: string }) {
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+  const [resetCompleted, setResetCompleted] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const [notice, setNotice] = useState("");
+  async function forgot(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const form = new FormData(event.currentTarget); setWorking(true); setLocalError(""); setNotice("");
+    try { const result = await request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email: form.get("email") }) }); setNotice(result.message); }
+    catch (reason) { setLocalError(reason instanceof Error ? reason.message : "Demande impossible"); }
+    finally { setWorking(false); }
+  }
+  async function reset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const form = new FormData(event.currentTarget); const password = String(form.get("password") ?? ""); setLocalError(""); setNotice("");
+    if (password !== String(form.get("passwordConfirmation") ?? "")) { setLocalError("Les mots de passe ne correspondent pas."); return; }
+    setWorking(true);
+    try { const result = await request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token: resetToken, password }) }); window.history.replaceState({}, "", window.location.pathname); setNotice(result.message); setResetCompleted(true); setMode("login"); }
+    catch (reason) { setLocalError(reason instanceof Error ? reason.message : "Réinitialisation impossible"); }
+    finally { setWorking(false); }
+  }
+  const activeMode = resetToken && !resetCompleted ? "reset" : mode;
+  const creating = activeMode === "register"; const forgotten = activeMode === "forgot"; const resetting = activeMode === "reset";
+  const submit = creating ? register : forgotten ? forgot : resetting ? reset : login;
+  return <main className="login-page"><section className="login-story"><div className="login-brand"><span>K</span> KRITIA</div><div className="story-copy"><p className="eyebrow light">CONSTRUIRE · PILOTER · TRANSMETTRE</p><h1>Le chantier avance.<br />Votre gestion aussi.</h1><p>De la première visite à la réception, gardez la maîtrise des coûts, des équipes et du bâti existant.</p><div className="story-stats"><span><strong>360°</strong>Vision chantier</span><span><strong>1 seul</strong>outil de pilotage</span><span><strong>100%</strong>orienté rénovation</span></div></div><p className="story-quote">« La précision du métré. La clarté du pilotage. »</p></section><section className="login-panel"><form onSubmit={submit}><p className="eyebrow">{creating ? "CRÉATION DE COMPTE" : forgotten ? "ACCÈS AU COMPTE" : resetting ? "NOUVEAU MOT DE PASSE" : "ESPACE SÉCURISÉ"}</p><h2>{creating ? "Rejoindre KRITIA" : forgotten ? "Mot de passe oublié" : resetting ? "Choisissez votre mot de passe" : "Bienvenue sur KRITIA"}</h2><p className="muted">{creating ? "Créez votre accès personnel à KRITIA btp." : forgotten ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes." : resetting ? "Le nouveau mot de passe remplacera immédiatement l’ancien." : "Connectez-vous à votre espace de gestion."}</p>{(error || localError) && <div className="form-error">{localError || error}</div>}{notice && <div className="form-notice">{notice}</div>}{creating && <div className="name-fields"><label>Prénom<input name="firstName" required autoComplete="given-name" /></label><label>Nom<input name="lastName" required autoComplete="family-name" /></label></div>}{!resetting && <label>Adresse e-mail<input name="email" type="email" placeholder="vous@entreprise.fr" required autoComplete="username" /></label>}{!forgotten && <label>Mot de passe<input name="password" type="password" placeholder="••••••••••••" required minLength={8} autoComplete={creating || resetting ? "new-password" : "current-password"} /></label>}{(creating || resetting) && <><p className="password-rule">8 caractères minimum, avec majuscule, minuscule et chiffre.</p><label>Confirmer le mot de passe<input name="passwordConfirmation" type="password" placeholder="••••••••••••" required minLength={8} autoComplete="new-password" /></label></>}<details><summary>Configuration de l’API</summary><label>Adresse de l’API<input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} type="url" required /></label></details><button className="primary" disabled={busy || working}>{busy || working ? "Traitement…" : creating ? "Créer mon compte" : forgotten ? "Envoyer le lien" : resetting ? "Enregistrer le nouveau mot de passe" : "Se connecter"}<span>→</span></button>{activeMode === "login" && <button className="auth-switch" type="button" onClick={() => { setMode("forgot"); setLocalError(""); setNotice(""); }}>Mot de passe oublié ?</button>}<button className="auth-switch" type="button" onClick={() => { setMode(activeMode === "register" ? "login" : activeMode === "login" ? "register" : "login"); setLocalError(""); setNotice(""); }}>{activeMode === "register" ? "J’ai déjà un compte" : activeMode === "login" ? "Créer un compte" : "Retour à la connexion"}</button>{activeMode === "login" && <><div className="or"><span>ou</span></div><button className="secondary" type="button" onClick={demo}>Découvrir avec les données de démonstration</button></>}<small className="secure-note">Les liens de réinitialisation sont temporaires et à usage unique.</small></form></section></main>;
 }
 
 function Dashboard({ data, navigate }: { data: typeof demoData; navigate: (section: Section) => void }) {
