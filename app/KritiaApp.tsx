@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 type RecordValue = Record<string, unknown>;
 type Section = "dashboard" | "clients" | "chantiers" | "devis" | "factures" | "dpgf";
 type Session = { accessToken: string; user: { firstName?: string; lastName?: string; email?: string; role?: string } };
+type ApiRequest = (path: string, options?: RequestInit) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const demoData: Record<Exclude<Section, "dashboard">, RecordValue[]> = {
   clients: [
@@ -147,7 +148,7 @@ export default function KritiaApp() {
         <div className="content">
           {error && <div className="alert">{error}<button onClick={() => setError("")}>×</button></div>}
           {busy && <div className="loading-line" />}
-          {section === "dashboard" ? <Dashboard data={data} navigate={setSection} /> : <DataView section={section} rows={data[section]} demo={demo} refresh={loadAll} />}
+          {section === "dashboard" ? <Dashboard data={data} navigate={setSection} /> : section === "dpgf" ? <DpgfWorkspace rows={data.dpgf} chantiers={data.chantiers} demo={demo} request={api} refresh={loadAll} /> : <DataView section={section} rows={data[section]} demo={demo} refresh={loadAll} />}
         </div>
       </section>
     </main>
@@ -169,6 +170,119 @@ function Dashboard({ data, navigate }: { data: typeof demoData; navigate: (secti
 function DataView({ section, rows, demo, refresh }: { section: Exclude<Section, "dashboard">; rows: RecordValue[]; demo: boolean; refresh: () => void }) {
   const config = { clients: ["nom", "type", "ville", "telephone"], chantiers: ["reference", "objet", "ville", "statut", "avancement"], devis: ["numero", "objet", "totalTtc", "statut"], factures: ["numero", "objet", "totalTtc", "montantPaye", "statut"], dpgf: ["numero", "objet", "totalHt", "statut"] }[section];
   return <><section className="hero-row"><div><p className="eyebrow">GESTION · {section.toUpperCase()}</p><h2>{nav.find((item) => item.id === section)?.label}</h2><p>{rows.length} élément{rows.length > 1 ? "s" : ""} dans votre périmètre.</p></div><div className="view-actions"><button className="secondary compact" onClick={refresh}>↻ Actualiser</button><button className="primary compact" title={demo ? "Action désactivée en démonstration" : "Disponible dans la prochaine itération"}>＋ Ajouter</button></div></section><section className="panel table-panel"><div className="table-toolbar"><label>⌕<input placeholder={`Rechercher dans ${section}…`} /></label><button>Filtres</button><button>Exporter</button></div>{rows.length ? <div className="table-scroll"><table><thead><tr>{config.map((key) => <th key={key}>{label(key)}</th>)}<th /></tr></thead><tbody>{rows.map((row, index) => <tr key={String(row.id ?? index)}>{config.map((key) => <td key={key}>{key === "statut" ? <Status value={row[key]} /> : key.toLowerCase().includes("total") || key === "montantPaye" ? <strong>{euro(row[key])}</strong> : key === "avancement" ? <span className="mini-progress"><i style={{ width: `${Number(row[key])}%` }} />{String(row[key])}%</span> : String(row[key] ?? "—")}</td>)}<td><button className="row-action">•••</button></td></tr>)}</tbody></table></div> : <div className="empty"><span>◇</span><h3>Aucune donnée accessible</h3><p>Ajoutez un premier élément ou vérifiez le périmètre de votre rôle.</p></div>}</section></>;
+}
+
+type Metre = { id: string; libelle: string; formule?: string; quantite: number };
+type Poste = { id: string; code: string; designation: string; unite: string; quantite: number; debourseUnitaire: number; prixUnitaireHt: number; totalVenteHt: number; isSelected: boolean; metres: Metre[] };
+type Lot = { id: string; code: string; designation: string; postes: Poste[] };
+type DpgfDetail = { id: string; reference: string; nom: string; statut: string; totalDebourseSec: number; totalVenteHt: number; coefficientFraisGeneraux: number; coefficientMarge: number; chantier?: { objet?: string; reference?: string }; lots: Lot[] };
+
+const demoDpgf: DpgfDetail = {
+  id: "demo-dpgf", reference: "DPGF-2026-0035", nom: "Rénovation maison de maître", statut: "BROUILLON",
+  totalDebourseSec: 52270, totalVenteHt: 86420, coefficientFraisGeneraux: 1.12, coefficientMarge: 1.18,
+  chantier: { reference: "CH-2026-0051", objet: "Rénovation maison de maître" },
+  lots: [
+    { id: "lot-1", code: "01", designation: "Maçonnerie ancienne", postes: [
+      { id: "p-1", code: "01.01", designation: "Piquage des enduits ciment", unite: "m²", quantite: 186.4, debourseUnitaire: 16.8, prixUnitaireHt: 25.6, totalVenteHt: 4771.84, isSelected: true, metres: [{ id: "m-1", libelle: "Façades cour et jardin", formule: "(L*H)-OUVERTURES", quantite: 186.4 }] },
+      { id: "p-2", code: "01.02", designation: "Rejointoiement pierre à la chaux", unite: "m²", quantite: 186.4, debourseUnitaire: 54.2, prixUnitaireHt: 82.6, totalVenteHt: 15396.64, isSelected: true, metres: [] },
+    ] },
+    { id: "lot-2", code: "02", designation: "Charpente traditionnelle", postes: [
+      { id: "p-3", code: "02.01", designation: "Reprise de fermes en chêne", unite: "u", quantite: 4, debourseUnitaire: 1860, prixUnitaireHt: 2840, totalVenteHt: 11360, isSelected: true, metres: [{ id: "m-2", libelle: "Fermes à reprendre", quantite: 4 }] },
+      { id: "p-4", code: "02.02", designation: "Option isolation biosourcée", unite: "m²", quantite: 142, debourseUnitaire: 62, prixUnitaireHt: 94, totalVenteHt: 13348, isSelected: false, metres: [] },
+    ] },
+  ],
+};
+
+function DpgfWorkspace({ rows, chantiers, demo, request, refresh }: { rows: RecordValue[]; chantiers: RecordValue[]; demo: boolean; request: ApiRequest; refresh: () => void }) {
+  const [selectedId, setSelectedId] = useState<string>(demo ? demoDpgf.id : String(rows[0]?.id ?? ""));
+  const [detail, setDetail] = useState<DpgfDetail | null>(demo ? demoDpgf : null);
+  const [editor, setEditor] = useState<"dpgf" | "lot" | "poste" | "metre" | null>(null);
+  const [targetLot, setTargetLot] = useState("");
+  const [targetPoste, setTargetPoste] = useState("");
+  const [message, setMessage] = useState("");
+  const [working, setWorking] = useState(false);
+  const effectiveSelectedId = selectedId || String(rows[0]?.id ?? "");
+
+  useEffect(() => {
+    if (demo || !effectiveSelectedId) return;
+    request(`/dpgf/${effectiveSelectedId}`).then(setDetail).catch((reason) => setMessage(reason instanceof Error ? reason.message : "DPGF inaccessible"));
+  }, [effectiveSelectedId, demo]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function submit(path: string, body: Record<string, unknown>, after?: (result: any) => void) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (demo) { setMessage("Mode démonstration : les calculs sont visibles, sans modifier la base."); setEditor(null); return; }
+    setWorking(true); setMessage("");
+    try { const result = await request(path, { method: "POST", body: JSON.stringify(body) }); after?.(result); setEditor(null); await refresh(); if (effectiveSelectedId) setDetail(await request(`/dpgf/${effectiveSelectedId}`)); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Opération impossible"); }
+    finally { setWorking(false); }
+  }
+
+  async function togglePoste(poste: Poste) {
+    if (demo) { setDetail((current) => current ? { ...current, lots: current.lots.map((lot) => ({ ...lot, postes: lot.postes.map((item) => item.id === poste.id ? { ...item, isSelected: !item.isSelected } : item) })) } : current); return; }
+    setWorking(true);
+    try { await request(`/dpgf/postes/${poste.id}/selection`, { method: "PATCH", body: JSON.stringify({ isSelected: !poste.isSelected }) }); setDetail(await request(`/dpgf/${effectiveSelectedId}`)); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Sélection impossible"); }
+    finally { setWorking(false); }
+  }
+
+  async function validateDpgf() {
+    if (!detail || demo) { setMessage(demo ? "La validation est désactivée dans la démonstration." : "DPGF absente"); return; }
+    setWorking(true);
+    try { await request(`/dpgf/${detail.id}/statut`, { method: "PATCH", body: JSON.stringify({ statut: "VALIDE" }) }); setDetail(await request(`/dpgf/${detail.id}`)); setMessage("DPGF validée : elle est maintenant figée et prête à devenir un devis."); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Validation impossible"); }
+    finally { setWorking(false); }
+  }
+
+  async function createDevis() {
+    if (!detail || demo) { setMessage(demo ? "La génération du devis est désactivée dans la démonstration." : "DPGF absente"); return; }
+    const dateValidite = new Date(); dateValidite.setDate(dateValidite.getDate() + 30);
+    setWorking(true); setMessage("");
+    try { const devis = await request(`/dpgf/${detail.id}/devis`, { method: "POST", body: JSON.stringify({ dateValidite: dateValidite.toISOString().slice(0, 10), tauxTva: 20, conditions: "Validité 30 jours. Modalités à confirmer avant émission." }) }); setMessage(`Devis ${devis.numero} créé avec succès à partir de la DPGF.`); await refresh(); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Création du devis impossible"); }
+    finally { setWorking(false); }
+  }
+
+  const allPostes = detail?.lots.flatMap((lot) => lot.postes) ?? [];
+  const selected = allPostes.filter((poste) => poste.isSelected);
+  const totalVente = selected.reduce((sum, poste) => sum + Number(poste.totalVenteHt), 0);
+  const totalDebourse = selected.reduce((sum, poste) => sum + Number(poste.quantite) * Number(poste.debourseUnitaire), 0);
+  const marge = totalVente ? ((totalVente - totalDebourse) / totalVente) * 100 : 0;
+  const dpgfRows = demo ? [{ ...demoData.dpgf[1], id: demoDpgf.id }] : rows;
+
+  return <div className="dpgf-workspace">
+    <section className="hero-row dpgf-hero"><div><p className="eyebrow">CHIFFRAGE · DPGF · MÉTRÉS</p><h2>Construire le prix, poste par poste</h2><p>Lots, ouvrages, quantités, déboursés et marge consolidés avant le devis.</p></div><div className="view-actions"><button className="secondary compact" onClick={refresh}>↻ Actualiser</button><button className="primary compact" onClick={() => setEditor("dpgf")}>＋ Nouvelle DPGF</button></div></section>
+    {message && <div className="alert dpgf-alert">{message}<button onClick={() => setMessage("")}>×</button></div>}
+    <div className="dpgf-layout">
+        <aside className="dpgf-list panel"><div className="panel-title"><h3>Chiffrages</h3><span>{dpgfRows.length}</span></div>{dpgfRows.map((row) => { const id = String(row.id); return <button key={id} className={effectiveSelectedId === id ? "active" : ""} onClick={() => setSelectedId(id)}><span><strong>{String(row.reference ?? row.numero ?? "DPGF")}</strong><small>{String(row.nom ?? row.objet ?? "Sans objet")}</small></span><Status value={row.statut} /></button>; })}{!demo && !rows.length && <div className="dpgf-empty"><strong>Aucun chiffrage</strong><p>Créez d’abord un chantier, puis sa première DPGF.</p></div>}</aside>
+      <section className="dpgf-main">
+        {detail ? <>
+          <div className="panel dpgf-summary"><div><p className="eyebrow">{detail.reference}</p><h3>{detail.nom}</h3><small>{detail.chantier?.reference} · {detail.chantier?.objet}</small></div><div className="dpgf-summary-actions"><Status value={detail.statut} />{detail.statut === "BROUILLON" && <button className="secondary compact" onClick={validateDpgf} disabled={working}>✓ Valider</button>}<button className="primary compact" onClick={createDevis} disabled={detail.statut !== "VALIDE" || working} title={detail.statut !== "VALIDE" ? "Validez la DPGF avant de générer le devis" : "Générer le devis"}>Créer le devis →</button></div></div>
+          <div className="dpgf-kpis"><Kpi label="Déboursé sec" value={euro(totalDebourse)} note={`${selected.length} postes retenus`} /><Kpi label="Vente HT" value={euro(totalVente)} note={`FG ×${detail.coefficientFraisGeneraux} · marge ×${detail.coefficientMarge}`} accent="orange" /><Kpi label="Marge brute" value={`${marge.toFixed(1)} %`} note={euro(totalVente - totalDebourse)} accent={marge < 20 ? "dark" : "plain"} /></div>
+          <div className="panel dpgf-editor"><div className="table-toolbar"><strong>Décomposition des travaux</strong><span /><button onClick={() => setEditor("lot")} disabled={detail.statut !== "BROUILLON"}>＋ Lot</button><button onClick={() => { setTargetLot(detail.lots[0]?.id ?? ""); setEditor("poste"); }} disabled={!detail.lots.length || detail.statut !== "BROUILLON"}>＋ Poste</button></div>
+            {detail.lots.map((lot) => <div className="dpgf-lot" key={lot.id}><div className="lot-heading"><span>{lot.code}</span><strong>{lot.designation}</strong><small>{lot.postes.length} poste{lot.postes.length > 1 ? "s" : ""}</small></div><div className="table-scroll"><table><thead><tr><th>Retenu</th><th>Code · Désignation</th><th>Unité</th><th>Quantité</th><th>Déboursé/u.</th><th>Vente/u.</th><th>Total HT</th><th /></tr></thead><tbody>{lot.postes.map((poste) => <tr key={poste.id} className={!poste.isSelected ? "option-row" : ""}><td><input type="checkbox" checked={poste.isSelected} onChange={() => togglePoste(poste)} disabled={detail.statut !== "BROUILLON" || working} /></td><td><strong>{poste.code}</strong><span className="poste-name">{poste.designation}</span>{poste.metres.length > 0 && <small className="metre-note">⌗ {poste.metres.map((metre) => `${metre.libelle} : ${metre.quantite}`).join(" · ")}</small>}</td><td>{poste.unite}</td><td><strong>{Number(poste.quantite).toLocaleString("fr-FR")}</strong></td><td>{euro(poste.debourseUnitaire)}</td><td>{euro(poste.prixUnitaireHt)}</td><td><strong>{euro(poste.totalVenteHt)}</strong></td><td><button className="row-action" title="Ajouter un métré" onClick={() => { setTargetPoste(poste.id); setEditor("metre"); }} disabled={detail.statut !== "BROUILLON"}>⌗</button></td></tr>)}</tbody></table></div></div>)}
+            {!detail.lots.length && <div className="empty"><span>⌗</span><h3>Commencez par un lot</h3><p>Exemple : 01 Maçonnerie, 02 Charpente, 03 Couverture.</p></div>}
+          </div>
+        </> : <div className="panel empty"><span>⌗</span><h3>Sélectionnez ou créez une DPGF</h3><p>Le chiffrage détaillé apparaîtra ici.</p></div>}
+      </section>
+    </div>
+    {editor && <DpgfDialog kind={editor} detail={detail} chantiers={chantiers} targetLot={targetLot} targetPoste={targetPoste} working={working} close={() => setEditor(null)} submit={submit} setSelectedId={setSelectedId} />}
+  </div>;
+}
+
+function DpgfDialog({ kind, detail, chantiers, targetLot, targetPoste, working, close, submit, setSelectedId }: { kind: "dpgf" | "lot" | "poste" | "metre"; detail: DpgfDetail | null; chantiers: RecordValue[]; targetLot: string; targetPoste: string; working: boolean; close: () => void; submit: (path: string, body: Record<string, unknown>, after?: (result: any) => void) => void; setSelectedId: (id: string) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  function send(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); const value = (name: string) => String(form.get(name) ?? ""); const number = (name: string) => Number(value(name));
+    if (kind === "dpgf") return submit("/dpgf", { chantierId: value("chantierId"), nom: value("nom"), coefficientFraisGeneraux: number("coefficientFraisGeneraux"), coefficientMarge: number("coefficientMarge") }, (result) => setSelectedId(result.id));
+    if (kind === "lot") return submit(`/dpgf/${detail?.id}/lots`, { code: value("code"), designation: value("designation"), ordre: number("ordre") });
+    if (kind === "poste") return submit(`/dpgf/lots/${value("lotId")}/postes`, { code: value("code"), designation: value("designation"), unite: value("unite"), quantite: number("quantite"), debourseUnitaire: number("debourseUnitaire"), coefficientVente: number("coefficientVente"), type: value("type"), isSelected: true });
+    const variables = Object.fromEntries(value("variables").split(";").filter(Boolean).map((entry) => { const [key, raw] = entry.split("="); return [key.trim(), Number(raw)]; }));
+    return submit(`/dpgf/postes/${value("posteId")}/metres`, { libelle: value("libelle"), formule: value("formule") || undefined, variables, quantite: value("quantite") ? number("quantite") : undefined, coefficient: number("coefficient") });
+  }
+  const titles = { dpgf: "Nouvelle DPGF", lot: "Ajouter un lot", poste: "Ajouter un poste", metre: "Ajouter un métré" };
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><form className="modal-card" onSubmit={send}><div className="modal-head"><div><p className="eyebrow">DPGF & MÉTRÉS</p><h3>{titles[kind]}</h3></div><button type="button" onClick={close}>×</button></div>
+    {kind === "dpgf" && <><label>Chantier<select name="chantierId" required defaultValue=""><option value="" disabled>Choisir un chantier…</option>{chantiers.map((chantier) => <option value={String(chantier.id)} key={String(chantier.id)}>{String(chantier.reference)} · {String(chantier.objet)}</option>)}</select></label><label>Nom du chiffrage<input name="nom" required placeholder="Rénovation maison de maître" /></label><div className="form-grid"><label>Coefficient frais généraux<input name="coefficientFraisGeneraux" type="number" min="1" step="0.01" defaultValue="1.12" required /></label><label>Coefficient de marge<input name="coefficientMarge" type="number" min="1" step="0.01" defaultValue="1.18" required /></label></div></>}
+    {kind === "lot" && <><div className="form-grid"><label>Code<input name="code" required placeholder="01" /></label><label>Ordre<input name="ordre" type="number" min="0" defaultValue={detail?.lots.length ?? 0} required /></label></div><label>Désignation<input name="designation" required placeholder="Maçonnerie ancienne" /></label></>}
+    {kind === "poste" && <><label>Lot<select name="lotId" required defaultValue={targetLot}>{detail?.lots.map((lot) => <option value={lot.id} key={lot.id}>{lot.code} · {lot.designation}</option>)}</select></label><div className="form-grid"><label>Code<input name="code" required placeholder="01.01" /></label><label>Unité<select name="unite" defaultValue="m²"><option>m²</option><option>ml</option><option>m³</option><option>u</option><option>h</option><option>forfait</option></select></label></div><label>Désignation<input name="designation" required placeholder="Rejointoiement pierre à la chaux" /></label><div className="form-grid three"><label>Quantité initiale<input name="quantite" type="number" min="0" step="0.001" defaultValue="0" /></label><label>Déboursé unitaire<input name="debourseUnitaire" type="number" min="0" step="0.01" required /></label><label>Coefficient vente<input name="coefficientVente" type="number" min="1" step="0.01" defaultValue="1.25" required /></label></div><label>Nature<select name="type" defaultValue="BASE"><option value="BASE">Base</option><option value="OPTION">Option</option><option value="VARIANTE">Variante</option></select></label></>}
+    {kind === "metre" && <><label>Poste<select name="posteId" required defaultValue={targetPoste}>{detail?.lots.flatMap((lot) => lot.postes).map((poste) => <option value={poste.id} key={poste.id}>{poste.code} · {poste.designation}</option>)}</select></label><label>Libellé du relevé<input name="libelle" required placeholder="Façade cour" /></label><div className="form-grid"><label>Formule<input name="formule" placeholder="(L*H)-OUVERTURES" /></label><label>Variables<input name="variables" placeholder="L=12.4;H=6.2;OUVERTURES=8" /></label></div><div className="form-grid"><label>Ou quantité directe<input name="quantite" type="number" min="0" step="0.001" /></label><label>Coefficient<input name="coefficient" type="number" min="0" step="0.001" defaultValue="1" required /></label></div><p className="form-hint">Utilisez +, −, ×, / et des parenthèses. Les variables sont séparées par des points-virgules.</p></>}
+    <div className="modal-actions"><button className="secondary compact" type="button" onClick={close}>Annuler</button><button className="primary compact" disabled={working || (kind === "dpgf" && !chantiers.length)}>{working ? "Enregistrement…" : "Enregistrer"}</button></div>{kind === "dpgf" && !chantiers.length && <p className="form-error">Créez d’abord un chantier pour rattacher cette DPGF.</p>}</form></div>;
 }
 
 function Kpi({ label: text, value, note, accent = "plain" }: { label: string; value: string | number; note: string; accent?: string }) { return <article className={`kpi ${accent}`}><p>{text}</p><strong>{value}</strong><small>{note}</small></article>; }

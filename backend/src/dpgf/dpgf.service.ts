@@ -22,6 +22,16 @@ export class DpgfService {
     });
   }
 
+  async findAll() {
+    return this.prisma.dpgf.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        chantier: { select: { id: true, reference: true, objet: true } },
+        _count: { select: { lots: true } },
+      },
+    });
+  }
+
   async findOne(id: string) {
     const dpgf = await this.prisma.dpgf.findUnique({
       where: { id },
