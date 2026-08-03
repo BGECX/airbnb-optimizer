@@ -28,6 +28,7 @@ import { HealthModule } from './health/health.module';
 import { RedisModule } from './redis/redis.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RequestObservabilityInterceptor } from './observability/request-observability.interceptor';
+import { ApporteursModule } from './apporteurs/apporteurs.module';
 
 function validateEnvironment(config: Record<string, unknown>) {
   const secret = String(config.JWT_SECRET || '');
@@ -56,6 +57,7 @@ function validateEnvironment(config: Record<string, unknown>) {
     AuthModule,
     UsersModule,
     ClientsModule,
+    ApporteursModule,
     DevisModule,
     FacturesModule,
     ChantiersModule,

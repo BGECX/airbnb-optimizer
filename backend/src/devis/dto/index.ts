@@ -43,6 +43,16 @@ export class CreateDevisDto {
   @IsUUID()
   chantierId?: string;
 
+  @ApiPropertyOptional({ description: 'Agence, apporteur ou mandataire distinct du client facturé' })
+  @IsOptional()
+  @IsUUID()
+  apporteurId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  referenceMandat?: string;
+
   @ApiProperty()
   @IsString()
   @MinLength(1)

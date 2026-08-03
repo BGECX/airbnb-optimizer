@@ -125,6 +125,17 @@ button, input, select, textarea { font:inherit; } button { cursor:pointer; }
 .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
 .form-grid.three { grid-template-columns:repeat(3,1fr); }
 .form-hint { background:#f1f6fd; color:#53657a; border-radius:6px; padding:10px; margin:0; font-size:9px; line-height:1.5; }
+.text-action { width:max-content; border:0; background:transparent; color:#1d5fbf; padding:2px 0; font-size:9px; font-weight:900; }
+.text-action:hover { text-decoration:underline; }
+.inline-creator { background:#f7faff; border-color:#b9d2f1!important; }
+.lookup-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
+.lookup-row button { min-height:36px; }
+.suggestion-field { position:relative; }
+.suggestion-list { position:absolute; z-index:5; left:0; right:0; top:100%; display:grid; background:#fff; border:1px solid #b9cce1; border-radius:6px; box-shadow:0 12px 30px rgba(8,24,49,.16); overflow:hidden; }
+.suggestion-list button { border:0; border-bottom:1px solid #edf2f7; background:#fff; padding:9px 11px; text-align:left; color:var(--ink); font-size:9px; }
+.suggestion-list button:hover { background:#edf5ff; }
+.apporteur-fields { display:grid; gap:10px; padding:12px; border-radius:7px; background:#f7faff; }
+.inline-buttons { display:flex; justify-content:flex-end; gap:8px; }
 .modal-actions { display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding-top:16px; }
 @media (max-width:1050px){.dpgf-layout{grid-template-columns:1fr}.dpgf-list{position:static;display:flex;overflow:auto;gap:6px}.dpgf-list .panel-title{min-width:120px}.dpgf-list>button{min-width:240px}.dpgf-empty{min-width:220px}.dpgf-kpis{grid-template-columns:repeat(3,1fr)}}
-@media (max-width:720px){.dpgf-summary{align-items:flex-start;flex-direction:column}.dpgf-summary-actions{justify-content:flex-start}.dpgf-kpis{grid-template-columns:1fr}.form-grid,.form-grid.three,.detail-grid{grid-template-columns:1fr}.modal-card{padding:18px}.dpgf-editor>.table-toolbar{flex-wrap:wrap}.dpgf-editor>.table-toolbar>span{display:none}}
+@media (max-width:720px){.dpgf-summary{align-items:flex-start;flex-direction:column}.dpgf-summary-actions{justify-content:flex-start}.dpgf-kpis{grid-template-columns:1fr}.form-grid,.form-grid.three,.detail-grid,.lookup-row{grid-template-columns:1fr}.modal-card{padding:18px}.dpgf-editor>.table-toolbar{flex-wrap:wrap}.dpgf-editor>.table-toolbar>span{display:none}}

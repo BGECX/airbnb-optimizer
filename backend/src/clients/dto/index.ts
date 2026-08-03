@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsEmail } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsEmail, Matches, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ClientType } from '@prisma/client';
 
@@ -14,6 +14,7 @@ export class CreateClientDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^\d{14}$/, { message: 'Le SIRET doit contenir exactement 14 chiffres' })
   siret?: string;
 
   @ApiPropertyOptional()
@@ -66,6 +67,7 @@ export class UpdateClientDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^\d{14}$/, { message: 'Le SIRET doit contenir exactement 14 chiffres' })
   siret?: string;
 
   @ApiPropertyOptional()
@@ -87,4 +89,16 @@ export class UpdateClientDto {
   @IsOptional()
   @IsString()
   notes?: string;
+}
+
+export class SearchSiretDto {
+  @Matches(/^\d{14}$/, { message: 'Le SIRET doit contenir exactement 14 chiffres' })
+  siret: string;
+}
+
+export class SearchAddressDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(160)
+  q: string;
 }

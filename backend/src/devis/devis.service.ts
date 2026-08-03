@@ -19,14 +19,14 @@ export class DevisService {
       const numero = await nextDocumentNumber(tx, 'D');
       return tx.devis.create({
         data: { ...data, dateValidite: new Date(data.dateValidite), numero, totalHt, totalTva, totalTtc, createdById: userId, lignes: { create: normalizedLines } },
-        include: { lignes: true, client: true },
+        include: { lignes: true, client: true, apporteur: true },
       });
     });
   }
 
   findAll(query: PaginationQueryDto) {
     return this.prisma.devis.findMany({
-      include: { client: { select: { nom: true } }, lignes: true },
+      include: { client: { select: { nom: true } }, apporteur: { select: { nom: true, type: true } }, lignes: true },
       orderBy: { date: 'desc' },
       skip: query.skip,
       take: query.limit,
@@ -36,7 +36,7 @@ export class DevisService {
   async findOne(id: string) {
     const devis = await this.prisma.devis.findUnique({
       where: { id },
-      include: { client: true, chantier: true, lignes: true, createdBy: { select: { firstName: true, lastName: true } } },
+      include: { client: true, apporteur: true, chantier: true, lignes: true, createdBy: { select: { firstName: true, lastName: true } } },
     });
     if (!devis) throw new NotFoundException('Devis non trouvé');
     return devis;

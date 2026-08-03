@@ -167,7 +167,7 @@ model Client {
   id           String     @id @default(uuid())
   type         ClientType @default(PARTICULIER)
   nom          String
-  siret        String?
+  siret        String?    @unique
   siren        String?
   tvaIntra     String?    @map("tva_intra")
   adresse      String?
@@ -194,6 +194,37 @@ model Client {
   visites    VisiteTechnique[]
 
   @@map("clients")
+}
+
+model ApporteurAffaires {
+  id              String        @id @default(uuid())
+  type            ApporteurType @default(AUTRE)
+  nom             String
+  siret           String?       @unique
+  adresse         String?
+  codePostal      String?       @map("code_postal")
+  ville           String?
+  telephone       String?
+  email           String?
+  contactNom      String?       @map("contact_nom")
+  referenceMandat String?       @map("reference_mandat")
+  commissionPct   Decimal?      @map("commission_pct") @db.Decimal(5, 2)
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  devis Devis[]
+
+  @@map("apporteurs_affaires")
+}
+
+enum ApporteurType {
+  AGENCE_IMMOBILIERE
+  APPORTEUR_AFFAIRES
+  ARCHITECTE
+  MAITRE_OEUVRE
+  SYNDIC
+  AUTRE
 }
 
 enum ClientType {
@@ -524,29 +555,32 @@ enum TraceBatiType {
 
 // ==================== DEVIS ====================
 model Devis {
-  id           String      @id @default(uuid())
-  numero       String      @unique
-  clientId     String      @map("client_id")
-  chantierId   String?     @map("chantier_id")
-  objet        String
-  date         DateTime    @default(now())
-  dateValidite DateTime    @map("date_validite")
-  tauxTva      Decimal     @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
-  totalHt      Decimal     @default(0) @map("total_ht") @db.Decimal(12, 2)
-  totalTva     Decimal     @default(0) @map("total_tva") @db.Decimal(12, 2)
-  totalTtc     Decimal     @default(0) @map("total_ttc") @db.Decimal(12, 2)
-  conditions   String?
-  statut       DevisStatut @default(BROUILLON)
-  createdById  String      @map("created_by_id")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-  dpgfId       String?     @unique @map("dpgf_id")
+  id              String      @id @default(uuid())
+  numero          String      @unique
+  clientId        String      @map("client_id")
+  chantierId      String?     @map("chantier_id")
+  apporteurId     String?     @map("apporteur_id")
+  referenceMandat String?     @map("reference_mandat")
+  objet           String
+  date            DateTime    @default(now())
+  dateValidite    DateTime    @map("date_validite")
+  tauxTva         Decimal     @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
+  totalHt         Decimal     @default(0) @map("total_ht") @db.Decimal(12, 2)
+  totalTva        Decimal     @default(0) @map("total_tva") @db.Decimal(12, 2)
+  totalTtc        Decimal     @default(0) @map("total_ttc") @db.Decimal(12, 2)
+  conditions      String?
+  statut          DevisStatut @default(BROUILLON)
+  createdById     String      @map("created_by_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  dpgfId          String?     @unique @map("dpgf_id")
 
-  client    Client       @relation(fields: [clientId], references: [id])
-  chantier  Chantier?    @relation(fields: [chantierId], references: [id])
-  createdBy User         @relation(fields: [createdById], references: [id])
+  client    Client             @relation(fields: [clientId], references: [id])
+  chantier  Chantier?          @relation(fields: [chantierId], references: [id])
+  apporteur ApporteurAffaires? @relation(fields: [apporteurId], references: [id])
+  createdBy User               @relation(fields: [createdById], references: [id])
   lignes    LigneDevis[]
-  dpgf      Dpgf?        @relation(fields: [dpgfId], references: [id])
+  dpgf      Dpgf?              @relation(fields: [dpgfId], references: [id])
   facture   Facture?
 
   @@map("devis")

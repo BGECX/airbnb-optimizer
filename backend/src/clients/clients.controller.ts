@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
-import { CreateClientDto, UpdateClientDto } from './dto';
+import { CreateClientDto, SearchAddressDto, SearchSiretDto, UpdateClientDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -24,6 +24,16 @@ export class ClientsController {
   @Get()
   findAll(@Query() query: PaginationQueryDto) {
     return this.clientsService.findAll(query);
+  }
+
+  @Get('recherche/entreprises')
+  searchCompany(@Query() query: SearchSiretDto) {
+    return this.clientsService.searchCompany(query.siret);
+  }
+
+  @Get('recherche/adresses')
+  searchAddresses(@Query() query: SearchAddressDto) {
+    return this.clientsService.searchAddresses(query.q);
   }
 
   @Get(':id')
