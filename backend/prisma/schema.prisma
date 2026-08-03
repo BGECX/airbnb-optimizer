@@ -1,0 +1,1818 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== UTILISATEURS & AUTH ====================
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  role        UserRole  @default(USER)
+  isActive    Boolean   @default(true) @map("is_active")
+  avatarUrl   String?   @map("avatar_url")
+  phone       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // Relations
+  devisCreated           Devis[]
+  facturesCreated        Facture[]
+  chantiersManaged       Chantier[]
+  photosUploaded         Photo[]
+  notesCreated           Note[]
+  operationsCreated      OperationBancaire[]
+  contratsCreated        Contrat[]
+  tachesCreated          TacheGantt[]
+  bonsCreated            BonIntervention[]
+  dpgfsCreated           Dpgf[]
+  visitesCreated         VisiteTechnique[]
+  diagnosticsBatiCreated DiagnosticBati[]
+  tracesBatiCreated      TraceBati[]
+  depensesCreated        DepenseChantier[]
+  pointagesValides       Pointage[]          @relation("PointagesValides")
+  employe                Employe?
+  journauxAudit          JournalAudit[]
+  analysesChiffrage      AnalyseChiffrage[]
+  refreshTokens          RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  tokenHash    String    @unique @map("token_hash")
+  expiresAt    DateTime  @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  replacedById String?   @map("replaced_by_id")
+  userAgent    String?   @map("user_agent")
+  adresseIp    String?   @map("adresse_ip")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CHEF_CHANTIER
+  COMPTABLE
+  COMPAGNON
+  USER
+}
+
+model JournalAudit {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  methode    String
+  chemin     String
+  statutHttp Int      @map("statut_http")
+  adresseIp  String?  @map("adresse_ip")
+  userAgent  String?  @map("user_agent")
+  champs     String[]
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([chemin, createdAt])
+  @@map("journal_audit")
+}
+
+// ==================== PARAMÈTRES ENTREPRISE ====================
+model ParametreEntreprise {
+  id               String   @id @default(uuid())
+  raisonSociale    String   @map("raison_sociale")
+  siret            String?
+  siren            String?
+  tvaIntra         String?  @map("tva_intra")
+  adresse          String?
+  codePostal       String?  @map("code_postal")
+  ville            String?
+  telephone        String?
+  email            String?
+  siteWeb          String?  @map("site_web")
+  logoUrl          String?  @map("logo_url")
+  couleurPrimary   String   @default("#2563eb") @map("couleur_primary")
+  couleurSecondary String   @default("#f59e0b") @map("couleur_secondary")
+  cgv              String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("parametres_entreprise")
+}
+
+model ParametreNumerotation {
+  id           String   @id @default(uuid())
+  type         String // devis, facture, chantier, commande, acompte, situation, avoir
+  prefixe      String   @default("")
+  numeroActuel Int      @default(0) @map("numero_actuel")
+  format       String   @default("{PREFIX}{YYYY}-{NUMERO}")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([type])
+  @@map("parametres_numerotation")
+}
+
+model ParametreTVA {
+  id        String   @id @default(uuid())
+  nom       String
+  taux      Decimal  @db.Decimal(5, 2)
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("parametres_tva")
+}
+
+model ParametreBanque {
+  id              String   @id @default(uuid())
+  nom             String
+  iban            String
+  bic             String
+  compteComptable String?  @map("compte_comptable")
+  isDefault       Boolean  @default(false) @map("is_default")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("parametres_banques")
+}
+
+model Assurance {
+  id          String   @id @default(uuid())
+  type        String // RC_decennale, RC_exploitation, DO, etc.
+  police      String
+  compagnie   String
+  couverture  String?
+  dateDebut   DateTime @map("date_debut")
+  dateFin     DateTime @map("date_fin")
+  documentUrl String?  @map("document_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("assurances")
+}
+
+// ==================== CONTACTS ====================
+model Client {
+  id           String     @id @default(uuid())
+  type         ClientType @default(PARTICULIER)
+  nom          String
+  siret        String?
+  siren        String?
+  tvaIntra     String?    @map("tva_intra")
+  adresse      String?
+  codePostal   String?    @map("code_postal")
+  ville        String?
+  telephone    String?
+  email        String?
+  contactNom   String?    @map("contact_nom")
+  contactTel   String?    @map("contact_tel")
+  contactEmail String?    @map("contact_email")
+  notes        String?
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  devis      Devis[]
+  factures   Facture[]
+  chantiers  Chantier[]
+  acomptes   Acompte[]
+  situations Situation[]
+  avoirs     Avoir[]
+  prospects  Prospect[]
+  visites    VisiteTechnique[]
+
+  @@map("clients")
+}
+
+enum ClientType {
+  PARTICULIER
+  ENTREPRISE
+  COPROPRIETE
+  COLLECTIVITE
+}
+
+model Fournisseur {
+  id                 String   @id @default(uuid())
+  raisonSociale      String   @map("raison_sociale")
+  siret              String?
+  adresse            String?
+  codePostal         String?  @map("code_postal")
+  ville              String?
+  telephone          String?
+  email              String?
+  specialite         String?
+  delaiLivraison     String?  @map("delai_livraison")
+  conditionsPaiement String?  @map("conditions_paiement")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  commandes     Commande[]
+  facturesFourn FactureFournisseur[]
+
+  @@map("fournisseurs")
+}
+
+model SousTraitant {
+  id                 String    @id @default(uuid())
+  raisonSociale      String    @map("raison_sociale")
+  siret              String?
+  specialite         String?
+  adresse            String?
+  telephone          String?
+  email              String?
+  urssafDate         DateTime? @map("urssaf_date")
+  urssafValidite     DateTime? @map("urssaf_validite")
+  urssafDocumentUrl  String?   @map("urssaf_document_url")
+  assuranceRc        String?   @map("assurance_rc")
+  assuranceRcMontant Decimal?  @map("assurance_rc_montant") @db.Decimal(12, 2)
+  decennaleDate      DateTime? @map("decennale_date")
+  decennaleValidite  DateTime? @map("decennale_validite")
+  isActive           Boolean   @default(true) @map("is_active")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  affectations AffectationSousTraitant[]
+
+  @@map("sous_traitants")
+}
+
+model Prospect {
+  id                  String         @id @default(uuid())
+  type                ClientType     @default(PARTICULIER)
+  nom                 String
+  contactNom          String?        @map("contact_nom")
+  telephone           String?
+  email               String?
+  projet              String?
+  budgetEstime        Decimal?       @map("budget_estime") @db.Decimal(12, 2)
+  dateContact         DateTime       @map("date_contact")
+  statut              ProspectStatut @default(PREMIER_CONTACT)
+  notes               String?
+  convertedToClientId String?        @map("converted_to_client_id")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  convertedToClient Client?           @relation(fields: [convertedToClientId], references: [id])
+  visites           VisiteTechnique[]
+
+  @@map("prospects")
+}
+
+enum ProspectStatut {
+  PREMIER_CONTACT
+  VISITE_PLANIFIEE
+  VISITE_REALISEE
+  CHIFFRAGE
+  DEVIS_DEMANDE
+  DEVIS_ENVOYE
+  NEGOCIATION
+  GAGNE
+  PERDU
+}
+
+// ==================== CHANTIERS ====================
+model Chantier {
+  id              String         @id @default(uuid())
+  reference       String         @unique
+  clientId        String         @map("client_id")
+  objet           String
+  adresse         String?
+  codePostal      String?        @map("code_postal")
+  ville           String?
+  dateDebutPrevue DateTime?      @map("date_debut_prevue")
+  dateFinPrevue   DateTime?      @map("date_fin_prevue")
+  dateDebutReelle DateTime?      @map("date_debut_reelle")
+  dateFinReelle   DateTime?      @map("date_fin_reelle")
+  montantPrevu    Decimal?       @map("montant_prevu") @db.Decimal(12, 2)
+  montantRealise  Decimal?       @map("montant_realise") @db.Decimal(12, 2)
+  description     String?
+  statut          ChantierStatut @default(PREPARATION)
+  avancement      Decimal        @default(0) @db.Decimal(5, 2)
+  responsableId   String?        @map("responsable_id")
+  notes           String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  client                Client                    @relation(fields: [clientId], references: [id])
+  responsable           User?                     @relation(fields: [responsableId], references: [id])
+  devis                 Devis[]
+  factures              Facture[]
+  acomptes              Acompte[]
+  situations            Situation[]
+  commandes             Commande[]
+  photos                Photo[]
+  tachesGantt           TacheGantt[]
+  jalonsGantt           JalonGantt[]
+  lots                  Lot[]
+  carnets               CarnetEntretien[]
+  notesChantier         Note[]
+  dpgfs                 Dpgf[]
+  visites               VisiteTechnique[]
+  diagnosticsBati       DiagnosticBati[]
+  aleas                 AleaChantier[]
+  travauxConservatoires TravailConservatoire[]
+  tracesBati            TraceBati[]
+  reception             ReceptionChantier?
+  savTickets            SavTicket[]
+  retenuesGarantie      RetenueGarantie[]
+  budgets               BudgetChantier[]
+  depenses              DepenseChantier[]
+  sousTraitants         AffectationSousTraitant[]
+  documents             DocumentChantier[]
+  pointages             Pointage[]
+  bonsIntervention      BonIntervention[]
+  planningEntries       PlanningEntry[]
+  FactureFournisseur    FactureFournisseur[]
+
+  @@map("chantiers")
+}
+
+enum ChantierStatut {
+  PREPARATION
+  EN_COURS
+  SUSPENDU
+  TERMINE
+  LIVRE
+  ANNULE
+}
+
+// ==================== RÉNOVATION DU BÂTI ANCIEN ====================
+model VisiteTechnique {
+  id           String       @id @default(uuid())
+  prospectId   String?      @map("prospect_id")
+  clientId     String?      @map("client_id")
+  chantierId   String?      @map("chantier_id")
+  datePrevue   DateTime     @map("date_prevue")
+  dateRealisee DateTime?    @map("date_realisee")
+  statut       VisiteStatut @default(PLANIFIEE)
+  adresse      String?
+  objet        String
+  compteRendu  String?      @map("compte_rendu")
+  createdById  String       @map("created_by_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  prospect    Prospect?        @relation(fields: [prospectId], references: [id])
+  client      Client?          @relation(fields: [clientId], references: [id])
+  chantier    Chantier?        @relation(fields: [chantierId], references: [id])
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  diagnostics DiagnosticBati[]
+
+  @@index([prospectId, datePrevue])
+  @@index([chantierId, datePrevue])
+  @@map("visites_techniques")
+}
+
+enum VisiteStatut {
+  PLANIFIEE
+  REALISEE
+  ANNULEE
+}
+
+model DiagnosticBati {
+  id             String            @id @default(uuid())
+  chantierId     String            @map("chantier_id")
+  visiteId       String?           @map("visite_id")
+  zone           String
+  element        ElementBati
+  materiau       String?
+  pathologie     String
+  gravite        GraviteDiagnostic @default(MODEREE)
+  urgence        Boolean           @default(false)
+  preconisations String?
+  etatAvant      String?           @map("etat_avant")
+  createdById    String            @map("created_by_id")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  chantier              Chantier               @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  visite                VisiteTechnique?       @relation(fields: [visiteId], references: [id])
+  createdBy             User                   @relation(fields: [createdById], references: [id])
+  travauxConservatoires TravailConservatoire[]
+
+  @@index([chantierId, zone])
+  @@map("diagnostics_bati")
+}
+
+enum ElementBati {
+  FONDATIONS
+  MURS_PIERRE
+  MACONNERIE
+  ENDUITS_CHAUX
+  CHARPENTE
+  PLANCHER
+  COUVERTURE
+  FACADE
+  MENUISERIE
+  HUMIDITE
+  RESEAUX
+  AUTRE
+}
+
+enum GraviteDiagnostic {
+  MINEURE
+  MODEREE
+  IMPORTANTE
+  CRITIQUE
+}
+
+model AleaChantier {
+  id               String        @id @default(uuid())
+  chantierId       String        @map("chantier_id")
+  categorie        AleaCategorie
+  description      String
+  probabilite      Int           @default(1)
+  impact           Int           @default(1)
+  statut           AleaStatut    @default(IDENTIFIE)
+  coutEstime       Decimal?      @map("cout_estime") @db.Decimal(12, 2)
+  coutReel         Decimal?      @map("cout_reel") @db.Decimal(12, 2)
+  delaiJoursEstime Int?          @map("delai_jours_estime")
+  mesures          String?
+  detectedAt       DateTime      @default(now()) @map("detected_at")
+  resolvedAt       DateTime?     @map("resolved_at")
+
+  chantier Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+
+  @@index([chantierId, statut])
+  @@map("aleas_chantiers")
+}
+
+enum AleaCategorie {
+  STRUCTURE
+  HUMIDITE
+  MATERIAUX_REEMPLOI
+  RESEAUX
+  AMIANTE_PLOMB
+  ACCES
+  METEO
+  ADMINISTRATIF
+  AUTRE
+}
+
+enum AleaStatut {
+  IDENTIFIE
+  ANALYSE
+  TRAITE
+  ACCEPTE
+  CLOTURE
+}
+
+model TravailConservatoire {
+  id           String                     @id @default(uuid())
+  chantierId   String                     @map("chantier_id")
+  diagnosticId String?                    @map("diagnostic_id")
+  designation  String
+  motif        String
+  statut       TravailConservatoireStatut @default(A_FAIRE)
+  datePrevue   DateTime?                  @map("date_prevue")
+  dateRealisee DateTime?                  @map("date_realisee")
+  coutReel     Decimal?                   @map("cout_reel") @db.Decimal(12, 2)
+  observations String?
+
+  chantier   Chantier        @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  diagnostic DiagnosticBati? @relation(fields: [diagnosticId], references: [id])
+
+  @@index([chantierId, statut])
+  @@map("travaux_conservatoires")
+}
+
+enum TravailConservatoireStatut {
+  A_FAIRE
+  EN_COURS
+  REALISE
+  ANNULE
+}
+
+model TraceBati {
+  id          String        @id @default(uuid())
+  chantierId  String        @map("chantier_id")
+  type        TraceBatiType
+  zone        String
+  description String
+  donnees     Json?
+  createdById String        @map("created_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  chantier  Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@index([chantierId, createdAt])
+  @@map("traces_bati")
+}
+
+enum TraceBatiType {
+  CONSTAT
+  SONDAGE
+  DEPOSE
+  DECOUVERTE
+  MODIFICATION
+  CONSERVATION
+  REEMPLOI
+}
+
+// ==================== DEVIS ====================
+model Devis {
+  id           String      @id @default(uuid())
+  numero       String      @unique
+  clientId     String      @map("client_id")
+  chantierId   String?     @map("chantier_id")
+  objet        String
+  date         DateTime    @default(now())
+  dateValidite DateTime    @map("date_validite")
+  tauxTva      Decimal     @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
+  totalHt      Decimal     @default(0) @map("total_ht") @db.Decimal(12, 2)
+  totalTva     Decimal     @default(0) @map("total_tva") @db.Decimal(12, 2)
+  totalTtc     Decimal     @default(0) @map("total_ttc") @db.Decimal(12, 2)
+  conditions   String?
+  statut       DevisStatut @default(BROUILLON)
+  createdById  String      @map("created_by_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  dpgfId       String?     @unique @map("dpgf_id")
+
+  client    Client       @relation(fields: [clientId], references: [id])
+  chantier  Chantier?    @relation(fields: [chantierId], references: [id])
+  createdBy User         @relation(fields: [createdById], references: [id])
+  lignes    LigneDevis[]
+  dpgf      Dpgf?        @relation(fields: [dpgfId], references: [id])
+  facture   Facture?
+
+  @@map("devis")
+}
+
+enum DevisStatut {
+  BROUILLON
+  ENVOYE
+  RELANCE
+  ACCEPTE
+  REFUSE
+  TRANSFORME
+  EXPIRE
+}
+
+model LigneDevis {
+  id             String  @id @default(uuid())
+  devisId        String  @map("devis_id")
+  ordre          Int     @default(0)
+  designation    String
+  unite          String?
+  quantite       Decimal @db.Decimal(10, 2)
+  prixUnitaireHt Decimal @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  totalHt        Decimal @map("total_ht") @db.Decimal(12, 2)
+
+  devis Devis @relation(fields: [devisId], references: [id], onDelete: Cascade)
+
+  @@map("lignes_devis")
+}
+
+// Fondation V1 pour les DPGF et métrés. Les endpoints métier restent à implémenter.
+model Dpgf {
+  id                       String     @id @default(uuid())
+  reference                String     @unique
+  nom                      String
+  chantierId               String     @map("chantier_id")
+  statut                   DpgfStatut @default(BROUILLON)
+  version                  Int        @default(1)
+  coefficientFraisGeneraux Decimal    @default(1) @map("coefficient_frais_generaux") @db.Decimal(8, 4)
+  coefficientMarge         Decimal    @default(1) @map("coefficient_marge") @db.Decimal(8, 4)
+  totalDebourseSec         Decimal    @default(0) @map("total_debourse_sec") @db.Decimal(14, 2)
+  totalVenteHt             Decimal    @default(0) @map("total_vente_ht") @db.Decimal(14, 2)
+  createdById              String     @map("created_by_id")
+  createdAt                DateTime   @default(now()) @map("created_at")
+  updatedAt                DateTime   @updatedAt @map("updated_at")
+
+  chantier  Chantier           @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  createdBy User               @relation(fields: [createdById], references: [id])
+  lots      LotDpgf[]
+  devis     Devis?
+  analyses  AnalyseChiffrage[]
+
+  @@index([chantierId])
+  @@map("dpgf")
+}
+
+model AnalyseChiffrage {
+  id              String   @id @default(uuid())
+  dpgfId          String   @map("dpgf_id")
+  requestedById   String   @map("requested_by_id")
+  engineVersion   String   @map("engine_version")
+  scoreCompletude Int      @map("score_completude")
+  alertes         Json
+  suggestions     Json
+  comparaison     Json
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  dpgf        Dpgf @relation(fields: [dpgfId], references: [id], onDelete: Cascade)
+  requestedBy User @relation(fields: [requestedById], references: [id])
+
+  @@index([dpgfId, createdAt])
+  @@map("analyses_chiffrage")
+}
+
+enum DpgfStatut {
+  BROUILLON
+  VALIDE
+  ARCHIVE
+}
+
+model LotDpgf {
+  id          String  @id @default(uuid())
+  dpgfId      String  @map("dpgf_id")
+  code        String
+  designation String
+  ordre       Int     @default(0)
+  parentId    String? @map("parent_id")
+
+  dpgf     Dpgf        @relation(fields: [dpgfId], references: [id], onDelete: Cascade)
+  postes   PosteDpgf[]
+  parent   LotDpgf?    @relation("SousLots", fields: [parentId], references: [id], onDelete: Cascade)
+  sousLots LotDpgf[]   @relation("SousLots")
+
+  @@unique([dpgfId, code])
+  @@index([dpgfId, ordre])
+  @@index([parentId])
+  @@map("lots_dpgf")
+}
+
+model PosteDpgf {
+  id                  String        @id @default(uuid())
+  lotId               String        @map("lot_id")
+  code                String
+  designation         String
+  unite               String
+  quantite            Decimal       @default(0) @db.Decimal(12, 3)
+  prixUnitaireHt      Decimal       @default(0) @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  debourseUnitaire    Decimal       @default(0) @map("debourse_unitaire") @db.Decimal(12, 2)
+  coefficientVente    Decimal       @default(1) @map("coefficient_vente") @db.Decimal(8, 4)
+  margeUnitaire       Decimal       @default(0) @map("marge_unitaire") @db.Decimal(12, 2)
+  totalDebourse       Decimal       @default(0) @map("total_debourse") @db.Decimal(14, 2)
+  totalVenteHt        Decimal       @default(0) @map("total_vente_ht") @db.Decimal(14, 2)
+  tempsUnitaireHeures Decimal?      @map("temps_unitaire_heures") @db.Decimal(8, 3)
+  type                PosteDpgfType @default(BASE)
+  isSelected          Boolean       @default(true) @map("is_selected")
+  ouvrageId           String?       @map("ouvrage_id")
+  ordre               Int           @default(0)
+
+  lot     LotDpgf  @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  metres  Metre[]
+  ouvrage Ouvrage? @relation(fields: [ouvrageId], references: [id])
+
+  @@unique([lotId, code])
+  @@index([lotId, ordre])
+  @@index([ouvrageId])
+  @@map("postes_dpgf")
+}
+
+enum PosteDpgfType {
+  BASE
+  OPTION
+  VARIANTE
+}
+
+model Metre {
+  id          String   @id @default(uuid())
+  posteId     String   @map("poste_id")
+  libelle     String
+  longueur    Decimal? @db.Decimal(12, 3)
+  largeur     Decimal? @db.Decimal(12, 3)
+  hauteur     Decimal? @db.Decimal(12, 3)
+  coefficient Decimal  @default(1) @db.Decimal(8, 3)
+  quantite    Decimal  @db.Decimal(12, 3)
+  formule     String?
+  variables   Json?
+  commentaire String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  poste PosteDpgf @relation(fields: [posteId], references: [id], onDelete: Cascade)
+
+  @@index([posteId])
+  @@map("metres")
+}
+
+// ==================== FACTURES ====================
+model Facture {
+  id                 String             @id @default(uuid())
+  numero             String             @unique
+  clientId           String             @map("client_id")
+  chantierId         String?            @map("chantier_id")
+  type               FactureType        @default(DEFINITIVE)
+  objet              String
+  date               DateTime           @default(now())
+  dateEcheance       DateTime           @map("date_echeance")
+  tauxTva            Decimal            @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
+  totalHt            Decimal            @default(0) @map("total_ht") @db.Decimal(12, 2)
+  totalTva           Decimal            @default(0) @map("total_tva") @db.Decimal(12, 2)
+  totalTtc           Decimal            @default(0) @map("total_ttc") @db.Decimal(12, 2)
+  modeReglement      String?            @map("mode_reglement")
+  mentionsLegales    String?            @map("mentions_legales")
+  statut             FactureStatut      @default(BROUILLON)
+  isChorusPro        Boolean            @default(false) @map("is_chorus_pro")
+  chorusProStatut    String?            @map("chorus_pro_statut")
+  chorusProDateEnvoi DateTime?          @map("chorus_pro_date_envoi")
+  isFacturx          Boolean            @default(false) @map("is_facturx")
+  createdById        String             @map("created_by_id")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  datePrestation     DateTime?          @map("date_prestation")
+  adresseFacturation String?            @map("adresse_facturation")
+  referenceAcheteur  String?            @map("reference_acheteur")
+  categorieOperation CategorieOperation @default(SERVICE) @map("categorie_operation")
+  montantPaye        Decimal            @default(0) @map("montant_paye") @db.Decimal(12, 2)
+  sourceDevisId      String?            @unique @map("source_devis_id")
+  issuedAt           DateTime?          @map("issued_at")
+  contentHash        String?            @map("content_hash")
+  issuedSnapshot     Json?              @map("issued_snapshot")
+
+  client                     Client                     @relation(fields: [clientId], references: [id])
+  chantier                   Chantier?                  @relation(fields: [chantierId], references: [id])
+  createdBy                  User                       @relation(fields: [createdById], references: [id])
+  avoirs                     Avoir[]
+  lignes                     LigneFacture[]
+  paiements                  PaiementFacture[]
+  transmissionsElectroniques TransmissionElectronique[]
+  sourceDevis                Devis?                     @relation(fields: [sourceDevisId], references: [id])
+
+  @@map("factures")
+}
+
+model DocumentSequence {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("document_sequences")
+}
+
+enum CategorieOperation {
+  BIEN
+  SERVICE
+  MIXTE
+}
+
+model PaiementFacture {
+  id        String   @id @default(uuid())
+  factureId String   @map("facture_id")
+  montant   Decimal  @db.Decimal(12, 2)
+  date      DateTime
+  mode      String
+  reference String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  facture Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
+
+  @@index([factureId, date])
+  @@map("paiements_factures")
+}
+
+model TransmissionElectronique {
+  id                 String                    @id @default(uuid())
+  factureId          String                    @map("facture_id")
+  format             FormatFactureElectronique
+  canal              CanalTransmission
+  statut             TransmissionStatut        @default(PREPAREE)
+  payloadHash        String                    @map("payload_hash")
+  payload            Json
+  identifiantExterne String?                   @unique @map("identifiant_externe")
+  erreur             String?
+  preparedAt         DateTime                  @default(now()) @map("prepared_at")
+  sentAt             DateTime?                 @map("sent_at")
+  acknowledgedAt     DateTime?                 @map("acknowledged_at")
+  provider           String?
+  attemptCount       Int                       @default(0) @map("attempt_count")
+  lastAttemptAt      DateTime?                 @map("last_attempt_at")
+
+  facture    Facture                 @relation(fields: [factureId], references: [id], onDelete: Cascade)
+  tentatives TentativeTransmission[]
+  preuves    PreuveTransmission[]
+
+  @@index([factureId, statut])
+  @@map("transmissions_electroniques")
+}
+
+enum FormatFactureElectronique {
+  FACTUR_X
+  UBL
+  CII
+}
+
+enum CanalTransmission {
+  PLATEFORME_AGREEE
+  CHORUS_PRO
+  EXPORT_MANUEL
+}
+
+enum TransmissionStatut {
+  PREPAREE
+  EN_COURS
+  ENVOYEE
+  ACCEPTEE
+  REJETEE
+  ERREUR
+}
+
+model TentativeTransmission {
+  id             String   @id @default(uuid())
+  transmissionId String   @map("transmission_id")
+  success        Boolean
+  codeHttp       Int?     @map("code_http")
+  erreur         String?
+  dureeMs        Int?     @map("duree_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  transmission TransmissionElectronique @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+
+  @@index([transmissionId, createdAt])
+  @@map("tentatives_transmission")
+}
+
+model PreuveTransmission {
+  id              String    @id @default(uuid())
+  transmissionId  String    @map("transmission_id")
+  type            String
+  empreinte       String
+  contenu         Json
+  receivedAt      DateTime  @default(now()) @map("received_at")
+  externalEventId String?   @unique @map("external_event_id")
+  occurredAt      DateTime? @map("occurred_at")
+
+  transmission TransmissionElectronique @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+
+  @@index([transmissionId, receivedAt])
+  @@map("preuves_transmission")
+}
+
+enum FactureType {
+  DEFINITIVE
+  ACOMPTE
+  SITUATION
+  AVANCE
+}
+
+enum FactureStatut {
+  BROUILLON
+  ENVOYEE
+  PAYEE
+  IMPAYEE
+  EN_RETARD
+  LITIGE
+  ANNULEE
+}
+
+model LigneFacture {
+  id             String  @id @default(uuid())
+  factureId      String  @map("facture_id")
+  ordre          Int     @default(0)
+  designation    String
+  unite          String?
+  quantite       Decimal @db.Decimal(10, 2)
+  prixUnitaireHt Decimal @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  totalHt        Decimal @map("total_ht") @db.Decimal(12, 2)
+
+  facture Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
+
+  @@map("lignes_facture")
+}
+
+model Acompte {
+  id           String        @id @default(uuid())
+  numero       String        @unique
+  clientId     String        @map("client_id")
+  chantierId   String        @map("chantier_id")
+  montantHt    Decimal       @map("montant_ht") @db.Decimal(12, 2)
+  pourcentage  Decimal?      @db.Decimal(5, 2)
+  tauxTva      Decimal       @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
+  totalTtc     Decimal       @map("total_ttc") @db.Decimal(12, 2)
+  conditions   String?
+  statut       AcompteStatut @default(ATTENTE)
+  datePaiement DateTime?     @map("date_paiement")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  client   Client   @relation(fields: [clientId], references: [id])
+  chantier Chantier @relation(fields: [chantierId], references: [id])
+
+  @@map("acomptes")
+}
+
+enum AcompteStatut {
+  ATTENTE
+  PAYE
+  IMPAYE
+  REMBOURSE
+}
+
+model Situation {
+  id              String          @id @default(uuid())
+  numero          String          @unique
+  chantierId      String          @map("chantier_id")
+  periodeDebut    DateTime        @map("periode_debut")
+  periodeFin      DateTime        @map("periode_fin")
+  totalHt         Decimal         @map("total_ht") @db.Decimal(12, 2)
+  retenueGarantie Decimal         @default(0) @map("retenue_garantie") @db.Decimal(12, 2)
+  netAPayer       Decimal         @map("net_a_payer") @db.Decimal(12, 2)
+  statut          SituationStatut @default(ETABLIE)
+  datePaiement    DateTime?       @map("date_paiement")
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  chantier Chantier          @relation(fields: [chantierId], references: [id])
+  retenues RetenueGarantie[]
+  Client   Client?           @relation(fields: [clientId], references: [id])
+  clientId String?
+
+  @@map("situations")
+}
+
+enum SituationStatut {
+  ETABLIE
+  ENVOYEE
+  PAYEE
+  IMPAYEE
+}
+
+model RetenueGarantie {
+  id                   String                @id @default(uuid())
+  chantierId           String                @map("chantier_id")
+  situationId          String?               @map("situation_id")
+  montant              Decimal               @db.Decimal(12, 2)
+  taux                 Decimal               @db.Decimal(5, 2)
+  dateConstitution     DateTime              @default(now()) @map("date_constitution")
+  dateLiberationPrevue DateTime?             @map("date_liberation_prevue")
+  dateLiberation       DateTime?             @map("date_liberation")
+  statut               RetenueGarantieStatut @default(CONSTITUEE)
+  commentaire          String?
+
+  chantier  Chantier   @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  situation Situation? @relation(fields: [situationId], references: [id])
+
+  @@index([chantierId, statut])
+  @@map("retenues_garantie")
+}
+
+enum RetenueGarantieStatut {
+  CONSTITUEE
+  CONSIGNEE
+  LIBERABLE
+  LIBEREE
+  LITIGE
+}
+
+model ReceptionChantier {
+  id           String          @id @default(uuid())
+  chantierId   String          @unique @map("chantier_id")
+  date         DateTime
+  statut       ReceptionStatut @default(AVEC_RESERVES)
+  pvUrl        String?         @map("pv_url")
+  observations String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  chantier   Chantier           @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  reserves   ReserveReception[]
+  savTickets SavTicket[]
+
+  @@map("receptions_chantiers")
+}
+
+enum ReceptionStatut {
+  SANS_RESERVE
+  AVEC_RESERVES
+  RESERVES_LEVEES
+  REFUSEE
+}
+
+model ReserveReception {
+  id          String        @id @default(uuid())
+  receptionId String        @map("reception_id")
+  zone        String
+  description String
+  statut      ReserveStatut @default(OUVERTE)
+  echeance    DateTime?
+  leveeAt     DateTime?     @map("levee_at")
+  preuveUrl   String?       @map("preuve_url")
+  commentaire String?
+
+  reception ReceptionChantier @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+
+  @@index([receptionId, statut])
+  @@map("reserves_reception")
+}
+
+enum ReserveStatut {
+  OUVERTE
+  EN_COURS
+  LEVEE
+  CONTESTEE
+}
+
+model SavTicket {
+  id          String    @id @default(uuid())
+  chantierId  String    @map("chantier_id")
+  receptionId String?   @map("reception_id")
+  numero      String    @unique
+  objet       String
+  description String
+  priorite    Priorite  @default(NORMALE)
+  statut      SavStatut @default(OUVERT)
+  signaleAt   DateTime  @default(now()) @map("signale_at")
+  echeance    DateTime?
+  resoluAt    DateTime? @map("resolu_at")
+  resolution  String?
+
+  chantier  Chantier           @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  reception ReceptionChantier? @relation(fields: [receptionId], references: [id])
+
+  @@index([chantierId, statut])
+  @@map("sav_tickets")
+}
+
+enum SavStatut {
+  OUVERT
+  QUALIFIE
+  PLANIFIE
+  EN_COURS
+  RESOLU
+  CLOTURE
+  REJETE
+}
+
+model Avoir {
+  id             String      @id @default(uuid())
+  numero         String      @unique
+  factureId      String      @map("facture_id")
+  clientId       String      @map("client_id")
+  motif          String
+  montantHt      Decimal     @map("montant_ht") @db.Decimal(12, 2)
+  tauxTva        Decimal     @default(20.00) @map("taux_tva") @db.Decimal(5, 2)
+  totalTtc       Decimal     @map("total_ttc") @db.Decimal(12, 2)
+  statut         AvoirStatut @default(EMIS)
+  dateImputation DateTime?   @map("date_imputation")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  facture Facture @relation(fields: [factureId], references: [id])
+  client  Client  @relation(fields: [clientId], references: [id])
+
+  @@map("avoirs")
+}
+
+enum AvoirStatut {
+  EMIS
+  IMPUTE
+  ANNULE
+}
+
+// ==================== ACHATS ====================
+model Commande {
+  id            String         @id @default(uuid())
+  numero        String         @unique
+  fournisseurId String         @map("fournisseur_id")
+  chantierId    String?        @map("chantier_id")
+  date          DateTime       @default(now())
+  dateLivraison DateTime?      @map("date_livraison")
+  totalHt       Decimal        @default(0) @map("total_ht") @db.Decimal(12, 2)
+  totalTva      Decimal        @default(0) @map("total_tva") @db.Decimal(12, 2)
+  totalTtc      Decimal        @default(0) @map("total_ttc") @db.Decimal(12, 2)
+  statut        CommandeStatut @default(BROUILLON)
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  fournisseur Fournisseur       @relation(fields: [fournisseurId], references: [id])
+  chantier    Chantier?         @relation(fields: [chantierId], references: [id])
+  lignes      LigneCommande[]
+  livraisons  Livraison[]
+  depenses    DepenseChantier[]
+
+  @@map("commandes")
+}
+
+enum CommandeStatut {
+  BROUILLON
+  VALIDEE
+  EN_PREPARATION
+  EXPEDIEE
+  LIVREE
+  ANNULEE
+}
+
+model LigneCommande {
+  id             String  @id @default(uuid())
+  commandeId     String  @map("commande_id")
+  reference      String?
+  designation    String
+  quantite       Decimal @db.Decimal(10, 2)
+  prixUnitaireHt Decimal @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  totalHt        Decimal @map("total_ht") @db.Decimal(12, 2)
+
+  commande Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+
+  @@map("lignes_commande")
+}
+
+model Livraison {
+  id         String          @id @default(uuid())
+  numeroBl   String          @unique @map("numero_bl")
+  commandeId String          @map("commande_id")
+  date       DateTime        @default(now())
+  statut     LivraisonStatut @default(EN_COURS)
+  notes      String?
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@map("livraisons")
+}
+
+enum LivraisonStatut {
+  EN_COURS
+  LIVREE
+  PARTIELLE
+  RETOURNEE
+}
+
+model FactureFournisseur {
+  id            String             @id @default(uuid())
+  numero        String             @unique
+  fournisseurId String             @map("fournisseur_id")
+  chantierId    String?            @map("chantier_id")
+  date          DateTime           @default(now())
+  dateEcheance  DateTime           @map("date_echeance")
+  totalHt       Decimal            @map("total_ht") @db.Decimal(12, 2)
+  totalTva      Decimal            @map("total_tva") @db.Decimal(12, 2)
+  totalTtc      Decimal            @map("total_ttc") @db.Decimal(12, 2)
+  statut        FactureFournStatut @default(A_PAYER)
+  datePaiement  DateTime?          @map("date_paiement")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  fournisseur Fournisseur       @relation(fields: [fournisseurId], references: [id])
+  chantier    Chantier?         @relation(fields: [chantierId], references: [id])
+  depenses    DepenseChantier[]
+
+  @@map("factures_fournisseur")
+}
+
+enum FactureFournStatut {
+  A_PAYER
+  PAYEE
+  EN_RETARD
+  ANNULEE
+}
+
+// ==================== PILOTAGE ÉCONOMIQUE CHANTIER ====================
+model BudgetChantier {
+  id          String        @id @default(uuid())
+  chantierId  String        @map("chantier_id")
+  categorie   CategorieCout
+  montant     Decimal       @db.Decimal(14, 2)
+  commentaire String?
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  chantier Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+
+  @@unique([chantierId, categorie])
+  @@map("budgets_chantiers")
+}
+
+model DepenseChantier {
+  id                   String        @id @default(uuid())
+  chantierId           String        @map("chantier_id")
+  categorie            CategorieCout
+  source               SourceDepense
+  libelle              String
+  montantHt            Decimal       @map("montant_ht") @db.Decimal(14, 2)
+  date                 DateTime
+  commandeId           String?       @map("commande_id")
+  factureFournisseurId String?       @map("facture_fournisseur_id")
+  justificatifUrl      String?       @map("justificatif_url")
+  createdById          String        @map("created_by_id")
+  createdAt            DateTime      @default(now()) @map("created_at")
+
+  chantier           Chantier            @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  commande           Commande?           @relation(fields: [commandeId], references: [id])
+  factureFournisseur FactureFournisseur? @relation(fields: [factureFournisseurId], references: [id])
+  createdBy          User                @relation(fields: [createdById], references: [id])
+
+  @@index([chantierId, categorie, date])
+  @@map("depenses_chantiers")
+}
+
+model AffectationSousTraitant {
+  id              String    @id @default(uuid())
+  chantierId      String    @map("chantier_id")
+  sousTraitantId  String    @map("sous_traitant_id")
+  lot             String
+  montantEngageHt Decimal   @map("montant_engage_ht") @db.Decimal(14, 2)
+  dateDebut       DateTime? @map("date_debut")
+  dateFin         DateTime? @map("date_fin")
+  observations    String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  chantier     Chantier     @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  sousTraitant SousTraitant @relation(fields: [sousTraitantId], references: [id])
+
+  @@index([chantierId])
+  @@map("affectations_sous_traitants")
+}
+
+enum CategorieCout {
+  MATERIAUX
+  MAIN_OEUVRE
+  MATERIEL
+  SOUS_TRAITANCE
+  FRAIS_GENERAUX
+  ALEAS
+  AUTRE
+}
+
+enum SourceDepense {
+  SAISIE
+  COMMANDE
+  FACTURE_FOURNISSEUR
+  NOTE_FRAIS
+}
+
+// ==================== PERSONNEL ====================
+model Employe {
+  id                String    @id @default(uuid())
+  nom               String
+  prenom            String
+  dateNaissance     DateTime? @map("date_naissance")
+  adresse           String?
+  telephone         String?
+  email             String?
+  numeroSecu        String?   @map("numero_secu")
+  fonction          String?
+  qualification     String?
+  dateEntree        DateTime? @map("date_entree")
+  dateSortie        DateTime? @map("date_sortie")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  userId            String?   @unique @map("user_id")
+  coutHoraireCharge Decimal   @default(0) @map("cout_horaire_charge") @db.Decimal(10, 2)
+
+  contrats        Contrat[]
+  pointages       Pointage[]
+  bons            BonIntervention[]
+  planningEntries PlanningEntry[]
+  user            User?             @relation(fields: [userId], references: [id])
+
+  @@map("employes")
+}
+
+model Contrat {
+  id          String      @id @default(uuid())
+  employeId   String      @map("employe_id")
+  type        ContratType
+  dateDebut   DateTime    @map("date_debut")
+  dateFin     DateTime?   @map("date_fin")
+  poste       String
+  coefficient String?
+  salaireBrut Decimal     @map("salaire_brut") @db.Decimal(10, 2)
+  dureeEssai  String?     @map("duree_essai")
+  createdById String      @map("created_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  employe   Employe @relation(fields: [employeId], references: [id])
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  @@map("contrats")
+}
+
+enum ContratType {
+  CDI
+  CDD
+  APPRENTISSAGE
+  INTERIM
+  STAGE
+}
+
+model Pointage {
+  id            String       @id @default(uuid())
+  employeId     String       @map("employe_id")
+  chantierId    String?      @map("chantier_id")
+  date          DateTime
+  heureDebut    DateTime     @map("heure_debut")
+  heureFin      DateTime?    @map("heure_fin")
+  dureeMinutes  Int?         @map("duree_minutes")
+  type          PointageType @default(TRAVAIL)
+  notes         String?
+  isSync        Boolean      @default(false) @map("is_sync")
+  clientSyncId  String?      @unique @map("client_sync_id")
+  latitude      Decimal?     @db.Decimal(10, 8)
+  longitude     Decimal?     @db.Decimal(11, 8)
+  validatedAt   DateTime?    @map("validated_at")
+  validatedById String?      @map("validated_by_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  employe     Employe   @relation(fields: [employeId], references: [id])
+  chantier    Chantier? @relation(fields: [chantierId], references: [id])
+  validatedBy User?     @relation("PointagesValides", fields: [validatedById], references: [id])
+
+  @@map("pointages")
+}
+
+enum PointageType {
+  TRAVAIL
+  HEURE_SUP
+  DEPLACEMENT
+  FORMATION
+}
+
+model BonIntervention {
+  id             String    @id @default(uuid())
+  numero         String    @unique
+  demandeurId    String    @map("demandeur_id")
+  employeId      String?   @map("employe_id")
+  chantierId     String?   @map("chantier_id")
+  objet          String
+  priorite       Priorite  @default(NORMALE)
+  statut         BonStatut @default(EN_COURS)
+  dateDemande    DateTime  @default(now()) @map("date_demande")
+  dateTraitement DateTime? @map("date_traitement")
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  demandeur User      @relation(fields: [demandeurId], references: [id])
+  employe   Employe?  @relation(fields: [employeId], references: [id])
+  chantier  Chantier? @relation(fields: [chantierId], references: [id])
+
+  @@map("bons_intervention")
+}
+
+enum Priorite {
+  BASSE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+enum BonStatut {
+  EN_COURS
+  TRAITE
+  ANNULE
+}
+
+model PlanningEntry {
+  id         String       @id @default(uuid())
+  employeId  String       @map("employe_id")
+  date       DateTime
+  type       PlanningType @default(TRAVAIL)
+  chantierId String?      @map("chantier_id")
+  notes      String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  employe  Employe   @relation(fields: [employeId], references: [id])
+  chantier Chantier? @relation(fields: [chantierId], references: [id])
+
+  @@map("planning_entries")
+}
+
+enum PlanningType {
+  TRAVAIL
+  CONGE
+  RTT
+  FORMATION
+  ARRET
+  DISPONIBLE
+}
+
+// ==================== GANTT ====================
+model TacheGantt {
+  id           String   @id @default(uuid())
+  nom          String
+  chantierId   String   @map("chantier_id")
+  dateDebut    DateTime @map("date_debut")
+  dateFin      DateTime @map("date_fin")
+  couleur      String   @default("#2563eb")
+  dependanceId String?  @map("dependance_id")
+  ressources   String[] // IDs des employés
+  avancement   Decimal  @default(0) @db.Decimal(5, 2)
+  createdById  String   @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  clientSyncId String?  @unique @map("client_sync_id")
+
+  chantier  Chantier @relation(fields: [chantierId], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@map("taches_gantt")
+}
+
+model JalonGantt {
+  id          String   @id @default(uuid())
+  nom         String
+  chantierId  String   @map("chantier_id")
+  date        DateTime
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  chantier Chantier @relation(fields: [chantierId], references: [id])
+
+  @@map("jalons_gantt")
+}
+
+// ==================== PHOTOS ====================
+model Photo {
+  id           String     @id @default(uuid())
+  chantierId   String     @map("chantier_id")
+  url          String
+  thumbnailUrl String?    @map("thumbnail_url")
+  lieu         String?
+  description  String?
+  phase        PhotoPhase @default(PENDANT)
+  zone         String?
+  ouvrageId    String?    @map("ouvrage_id")
+  annotations  Json?
+  hashSha256   String?    @map("hash_sha256")
+  clientSyncId String?    @unique @map("client_sync_id")
+  latitude     Decimal?   @db.Decimal(10, 8)
+  longitude    Decimal?   @db.Decimal(11, 8)
+  datePrise    DateTime   @default(now()) @map("date_prise")
+  uploadedById String     @map("uploaded_by_id")
+  isSync       Boolean    @default(false) @map("is_sync")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  chantier   Chantier @relation(fields: [chantierId], references: [id])
+  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+  ouvrage    Ouvrage? @relation(fields: [ouvrageId], references: [id])
+
+  @@map("photos")
+}
+
+enum PhotoPhase {
+  AVANT
+  PENDANT
+  APRES
+  RESERVE
+  SAV
+}
+
+model DocumentChantier {
+  id         String               @id @default(uuid())
+  chantierId String               @map("chantier_id")
+  type       DocumentChantierType
+  phase      PhotoPhase?
+  zone       String?
+  nom        String
+  url        String
+  mimeType   String?              @map("mime_type")
+  taille     Int?
+  version    Int                  @default(1)
+  hashSha256 String?              @map("hash_sha256")
+  metadata   Json?
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  chantier Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+
+  @@index([chantierId, type, zone])
+  @@map("documents_chantiers")
+}
+
+enum DocumentChantierType {
+  PLAN
+  PV
+  DOE
+  DIAGNOSTIC
+  DEVIS
+  FACTURE
+  BON_LIVRAISON
+  NOTICE
+  AUTRE
+}
+
+// ==================== BIBLIOTHÈQUE ====================
+model Ouvrage {
+  id                   String   @id @default(uuid())
+  reference            String   @unique
+  designation          String
+  unite                String
+  prixUnitaireHt       Decimal  @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  dateMaj              DateTime @default(now()) @map("date_maj")
+  categorie            String?
+  sousCategorie        String?  @map("sous_categorie")
+  debourseSec          Decimal  @default(0) @map("debourse_sec") @db.Decimal(12, 2)
+  coefficientVente     Decimal  @default(1) @map("coefficient_vente") @db.Decimal(8, 4)
+  tempsPoseHeures      Decimal? @map("temps_pose_heures") @db.Decimal(8, 3)
+  rendement            Decimal? @db.Decimal(10, 3)
+  descriptionTechnique String?  @map("description_technique")
+  isActif              Boolean  @default(true) @map("is_actif")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  composants      ComposantOuvrage[]
+  historiquesPrix HistoriquePrixOuvrage[]
+  postesDpgf      PosteDpgf[]
+  photos          Photo[]
+  createdAt       DateTime                @default(now()) @map("created_at")
+
+  @@map("ouvrages")
+}
+
+model ComposantOuvrage {
+  id           String        @id @default(uuid())
+  ouvrageId    String        @map("ouvrage_id")
+  type         RessourceType
+  designation  String
+  unite        String
+  quantite     Decimal       @db.Decimal(12, 4)
+  prixUnitaire Decimal       @map("prix_unitaire") @db.Decimal(12, 4)
+  tauxPerte    Decimal       @default(0) @map("taux_perte") @db.Decimal(5, 2)
+  fournisseur  String?
+  ordre        Int           @default(0)
+
+  ouvrage Ouvrage @relation(fields: [ouvrageId], references: [id], onDelete: Cascade)
+
+  @@index([ouvrageId, ordre])
+  @@map("composants_ouvrages")
+}
+
+enum RessourceType {
+  MATERIAU
+  MAIN_OEUVRE
+  MATERIEL
+  SOUS_TRAITANCE
+}
+
+model HistoriquePrixOuvrage {
+  id          String   @id @default(uuid())
+  ouvrageId   String   @map("ouvrage_id")
+  prixAchat   Decimal  @map("prix_achat") @db.Decimal(12, 2)
+  prixVente   Decimal  @map("prix_vente") @db.Decimal(12, 2)
+  fournisseur String?
+  dateEffet   DateTime @default(now()) @map("date_effet")
+  commentaire String?
+
+  ouvrage Ouvrage @relation(fields: [ouvrageId], references: [id], onDelete: Cascade)
+
+  @@index([ouvrageId, dateEffet])
+  @@map("historiques_prix_ouvrages")
+}
+
+model Materiau {
+  id             String   @id @default(uuid())
+  reference      String   @unique
+  designation    String
+  fournisseurId  String?  @map("fournisseur_id")
+  prixUnitaireHt Decimal  @map("prix_unitaire_ht") @db.Decimal(12, 2)
+  stock          Decimal  @default(0) @db.Decimal(10, 2)
+  unite          String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("materiaux")
+}
+
+// ==================== BANQUE ====================
+model OperationBancaire {
+  id              String        @id @default(uuid())
+  type            OperationType
+  date            DateTime
+  libelle         String
+  montant         Decimal       @db.Decimal(12, 2)
+  banque          String
+  modeReglement   String?       @map("mode_reglement")
+  compteComptable String?       @map("compte_comptable")
+  isRapproche     Boolean       @default(false) @map("is_rapproche")
+  justificatifUrl String?       @map("justificatif_url")
+  createdById     String        @map("created_by_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@map("operations_bancaires")
+}
+
+enum OperationType {
+  DEBIT
+  CREDIT
+}
+
+// ==================== COMPTABILITÉ ====================
+model DeclarationTVA {
+  id              String            @id @default(uuid())
+  periode         String // T1-2026, T2-2026, etc.
+  tvaCollectee    Decimal           @map("tva_collectee") @db.Decimal(12, 2)
+  tvaDeductible   Decimal           @map("tva_deductible") @db.Decimal(12, 2)
+  montantAPayer   Decimal           @map("montant_a_payer") @db.Decimal(12, 2)
+  isCredit        Boolean           @default(false) @map("is_credit")
+  dateEcheance    DateTime          @map("date_echeance")
+  dateDeclaration DateTime?         @map("date_declaration")
+  statut          DeclarationStatut @default(A_DECLARER)
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  @@map("declarations_tva")
+}
+
+enum DeclarationStatut {
+  A_DECLARER
+  DECLAREE
+  PAYEE
+  EN_RETARD
+}
+
+model EcritureComptable {
+  id          String   @id @default(uuid())
+  journal     String
+  date        DateTime
+  numeroPiece String   @map("numero_piece")
+  compte      String
+  libelle     String
+  debit       Decimal? @db.Decimal(12, 2)
+  credit      Decimal? @db.Decimal(12, 2)
+  lettrage    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("ecritures_comptables")
+}
+
+// ==================== COPROPRIÉTÉS ====================
+model Copropriete {
+  id               String    @id @default(uuid())
+  nom              String
+  adresse          String
+  codePostal       String    @map("code_postal")
+  ville            String
+  nombreLots       Int       @map("nombre_lots")
+  dateConstruction DateTime? @map("date_construction")
+  syndicNom        String?   @map("syndic_nom")
+  syndicContact    String?   @map("syndic_contact")
+  observations     String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  lots        Lot[]
+  diagnostics Diagnostic[]
+  dtgs        DTG[]
+  evenements  EvenementHistorique[]
+
+  @@map("coproprietes")
+}
+
+model Lot {
+  id                  String       @id @default(uuid())
+  coproprieteId       String       @map("copropriete_id")
+  numero              String
+  designation         String?
+  tantiemes           Int
+  surface             Decimal?     @db.Decimal(8, 2)
+  derniersTravaux     String?      @map("derniers_travaux")
+  pointSituation      LotSituation @default(NON_COMMENCE) @map("point_situation")
+  montantConsignation Decimal?     @map("montant_consignation") @db.Decimal(12, 2)
+  dpeClasse           String?      @map("dpe_classe")
+  dpeConsommation     Decimal?     @map("dpe_consommation") @db.Decimal(8, 2)
+  dpeEmissions        Decimal?     @map("dpe_emissions") @db.Decimal(8, 2)
+  dpeDate             DateTime?    @map("dpe_date")
+  createdAt           DateTime     @default(now()) @map("created_at")
+
+  copropriete Copropriete @relation(fields: [coproprieteId], references: [id])
+  chantier    Chantier[]
+
+  @@map("lots")
+}
+
+enum LotSituation {
+  OK
+  A_CONTROLER
+  TRAVAUX_EN_COURS
+  CONSIGNATION
+  NON_COMMENCE
+}
+
+model Diagnostic {
+  id                String               @id @default(uuid())
+  coproprieteId     String               @map("copropriete_id")
+  type              DiagnosticType
+  lotId             String?              @map("lot_id")
+  dateRealisation   DateTime             @map("date_realisation")
+  dateValidite      DateTime             @map("date_validite")
+  diagnostiqueur    String?
+  numeroAttestation String?              @map("numero_attestation")
+  conclusion        DiagnosticConclusion @default(CONFORME)
+  observations      String?
+  documentUrl       String?              @map("document_url")
+  createdAt         DateTime             @default(now()) @map("created_at")
+
+  copropriete Copropriete @relation(fields: [coproprieteId], references: [id])
+
+  @@map("diagnostics")
+}
+
+enum DiagnosticType {
+  AMIANTE_DAPP
+  PLOMB_CREP
+  ELECTRICITE
+  GAZ
+  TERMITES
+  ERP_ACCESSIBILITE
+  LOI_CARREZ
+  ETAT_PARASITAIRE
+  DPE
+  ERNMT
+}
+
+enum DiagnosticConclusion {
+  CONFORME
+  NON_CONFORME
+  A_COMPLETER
+}
+
+model DTG {
+  id              String   @id @default(uuid())
+  coproprieteId   String   @map("copropriete_id")
+  dateRealisation DateTime @map("date_realisation")
+  dateValidite    DateTime @map("date_validite")
+  diagnostiqueur  String?
+  observations    String?
+  isConforme      Boolean  @default(true) @map("is_conforme")
+  documentUrl     String?  @map("document_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  copropriete Copropriete @relation(fields: [coproprieteId], references: [id])
+
+  @@map("dtgs")
+}
+
+model EvenementHistorique {
+  id            String        @id @default(uuid())
+  coproprieteId String        @map("copropriete_id")
+  date          DateTime
+  type          EvenementType
+  titre         String
+  description   String?
+  cout          Decimal?      @db.Decimal(12, 2)
+  documents     String[] // URLs des documents
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  copropriete Copropriete @relation(fields: [coproprieteId], references: [id])
+
+  @@map("evenements_historiques")
+}
+
+enum EvenementType {
+  TRAVAUX
+  DIAGNOSTIC
+  SINISTRE
+  AG_COPRO
+  AUTRE
+}
+
+// ==================== CARNETS D'ENTRETIEN ====================
+model CarnetEntretien {
+  id             String    @id @default(uuid())
+  numero         String    @unique
+  chantierId     String    @map("chantier_id")
+  description    String
+  dateReception  DateTime  @map("date_reception")
+  dureeGarantie  Int       @default(10) @map("duree_garantie") // en années
+  qrCodeUrl      String?   @map("qr_code_url")
+  pdfUrl         String?   @map("pdf_url")
+  isEnvoyeClient Boolean   @default(false) @map("is_envoye_client")
+  dateEnvoi      DateTime? @map("date_envoi")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  chantier Chantier @relation(fields: [chantierId], references: [id])
+
+  @@map("carnets_entretien")
+}
+
+// ==================== NOTES & JOURNAL ====================
+model Note {
+  id          String   @id @default(uuid())
+  chantierId  String?  @map("chantier_id")
+  contenu     String
+  type        NoteType @default(TEXT)
+  createdById String   @map("created_by_id")
+  isSync      Boolean  @default(false) @map("is_sync")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  chantier  Chantier? @relation(fields: [chantierId], references: [id])
+  createdBy User      @relation(fields: [createdById], references: [id])
+
+  @@map("notes")
+}
+
+enum NoteType {
+  TEXT
+  VOCAL
+  PHOTO
+}
+
+// ==================== DOCUMENTS JURIDIQUES ====================
+model DocumentJuridique {
+  id        String   @id @default(uuid())
+  nom       String
+  type      String // CGV, contrat_type, lettre_relance, mise_demeure
+  contenu   String   @db.Text
+  isModele  Boolean  @default(false) @map("is_modele")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("documents_juridiques")
+}

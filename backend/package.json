@@ -1,0 +1,88 @@
+{
+  "name": "kritia-api",
+  "version": "1.0.0",
+  "description": "Backend API KRITIA - Gestion BTP",
+  "author": "KRITIA",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/src/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "release:check": "./scripts/release-check.sh",
+    "check": "npm run lint -- --no-fix && npm run test -- --runInBand && npm run build",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.28",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "11.1.28",
+    "@nestjs/jwt": "11.0.2",
+    "@nestjs/passport": "11.0.5",
+    "@nestjs/platform-express": "11.1.28",
+    "@nestjs/swagger": "^11.4.5",
+    "@prisma/client": "^5.8.0",
+    "bcryptjs": "^3.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "redis": "^6.2.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "11.1.28",
+    "@types/compression": "^1.7.5",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "@types/passport-jwt": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.2",
+    "jest": "^29.7.0",
+    "prettier": "^3.1.1",
+    "prisma": "^5.8.0",
+    "ts-jest": "^29.1.1",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

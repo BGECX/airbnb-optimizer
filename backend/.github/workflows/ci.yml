@@ -1,0 +1,72 @@
+name: KRITIA CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kritia
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: kritia_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kritia -d kritia_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://kritia:test-password@localhost:5432/kritia_test?schema=public
+      JWT_SECRET: ci-secret-long-de-plus-de-trente-deux-caracteres
+      JWT_EXPIRES_IN: 15m
+      NODE_ENV: test
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run check
+      - run: npm run test:e2e -- --runInBand
+      - name: Installer le client PostgreSQL
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+      - name: Sauvegarder la base de test
+        run: |
+          mkdir -p "$RUNNER_TEMP/kritia-backups"
+          BACKUP_DIR="$RUNNER_TEMP/kritia-backups" BACKUP_RETENTION_DAYS=1 ./scripts/backup-postgres.sh
+          echo "BACKUP_FILE=$(find "$RUNNER_TEMP/kritia-backups" -type f -name 'kritia-*.dump' | sort | tail -1)" >> "$GITHUB_ENV"
+      - name: Restaurer et vérifier la sauvegarde
+        env:
+          ADMIN_DATABASE_URL: postgresql://kritia:test-password@localhost:5432/postgres
+          RESTORE_DATABASE_URL: postgresql://kritia:test-password@localhost:5432/kritia_restore_test
+        run: ./scripts/verify-restore-postgres.sh
+      - run: docker build --tag kritia-api:ci .
+      - name: Scanner l'image API
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: kritia-api:ci
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+      - run: docker build --target migrator --tag kritia-migrator:ci .

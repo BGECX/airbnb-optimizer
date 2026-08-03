@@ -1,20 +1,29 @@
-FROM python:3.11-slim
-
+FROM node:20-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache openssl
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate && npm run build
 
-# Installation des dépendances
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+FROM builder AS migrator
+CMD ["npx", "prisma", "migrate", "deploy"]
 
-# Copie du code
-COPY main.py .
+FROM builder AS production-deps
+RUN npm prune --omit=dev
 
-# Port attendu par Render
-EXPOSE 10000
-
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '10000') + '/health')" || exit 1
-
-# Lancement
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+FROM node:20-alpine
+LABEL org.opencontainers.image.title="KRITIA API" \
+      org.opencontainers.image.description="Backend de gestion BTP KRITIA" \
+      org.opencontainers.image.vendor="KRITIA"
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY --from=production-deps /app/dist ./dist
+COPY --from=production-deps /app/node_modules ./node_modules
+COPY --from=production-deps /app/package*.json ./
+COPY --from=production-deps /app/prisma ./prisma
+RUN mkdir -p /app/uploads && chown -R node:node /app
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD wget -qO- http://127.0.0.1:3000/api/health/ready >/dev/null || exit 1
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]

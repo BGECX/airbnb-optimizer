@@ -1,0 +1,140 @@
+services:
+  api:
+    image: ${KRITIA_API_IMAGE:-kritia-api:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kritia-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://kritia:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obligatoire}@postgres:5432/kritia?schema=public
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET obligatoire (32 caractères minimum)}
+      - JWT_EXPIRES_IN=15m
+      - REFRESH_TOKEN_DAYS=30
+      - PORT=3000
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5500}
+      - PA_PROVIDER_NAME=${PA_PROVIDER_NAME:-}
+      - PA_SUBMIT_URL=${PA_SUBMIT_URL:-}
+      - PA_API_KEY=${PA_API_KEY:-}
+      - PA_WEBHOOK_SECRET=${PA_WEBHOOK_SECRET:-}
+      - REDIS_URL=redis://redis:6379
+      - METRICS_TOKEN=${METRICS_TOKEN:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - kritia-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    restart: "no"
+    environment:
+      - DATABASE_URL=postgresql://kritia:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obligatoire}@postgres:5432/kritia?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - kritia-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: kritia-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=kritia
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obligatoire}
+      - POSTGRES_DB=kritia
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kritia -d kritia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - kritia-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kritia-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - kritia-network
+
+  backup:
+    image: postgres:16-alpine
+    profiles: ["maintenance"]
+    restart: "no"
+    environment:
+      - DATABASE_URL=postgresql://kritia:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD obligatoire}@postgres:5432/kritia
+      - BACKUP_DIR=/backups
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./backups:/backups
+    entrypoint: ["/scripts/backup-postgres.sh"]
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - kritia-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kritia-pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@kritia.fr
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:?PGADMIN_PASSWORD obligatoire}
+    depends_on:
+      - postgres
+    networks:
+      - kritia-network
+    profiles: ["admin"]
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  kritia-network:
+    driver: bridge
