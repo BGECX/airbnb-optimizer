@@ -219,6 +219,11 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Recherche impossible"); }
     finally { setWorking(false); }
   }
+  useEffect(() => {
+    if (client.type !== "ENTREPRISE" || !/^\d{14}$/.test(client.siret)) return;
+    const timer = window.setTimeout(lookupSiret, 250);
+    return () => window.clearTimeout(timer);
+  }, [client.siret, client.type]); // eslint-disable-line react-hooks/exhaustive-deps
   async function create() {
     if (!client.nom.trim()) { setMessage("Indiquez le nom du client."); return; }
     setWorking(true); setMessage("");
@@ -227,6 +232,32 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
     finally { setWorking(false); }
   }
   return <fieldset className="inline-creator"><legend>Créer un client sans quitter le devis</legend><div className="form-grid"><label>Type<select value={client.type} onChange={(event) => update("type", event.target.value)}><option value="PARTICULIER">Particulier</option><option value="ENTREPRISE">Entreprise</option><option value="COPROPRIETE">Copropriété</option><option value="COLLECTIVITE">Collectivité</option></select></label><label>Nom ou raison sociale<input value={client.nom} onChange={(event) => update("nom", event.target.value)} /></label></div>{client.type === "ENTREPRISE" && <div className="lookup-row"><label>SIRET<input inputMode="numeric" maxLength={14} value={client.siret} onChange={(event) => update("siret", event.target.value.replace(/\D/g, ""))} /></label><button className="secondary compact" type="button" disabled={working} onClick={lookupSiret}>Rechercher le SIRET</button></div>}<label className="suggestion-field">Adresse<input value={client.adresse} autoComplete="off" onChange={(event) => update("adresse", event.target.value)} />{client.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { setClient((current) => ({ ...current, adresse: item.adresse, codePostal: item.codePostal, ville: item.ville })); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid three"><label>Code postal<input value={client.codePostal} onChange={(event) => update("codePostal", event.target.value)} /></label><label>Ville<input value={client.ville} onChange={(event) => update("ville", event.target.value)} /></label><label>Téléphone<input value={client.telephone} onChange={(event) => update("telephone", event.target.value)} /></label></div><label>E-mail<input type="email" value={client.email} onChange={(event) => update("email", event.target.value)} /></label>{message && <p className="form-hint">{message}</p>}<button className="secondary compact" type="button" disabled={working} onClick={create}>{working ? "Traitement…" : "Créer et sélectionner ce client"}</button></fieldset>;
+}
+
+function ClientFormFields({ request }: { request: ApiRequest }) {
+  const [client, setClient] = useState({ type: "PARTICULIER", nom: "", siret: "", adresse: "", codePostal: "", ville: "" });
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [message, setMessage] = useState("");
+  const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
+  useEffect(() => {
+    if (client.adresse.trim().length < 3) return;
+    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).then(setSuggestions).catch(() => setSuggestions([])), 350);
+    return () => window.clearTimeout(timer);
+  }, [client.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (client.type !== "ENTREPRISE" || !/^\d{14}$/.test(client.siret)) return;
+    const timer = window.setTimeout(async () => {
+      setMessage("Recherche de l’entreprise…");
+      try {
+        const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`);
+        if (result.existing) { setMessage(`Ce SIRET appartient déjà au client ${String(result.client.nom)}.`); return; }
+        setClient((current) => ({ ...current, ...result.company, type: "ENTREPRISE" }));
+        setMessage("Entreprise retrouvée et fiche préremplie.");
+      } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Recherche impossible"); }
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [client.siret, client.type]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <><div className="form-grid"><label>Type<select name="type" value={client.type} onChange={(event) => update("type", event.target.value)}><option value="PARTICULIER">Particulier</option><option value="ENTREPRISE">Entreprise</option><option value="COPROPRIETE">Copropriété</option><option value="COLLECTIVITE">Collectivité</option></select></label><label>Nom ou raison sociale<input name="nom" value={client.nom} onChange={(event) => update("nom", event.target.value)} required /></label></div><div className="form-grid"><label>SIRET<input name="siret" inputMode="numeric" maxLength={14} value={client.siret} onChange={(event) => update("siret", event.target.value.replace(/\D/g, ""))} /></label><label>Contact<input name="contactNom" /></label></div>{message && <p className="form-hint">{message}</p>}<label className="suggestion-field">Adresse<input name="adresse" value={client.adresse} autoComplete="off" onChange={(event) => update("adresse", event.target.value)} />{client.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { setClient((current) => ({ ...current, adresse: item.adresse, codePostal: item.codePostal, ville: item.ville })); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid"><label>Code postal<input name="codePostal" value={client.codePostal} onChange={(event) => update("codePostal", event.target.value)} /></label><label>Ville<input name="ville" value={client.ville} onChange={(event) => update("ville", event.target.value)} /></label></div><label>Téléphone<input name="telephone" /></label><label>E-mail<input name="email" type="email" /></label><label>Notes<textarea name="notes" /></label></>;
 }
 
 function InlineApporteurCreator({ request, onCreated }: { request: ApiRequest; onCreated: (item: RecordValue) => void }) {
@@ -279,7 +310,7 @@ function CreateEntityDialog({ section, data, demo, request, close, done }: { sec
   const chantierOptions = data.chantiers;
   const dialogTitle: Record<CrudSection, string> = { clients: "Nouveau client", chantiers: "Nouveau chantier", devis: "Nouveau devis", factures: "Nouvelle facture", bibliotheque: "Nouvel ouvrage" };
   return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><form className="modal-card entity-form" onSubmit={send}><div className="modal-head"><div><p className="eyebrow">CRÉATION · {section.toUpperCase()}</p><h3>{dialogTitle[section]}</h3></div><button type="button" onClick={close}>×</button></div>
-    {section === "clients" && <><div className="form-grid"><label>Type<select name="type" defaultValue="PARTICULIER"><option value="PARTICULIER">Particulier</option><option value="ENTREPRISE">Entreprise</option><option value="COPROPRIETE">Copropriété</option><option value="COLLECTIVITE">Collectivité</option></select></label><label>Nom ou raison sociale<input name="nom" required /></label></div><div className="form-grid"><label>SIRET<input name="siret" inputMode="numeric" maxLength={14} /></label><label>Contact<input name="contactNom" /></label></div><AddressFields request={request} /><label>Téléphone<input name="telephone" /></label><label>E-mail<input name="email" type="email" /></label><label>Notes<textarea name="notes" /></label></>}
+    {section === "clients" && <ClientFormFields request={request} />}
     {section === "chantiers" && <><label>Client<select name="clientId" required defaultValue=""><option value="" disabled>Choisir un client…</option>{clientOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.nom)}</option>)}</select></label><label>Objet du chantier<input name="objet" required /></label><AddressFields request={request} /><div className="form-grid"><label>Début prévu<input name="dateDebutPrevue" type="date" /></label><label>Fin prévue<input name="dateFinPrevue" type="date" /></label></div><label>Budget prévisionnel HT<input name="montantPrevu" type="number" min="0" step="0.01" /></label><label>Description<textarea name="description" /></label></>}
     {(section === "devis" || section === "factures") && <>
       <div className="form-grid"><label>Client facturé<select name="clientId" required value={selectedClientId} onChange={(event) => setSelectedClientId(event.target.value)}><option value="" disabled>Choisir un client…</option>{clientOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.nom)}</option>)}</select></label><label>Chantier<select name="chantierId" defaultValue=""><option value="">Sans chantier</option>{chantierOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.reference)} · {String(item.objet)}</option>)}</select></label></div>
