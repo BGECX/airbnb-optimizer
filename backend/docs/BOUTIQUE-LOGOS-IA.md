@@ -41,4 +41,12 @@ Il refuse de recommander silencieusement une offre sous le seuil de marge et dis
 6. compléter l'interface boutique et les aperçus d'impression ;
 7. fixer juridiquement les CGV, responsabilités SAV et règles de facturation.
 
-La génération de logo déjà présente ne possède pas encore le portefeuille de crédits. Elle ne doit pas être présentée comme illimitée ou facturée tant que ce registre transactionnel n'est pas livré.
+## Crédits de génération livrés
+
+Chaque utilisateur reçoit trois crédits de bienvenue lors du premier accès au portefeuille. Une génération réserve atomiquement un crédit avant l'appel au fournisseur : le solde ne peut pas devenir négatif. En cas d'échec de l'IA, le crédit est automatiquement remboursé et le mouvement est journalisé avec une référence unique.
+
+- `GET /api/parametres/logo/credits`
+- `GET /api/parametres/logo/credits/historique`
+- `POST /api/parametres/logo/ia/generer`
+
+L'achat de packs Stripe et l'attribution périodique selon l'abonnement restent à connecter. Ils ne sont pas présentés comme opérationnels.

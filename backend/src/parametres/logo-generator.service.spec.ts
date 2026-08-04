@@ -2,6 +2,12 @@ import { ServiceUnavailableException } from "@nestjs/common";
 import { LogoGeneratorService } from "./logo-generator.service";
 
 describe("LogoGeneratorService", () => {
+  const credits = {
+    reserve: jest.fn().mockResolvedValue({ generationId: "generation-1", balance: 2 }),
+    complete: jest.fn().mockResolvedValue(undefined),
+    refund: jest.fn().mockResolvedValue(undefined),
+  } as any;
+  const service = () => new LogoGeneratorService(credits);
   const originalKey = process.env.OPENAI_API_KEY;
   afterEach(() => {
     if (originalKey) process.env.OPENAI_API_KEY = originalKey;
@@ -11,7 +17,7 @@ describe("LogoGeneratorService", () => {
 
   it("reports an unavailable generator without a server key", () => {
     delete process.env.OPENAI_API_KEY;
-    expect(new LogoGeneratorService().status()).toEqual({
+    expect(service().status()).toEqual({
       configured: false,
       model: "gpt-image-2",
     });
@@ -20,7 +26,7 @@ describe("LogoGeneratorService", () => {
   it("does not call the provider without a server key", async () => {
     delete process.env.OPENAI_API_KEY;
     await expect(
-      new LogoGeneratorService().generate({
+      service().generate("user-1", {
         raisonSociale: "KRITIA",
         activite: "BTP",
         style: "moderne",
@@ -34,11 +40,12 @@ describe("LogoGeneratorService", () => {
       ok: true,
       json: async () => ({ data: [{ b64_json: "aW1hZ2U=" }] }),
     } as Response);
-    const result = await new LogoGeneratorService().generate({
+    const result = await service().generate("user-1", {
       raisonSociale: "KRITIA",
       activite: "Rénovation",
       style: "patrimoine",
     });
     expect(result.image).toBe("data:image/png;base64,aW1hZ2U=");
+    expect(credits.complete).toHaveBeenCalledWith("user-1", "generation-1");
   });
 });

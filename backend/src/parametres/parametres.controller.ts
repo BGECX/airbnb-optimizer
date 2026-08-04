@@ -23,6 +23,8 @@ import {
   VerifyVatDto,
 } from "./dto";
 import { LogoGeneratorService } from "./logo-generator.service";
+import { LogoCreditsService } from "./logo-credits.service";
+import { CurrentUser } from "../common/decorators/current-user.decorator";
 
 @ApiTags("Paramètres")
 @Controller("parametres")
@@ -32,6 +34,7 @@ export class ParametresController {
   constructor(
     private parametresService: ParametresService,
     private logoGenerator: LogoGeneratorService,
+    private logoCredits: LogoCreditsService,
   ) {}
 
   @Get("logo/ia/status")
@@ -41,10 +44,15 @@ export class ParametresController {
   }
 
   @Post("logo/ia/generer")
-  @Roles(UserRole.ADMIN)
-  generateLogo(@Body() data: GenerateLogoDto) {
-    return this.logoGenerator.generate(data);
+  generateLogo(@CurrentUser("userId") userId: string, @Body() data: GenerateLogoDto) {
+    return this.logoGenerator.generate(userId, data);
   }
+
+  @Get("logo/credits")
+  getLogoCredits(@CurrentUser("userId") userId: string) { return this.logoCredits.balance(userId); }
+
+  @Get("logo/credits/historique")
+  getLogoCreditHistory(@CurrentUser("userId") userId: string) { return this.logoCredits.history(userId); }
 
   @Get("entreprise")
   getEntreprise() {

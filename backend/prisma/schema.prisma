@@ -37,14 +37,79 @@ model User {
   diagnosticsBatiCreated DiagnosticBati[]
   tracesBatiCreated      TraceBati[]
   depensesCreated        DepenseChantier[]
-  pointagesValides       Pointage[]           @relation("PointagesValides")
+  pointagesValides       Pointage[]              @relation("PointagesValides")
   employe                Employe?
   journauxAudit          JournalAudit[]
   analysesChiffrage      AnalyseChiffrage[]
   refreshTokens          RefreshToken[]
   passwordResetTokens    PasswordResetToken[]
+  logoCreditAccount      LogoCreditAccount?
+  logoCreditTransactions LogoCreditTransaction[]
+  logoGenerations        LogoGeneration[]
 
   @@map("users")
+}
+
+model LogoCreditAccount {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  balance   Int      @default(3)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("logo_credit_accounts")
+}
+
+model LogoCreditTransaction {
+  id           String                    @id @default(uuid())
+  userId       String                    @map("user_id")
+  amount       Int
+  type         LogoCreditTransactionType
+  reference    String?                   @unique
+  description  String?
+  balanceAfter Int                       @map("balance_after")
+  createdAt    DateTime                  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("logo_credit_transactions")
+}
+
+model LogoGeneration {
+  id           String               @id @default(uuid())
+  userId       String               @map("user_id")
+  provider     String
+  model        String
+  promptDigest String               @map("prompt_digest")
+  status       LogoGenerationStatus @default(RESERVED)
+  creditCost   Int                  @default(1) @map("credit_cost")
+  errorCode    String?              @map("error_code")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  completedAt  DateTime?            @map("completed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("logo_generations")
+}
+
+enum LogoCreditTransactionType {
+  WELCOME
+  SUBSCRIPTION
+  PURCHASE
+  GENERATION
+  REFUND
+  ADMIN_ADJUSTMENT
+}
+
+enum LogoGenerationStatus {
+  RESERVED
+  COMPLETED
+  FAILED
+  REFUNDED
 }
 
 model PasswordResetToken {

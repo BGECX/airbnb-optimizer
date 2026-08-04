@@ -5,12 +5,14 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { GenerateLogoDto } from "./dto";
+import { LogoCreditsService } from "./logo-credits.service";
 
 type OpenAIImageResponse = { data?: Array<{ b64_json?: string }> };
 
 @Injectable()
 export class LogoGeneratorService {
   private lastGenerationAt = 0;
+  constructor(private credits: LogoCreditsService) {}
 
   status() {
     return {
@@ -19,7 +21,7 @@ export class LogoGeneratorService {
     };
   }
 
-  async generate(data: GenerateLogoDto) {
+  async generate(userId: string, data: GenerateLogoDto) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       throw new ServiceUnavailableException(
@@ -35,6 +37,8 @@ export class LogoGeneratorService {
     }
     this.lastGenerationAt = now;
 
+    const prompt = this.buildPrompt(data);
+    const reservation = await this.credits.reserve(userId, prompt);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
     try {
@@ -49,7 +53,7 @@ export class LogoGeneratorService {
           signal: controller.signal,
           body: JSON.stringify({
             model: "gpt-image-2",
-            prompt: this.buildPrompt(data),
+            prompt,
             size: "1024x1024",
             quality: "medium",
             background: "transparent",
@@ -76,11 +80,11 @@ export class LogoGeneratorService {
         throw new ServiceUnavailableException(
           "Le service IA n’a retourné aucune image exploitable.",
         );
-      return { model: "gpt-image-2", image: `data:image/png;base64,${image}` };
+      await this.credits.complete(userId, reservation.generationId);
+      return { model: "gpt-image-2", generationId: reservation.generationId, remainingCredits: reservation.balance, image: `data:image/png;base64,${image}` };
     } catch (error) {
-      if (
-        error instanceof HttpException
-      )
+      await this.credits.refund(userId, reservation.generationId, error instanceof Error ? error.name : "UNKNOWN");
+      if (error instanceof HttpException)
         throw error;
       if (error instanceof Error && error.name === "AbortError") {
         throw new ServiceUnavailableException(
