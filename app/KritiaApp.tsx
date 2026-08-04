@@ -260,6 +260,20 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
   const [message, setMessage] = useState("");
   const skipAddressLookup = useRef(false);
   useEffect(() => {
+    const selectBeforeBlur = (event: PointerEvent) => {
+      const target = event.target instanceof Element ? event.target.closest(".inline-creator .suggestion-list button") : null;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const item = suggestions.find((suggestion) => suggestion.label === target.textContent?.trim());
+      if (!item) return;
+      event.preventDefault();
+      skipAddressLookup.current = true;
+      setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
+      setSuggestions([]);
+    };
+    document.addEventListener("pointerdown", selectBeforeBlur, true);
+    return () => document.removeEventListener("pointerdown", selectBeforeBlur, true);
+  }, [suggestions]);
+  useEffect(() => {
     if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
     if (client.adresse.trim().length < 3) return;
     const timer = window.setTimeout(async () => {
