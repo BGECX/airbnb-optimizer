@@ -59,9 +59,12 @@ export class LogoGeneratorService {
             model: "gpt-image-2",
             prompt,
             size: "1024x1024",
-            quality: "medium",
+            // Une prévisualisation légère évite les coupures du proxy pendant
+            // le transfert. L'utilisateur peut ensuite retenir la piste.
+            quality: "low",
             background: "transparent",
-            output_format: "png",
+            output_format: "webp",
+            output_compression: 65,
             n: 1,
           }),
         },
@@ -87,7 +90,7 @@ export class LogoGeneratorService {
           "Le service IA n’a retourné aucune image exploitable.",
         );
       await this.credits.complete(userId, reservation.generationId);
-      return { model: "gpt-image-2", generationId: reservation.generationId, remainingCredits: reservation.balance, image: `data:image/png;base64,${image}` };
+      return { model: "gpt-image-2", generationId: reservation.generationId, remainingCredits: reservation.balance, image: `data:image/webp;base64,${image}` };
     } catch (error) {
       const incidentId = randomUUID().slice(0, 8).toUpperCase();
       this.logger.error(

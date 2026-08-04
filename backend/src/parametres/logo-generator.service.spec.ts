@@ -34,7 +34,7 @@ describe("LogoGeneratorService", () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
-  it("returns a PNG data URL from the provider response", async () => {
+  it("returns a compact WebP data URL from the provider response", async () => {
     process.env.OPENAI_API_KEY = "test-key";
     jest.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
@@ -45,7 +45,12 @@ describe("LogoGeneratorService", () => {
       activite: "Rénovation",
       style: "patrimoine",
     });
-    expect(result.image).toBe("data:image/png;base64,aW1hZ2U=");
+    expect(result.image).toBe("data:image/webp;base64,aW1hZ2U=");
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toMatchObject({
+      quality: "low",
+      output_format: "webp",
+      output_compression: 65,
+    });
     expect(credits.complete).toHaveBeenCalledWith("user-1", "generation-1");
   });
 });
