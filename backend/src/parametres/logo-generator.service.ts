@@ -2,6 +2,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { GenerateLogoDto } from "./dto";
@@ -11,6 +12,7 @@ type OpenAIImageResponse = { data?: Array<{ b64_json?: string }> };
 
 @Injectable()
 export class LogoGeneratorService {
+  private readonly logger = new Logger(LogoGeneratorService.name);
   private lastGenerationAt = 0;
   constructor(private credits: LogoCreditsService) {}
 
@@ -38,10 +40,11 @@ export class LogoGeneratorService {
     this.lastGenerationAt = now;
 
     const prompt = this.buildPrompt(data);
-    const reservation = await this.credits.reserve(userId, prompt);
+    let reservation: { generationId: string; balance: number } | undefined;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
     try {
+      reservation = await this.credits.reserve(userId, prompt);
       const response = await fetch(
         "https://api.openai.com/v1/images/generations",
         {
@@ -68,9 +71,11 @@ export class LogoGeneratorService {
         error?: { message?: string; code?: string };
       };
       if (!response.ok) {
-        const detail =
-          payload.error?.code === "invalid_api_key"
-            ? "La clé OpenAI configurée sur le serveur est invalide."
+        const code = payload.error?.code;
+        const detail = code === "invalid_api_key"
+          ? "La clé OpenAI configurée sur le serveur est invalide."
+          : code === "billing_hard_limit_reached" || code === "insufficient_quota"
+            ? "Le budget de l’API OpenAI est épuisé ou non activé. L’abonnement ChatGPT ne finance pas automatiquement l’API."
             : payload.error?.message ||
               "Le service de création d’images a refusé la demande.";
         throw new ServiceUnavailableException(detail);
@@ -83,9 +88,31 @@ export class LogoGeneratorService {
       await this.credits.complete(userId, reservation.generationId);
       return { model: "gpt-image-2", generationId: reservation.generationId, remainingCredits: reservation.balance, image: `data:image/png;base64,${image}` };
     } catch (error) {
-      await this.credits.refund(userId, reservation.generationId, error instanceof Error ? error.name : "UNKNOWN");
+      if (reservation) {
+        try {
+          await this.credits.refund(
+            userId,
+            reservation.generationId,
+            error instanceof Error ? error.name : "UNKNOWN",
+          );
+        } catch (refundError) {
+          this.logger.error(
+            `Remboursement du crédit logo impossible (${reservation.generationId})`,
+            refundError instanceof Error ? refundError.stack : undefined,
+          );
+        }
+      }
       if (error instanceof HttpException)
         throw error;
+      const databaseCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? String(error.code)
+          : "";
+      if (databaseCode === "P2021" || databaseCode === "P2022") {
+        throw new ServiceUnavailableException(
+          "La base de données des crédits logo doit être mise à jour. Relancez le déploiement de l’API afin d’appliquer les migrations.",
+        );
+      }
       if (error instanceof Error && error.name === "AbortError") {
         throw new ServiceUnavailableException(
           "La création a dépassé deux minutes. Vous pouvez réessayer.",
