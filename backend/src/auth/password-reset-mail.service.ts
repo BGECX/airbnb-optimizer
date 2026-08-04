@@ -19,6 +19,9 @@ export class PasswordResetMailService {
       port,
       secure: port === 465,
       auth: { user: this.config.getOrThrow<string>('SMTP_USER'), pass: this.config.getOrThrow<string>('SMTP_PASSWORD') },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
     });
     try {
       await transporter.sendMail({
