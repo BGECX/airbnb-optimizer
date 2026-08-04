@@ -38,7 +38,6 @@ export class ParametresController {
   ) {}
 
   @Get("logo/ia/status")
-  @Roles(UserRole.ADMIN)
   getLogoGeneratorStatus() {
     return this.logoGenerator.status();
   }

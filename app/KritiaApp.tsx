@@ -550,6 +550,7 @@ function Login({
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [resetCompleted, setResetCompleted] = useState(false);
   const [working, setWorking] = useState(false);
+  const [credits, setCredits] = useState<number | null>(demo ? 0 : null);
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
   async function forgot(event: FormEvent<HTMLFormElement>) {
@@ -1877,8 +1878,14 @@ function LogoAiStudio({
 
   useEffect(() => {
     if (!open || demo || configured !== null) return;
-    request("/parametres/logo/ia/status")
-      .then((result) => setConfigured(Boolean(result.configured)))
+    Promise.all([
+      request("/parametres/logo/ia/status"),
+      request("/parametres/logo/credits"),
+    ])
+      .then(([status, account]) => {
+        setConfigured(Boolean(status.configured));
+        setCredits(Number(account.balance ?? 0));
+      })
       .catch(() => setConfigured(false));
   }, [configured, demo, open, request]);
 
@@ -1906,6 +1913,7 @@ function LogoAiStudio({
       });
       if (!result.image) throw new Error("Aucune proposition reçue.");
       setImages((current) => [String(result.image), ...current].slice(0, 3));
+      setCredits(Number(result.remainingCredits ?? 0));
       setConfigured(true);
     } catch (reason) {
       setError(
@@ -2008,13 +2016,14 @@ function LogoAiStudio({
             </label>
             <div className="ai-logo-actions">
               <small>
-                Chaque clic crée une nouvelle image et utilise le crédit de
-                votre compte IA.
+                {credits === null
+                  ? "Chargement de vos crédits…"
+                  : `${credits} crédit${credits > 1 ? "s" : ""} disponible${credits > 1 ? "s" : ""}. Chaque proposition utilise 1 crédit ; un échec est remboursé.`}
               </small>
               <button
                 type="button"
                 className="primary compact"
-                disabled={working || configured === false}
+                disabled={working || configured === false || credits === 0}
                 onClick={() => void generate()}
               >
                 {working
@@ -2022,6 +2031,11 @@ function LogoAiStudio({
                   : "✦ Générer une proposition"}
               </button>
             </div>
+            {credits === 0 && (
+              <div className="form-error">
+                Vos crédits sont épuisés. L’achat sécurisé de packs sera proposé ici dès que le paiement Stripe sera activé.
+              </div>
+            )}
           </div>
           {error && <div className="form-error">{error}</div>}
           {images.length > 0 && (
