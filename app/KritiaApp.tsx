@@ -93,6 +93,11 @@ export default function KritiaApp() {
       headers: { "content-type": "application/json", ...(session?.accessToken ? { authorization: `Bearer ${session.accessToken}` } : {}), ...options.headers },
     });
     const body = await response.json().catch(() => ({}));
+    if (response.status === 401 && session) {
+      window.sessionStorage.removeItem("kritia-session");
+      setSession(null); setDemo(false); setSettingsOpen(false); setProfileMenuOpen(false);
+      throw new Error("Votre session a expiré. Reconnectez-vous pour continuer.");
+    }
     if (!response.ok) throw new Error(Array.isArray(body.message) ? body.message.join(" · ") : body.message || `Erreur ${response.status}`);
     return body;
   }
