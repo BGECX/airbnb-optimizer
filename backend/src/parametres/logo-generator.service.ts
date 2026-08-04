@@ -127,6 +127,11 @@ export class LogoGeneratorService {
           `La réservation du crédit logo a échoué (référence ${incidentId}). Aucun crédit n’a été consommé.`,
         );
       }
+      if (error instanceof Error && error.name.startsWith("Prisma")) {
+        throw new ServiceUnavailableException(
+          `La base des crédits logo est temporairement inaccessible (référence ${incidentId}). Aucun crédit n’a été consommé.`,
+        );
+      }
       if (error instanceof Error && error.name === "AbortError") {
         throw new ServiceUnavailableException(
           "La création a dépassé deux minutes. Vous pouvez réessayer.",
