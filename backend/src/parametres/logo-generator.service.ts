@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { GenerateLogoDto } from "./dto";
 import { LogoCreditsService } from "./logo-credits.service";
+import { randomUUID } from "crypto";
 
 type OpenAIImageResponse = { data?: Array<{ b64_json?: string }> };
 
@@ -88,6 +89,11 @@ export class LogoGeneratorService {
       await this.credits.complete(userId, reservation.generationId);
       return { model: "gpt-image-2", generationId: reservation.generationId, remainingCredits: reservation.balance, image: `data:image/png;base64,${image}` };
     } catch (error) {
+      const incidentId = randomUUID().slice(0, 8).toUpperCase();
+      this.logger.error(
+        `Échec génération logo [${incidentId}]`,
+        error instanceof Error ? error.stack : String(error),
+      );
       if (reservation) {
         try {
           await this.credits.refund(
@@ -113,13 +119,23 @@ export class LogoGeneratorService {
           "La base de données des crédits logo doit être mise à jour. Relancez le déploiement de l’API afin d’appliquer les migrations.",
         );
       }
+      if (databaseCode.startsWith("P20")) {
+        throw new ServiceUnavailableException(
+          `La réservation du crédit logo a échoué (référence ${incidentId}). Aucun crédit n’a été consommé.`,
+        );
+      }
       if (error instanceof Error && error.name === "AbortError") {
         throw new ServiceUnavailableException(
           "La création a dépassé deux minutes. Vous pouvez réessayer.",
         );
       }
+      if (error instanceof TypeError) {
+        throw new ServiceUnavailableException(
+          `Le serveur KRITIA n’arrive pas à joindre le service d’images OpenAI (référence ${incidentId}). Aucun crédit n’a été consommé.`,
+        );
+      }
       throw new ServiceUnavailableException(
-        "Le service de création de logo est momentanément indisponible.",
+        `Le service de création de logo est momentanément indisponible (référence ${incidentId}). Aucun crédit n’a été consommé.`,
       );
     } finally {
       clearTimeout(timeout);
