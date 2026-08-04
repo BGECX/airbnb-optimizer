@@ -64,6 +64,8 @@ export default function KritiaApp() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [resetToken, setResetToken] = useState("");
 
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function KritiaApp() {
   if (!session && !demo) return <Login apiUrl={apiUrl} setApiUrl={setApiUrl} login={login} register={register} request={api} resetToken={resetToken} demo={() => setDemo(true)} busy={busy} error={error} />;
 
   const currentUser = session?.user ?? { firstName: "Bruno", lastName: "Martin", role: "ADMIN" };
-  const title = nav.find((item) => item.id === section)?.label ?? "Vue d’ensemble";
+  const title = settingsOpen ? "Paramètres" : nav.find((item) => item.id === section)?.label ?? "Vue d’ensemble";
 
   return (
     <main className="app-shell">
@@ -144,7 +146,7 @@ export default function KritiaApp() {
         <div className="brand"><span className="brand-mark">K</span><span><span className="brand-name">KRITIA<small className="product-name">btp</small></span><small className="brand-tagline">PILOTAGE BTP</small></span></div>
         <nav aria-label="Navigation principale">
           <p className="nav-caption">ESPACE DE TRAVAIL</p>
-          {nav.map((item) => <button key={item.id} className={section === item.id ? "active" : ""} onClick={() => { setSection(item.id); setMenuOpen(false); }}><span>{item.glyph}</span>{item.label}{item.id === "chantiers" && <b>{data.chantiers.length}</b>}</button>)}
+          {nav.map((item) => <button key={item.id} className={!settingsOpen && section === item.id ? "active" : ""} onClick={() => { setSection(item.id); setSettingsOpen(false); setMenuOpen(false); setProfileMenuOpen(false); }}><span>{item.glyph}</span>{item.label}{item.id === "chantiers" && <b>{data.chantiers.length}</b>}</button>)}
         </nav>
         <div className="sidebar-foot"><div className="help-card"><span>?</span><strong>Besoin d’aide ?</strong><p>Consultez le guide KRITIA ou contactez votre administrateur.</p></div><div className="version">KRITIA V1 · environnement {demo ? "démo" : "connecté"}</div></div>
       </aside>
@@ -153,13 +155,13 @@ export default function KritiaApp() {
         <header className="topbar">
           <button className="menu-toggle" aria-label="Ouvrir le menu" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
           <div><p className="eyebrow">Lundi 3 août 2026</p><h1>{title}</h1></div>
-          <div className="top-actions"><span className={`connection ${demo ? "demo" : ""}`}>{demo ? "Mode démonstration" : "API connectée"}</span><button className="notification" aria-label="Notifications">●</button><button className="profile" onClick={logout}><span>{String(currentUser.firstName ?? "K")[0]}{String(currentUser.lastName ?? "")[0]}</span><div><strong>{currentUser.firstName} {currentUser.lastName}</strong><small>{label(currentUser.role)}</small></div><i>⌄</i></button></div>
+          <div className="top-actions"><span className={`connection ${demo ? "demo" : ""}`}>{demo ? "Mode démonstration" : "API connectée"}</span><button className="notification" aria-label="Notifications">●</button><div className="profile-wrap"><button className="profile" aria-expanded={profileMenuOpen} onClick={() => setProfileMenuOpen((open) => !open)}><span>{String(currentUser.firstName ?? "K")[0]}{String(currentUser.lastName ?? "")[0]}</span><div><strong>{currentUser.firstName} {currentUser.lastName}</strong><small>{label(currentUser.role)}</small></div><i>{profileMenuOpen ? "⌃" : "⌄"}</i></button>{profileMenuOpen && <div className="profile-menu"><button onClick={() => { setSettingsOpen(true); setProfileMenuOpen(false); }}>◎ Mon profil</button><button onClick={() => { setSettingsOpen(true); setProfileMenuOpen(false); }}>⚙ Paramètres</button><span /><button className="logout-action" onClick={logout}>↪ Se déconnecter</button></div>}</div></div>
         </header>
 
         <div className="content">
           {error && <div className="alert">{error}<button onClick={() => setError("")}>×</button></div>}
           {busy && <div className="loading-line" />}
-          {section === "dashboard" ? <Dashboard data={data} navigate={setSection} /> : section === "dpgf" ? <DpgfWorkspace rows={data.dpgf} chantiers={data.chantiers} demo={demo} request={api} refresh={loadAll} /> : <DataView section={section} rows={data[section]} data={data} demo={demo} request={api} refresh={loadAll} />}
+          {settingsOpen ? <SettingsPage user={currentUser} demo={demo} /> : section === "dashboard" ? <Dashboard data={data} navigate={setSection} /> : section === "dpgf" ? <DpgfWorkspace rows={data.dpgf} chantiers={data.chantiers} demo={demo} request={api} refresh={loadAll} /> : <DataView section={section} rows={data[section]} data={data} demo={demo} request={api} refresh={loadAll} />}
         </div>
       </section>
     </main>
@@ -190,6 +192,16 @@ function Login({ apiUrl, setApiUrl, login, register, request, resetToken, demo, 
   const creating = activeMode === "register"; const forgotten = activeMode === "forgot"; const resetting = activeMode === "reset";
   const submit = creating ? register : forgotten ? forgot : resetting ? reset : login;
   return <main className="login-page"><section className="login-story"><div className="login-brand"><span>K</span> KRITIA</div><div className="story-copy"><p className="eyebrow light">CONSTRUIRE · PILOTER · TRANSMETTRE</p><h1>Le chantier avance.<br />Votre gestion aussi.</h1><p>De la première visite à la réception, gardez la maîtrise des coûts, des équipes et du bâti existant.</p><div className="story-stats"><span><strong>360°</strong>Vision chantier</span><span><strong>1 seul</strong>outil de pilotage</span><span><strong>100%</strong>orienté rénovation</span></div></div><p className="story-quote">« La précision du métré. La clarté du pilotage. »</p></section><section className="login-panel"><form onSubmit={submit}><p className="eyebrow">{creating ? "CRÉATION DE COMPTE" : forgotten ? "ACCÈS AU COMPTE" : resetting ? "NOUVEAU MOT DE PASSE" : "ESPACE SÉCURISÉ"}</p><h2>{creating ? "Rejoindre KRITIA" : forgotten ? "Mot de passe oublié" : resetting ? "Choisissez votre mot de passe" : "Bienvenue sur KRITIA"}</h2><p className="muted">{creating ? "Créez votre accès personnel à KRITIA btp." : forgotten ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes." : resetting ? "Le nouveau mot de passe remplacera immédiatement l’ancien." : "Connectez-vous à votre espace de gestion."}</p>{(error || localError) && <div className="form-error">{localError || error}</div>}{notice && <div className="form-notice">{notice}</div>}{creating && <div className="name-fields"><label>Prénom<input name="firstName" required autoComplete="given-name" /></label><label>Nom<input name="lastName" required autoComplete="family-name" /></label></div>}{!resetting && <label>Adresse e-mail<input name="email" type="email" placeholder="vous@entreprise.fr" required autoComplete="username" /></label>}{!forgotten && <label>Mot de passe<input name="password" type="password" placeholder="••••••••••••" required minLength={8} autoComplete={creating || resetting ? "new-password" : "current-password"} /></label>}{(creating || resetting) && <><p className="password-rule">8 caractères minimum, avec majuscule, minuscule et chiffre.</p><label>Confirmer le mot de passe<input name="passwordConfirmation" type="password" placeholder="••••••••••••" required minLength={8} autoComplete="new-password" /></label></>}<details><summary>Configuration de l’API</summary><label>Adresse de l’API<input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} type="url" required /></label></details><button className="primary" disabled={busy || working}>{busy || working ? "Traitement…" : creating ? "Créer mon compte" : forgotten ? "Envoyer le lien" : resetting ? "Enregistrer le nouveau mot de passe" : "Se connecter"}<span>→</span></button>{activeMode === "login" && <button className="auth-switch" type="button" onClick={() => { setMode("forgot"); setLocalError(""); setNotice(""); }}>Mot de passe oublié ?</button>}<button className="auth-switch" type="button" onClick={() => { setMode(activeMode === "register" ? "login" : activeMode === "login" ? "register" : "login"); setLocalError(""); setNotice(""); }}>{activeMode === "register" ? "J’ai déjà un compte" : activeMode === "login" ? "Créer un compte" : "Retour à la connexion"}</button>{activeMode === "login" && <><div className="or"><span>ou</span></div><button className="secondary" type="button" onClick={demo}>Découvrir avec les données de démonstration</button></>}<small className="secure-note">Les liens de réinitialisation sont temporaires et à usage unique.</small></form></section></main>;
+}
+
+function SettingsPage({ user, demo }: { user: RecordValue; demo: boolean }) {
+  const groups = [
+    { title: "Mon compte", cards: [["▣", "Mon entreprise", "Identité et coordonnées"], ["♙", "Utilisateurs", "Équipe et droits d’accès"], ["▱", "Mon offre KRITIA", "Abonnement et services"]] },
+    { title: "Mon profil", cards: [["◎", "Mon profil", "Nom, e-mail et téléphone"], ["▣", "Sécurité", "Mot de passe et sessions"], ["⚙", "Préférences", "Affichage et notifications"], ["✉", "Envoi d’e-mails", "Expéditeur et modèles"]] },
+    { title: "Gestion de mes données", cards: [["⇩", "Importer mes données", "Clients, ouvrages et tarifs"], ["⇧", "Exporter mes données", "Archives et portabilité"]] },
+    { title: "Personnaliser KRITIA", cards: [["◉", "Modèles de documents", "Devis, factures et situations"], ["◇", "Extensions", "Services et intégrations"], ["⌁", "Automatisations", "Règles et workflows"]] },
+  ];
+  return <section className="settings-page"><div className="settings-intro"><p className="eyebrow">COMPTE · CONFIGURATION</p><h2>Paramètres</h2><p>Retrouvez ici les informations de votre compte et les réglages de KRITIA btp.</p></div><div className="settings-layout"><div>{groups.map((group) => <section className="settings-group" key={group.title}><div className="settings-group-title"><h3>{group.title}</h3><i /></div><div className="settings-cards">{group.cards.map(([icon, title, description]) => <article className="settings-card" key={title}><span>{icon}</span><strong>{title}</strong><small>{description}</small></article>)}</div></section>)}</div><aside className="account-summary"><div className="account-avatar">{String(user.firstName ?? "K")[0]}{String(user.lastName ?? "")[0]}</div><h3>{String(user.firstName ?? "")} {String(user.lastName ?? "")}</h3><p>{String(user.email ?? (demo ? "demonstration@getkritia.com" : ""))}</p><span className="role-pill">{label(user.role)}</span><div className="connected-user"><i /><div><small>Utilisateur connecté</small><strong>{String(user.firstName ?? "")} {String(user.lastName ?? "")}</strong></div></div></aside></div></section>;
 }
 
 function Dashboard({ data, navigate }: { data: typeof demoData; navigate: (section: Section) => void }) {
