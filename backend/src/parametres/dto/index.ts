@@ -1,9 +1,26 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsDateString, IsEmail, IsNumber, IsOptional, IsString, Matches, Max, Min, MinLength } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from "class-transformer";
+import {
+  IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class UpdateEntrepriseDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(1) raisonSociale?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  raisonSociale?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() siret?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() siren?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() tvaIntra?: string;
@@ -20,10 +37,57 @@ export class UpdateEntrepriseDto {
 }
 
 export class VerifyVatDto {
-  @ApiProperty({ example: 'FR40303265045' })
+  @ApiProperty({ example: "FR40303265045" })
   @IsString()
-  @Matches(/^[A-Z]{2}[A-Z0-9]{2,14}$/, { message: 'Le numéro de TVA doit commencer par le code pays et contenir 4 à 16 caractères' })
+  @Matches(/^[A-Z]{2}[A-Z0-9]{2,14}$/, {
+    message:
+      "Le numéro de TVA doit commencer par le code pays et contenir 4 à 16 caractères",
+  })
   numero: string;
+}
+
+export class GenerateLogoDto {
+  @ApiProperty({ example: "FRH GECX" })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  raisonSociale: string;
+
+  @ApiProperty({
+    example: "Rénovation de bâtiments anciens et maçonnerie traditionnelle",
+  })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(300)
+  activite: string;
+
+  @ApiProperty({
+    enum: ["moderne", "patrimoine", "minimaliste", "premium", "artisanal"],
+  })
+  @IsIn(["moderne", "patrimoine", "minimaliste", "premium", "artisanal"])
+  style: string;
+
+  @ApiPropertyOptional({ example: "Bâtir, rénover, transmettre" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  slogan?: string;
+
+  @ApiPropertyOptional({ example: "#123B69" })
+  @IsOptional()
+  @Matches(/^#[0-9A-F]{6}$/i)
+  couleurPrincipale?: string;
+
+  @ApiPropertyOptional({ example: "#F59E0B" })
+  @IsOptional()
+  @Matches(/^#[0-9A-F]{6}$/i)
+  couleurSecondaire?: string;
+
+  @ApiPropertyOptional({ example: "pierre, maison ancienne, monogramme" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  symboles?: string;
 }
 
 export class UpdateNumerotationDto {

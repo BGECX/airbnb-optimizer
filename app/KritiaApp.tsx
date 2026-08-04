@@ -3,38 +3,159 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 type RecordValue = Record<string, unknown>;
-type Section = "dashboard" | "clients" | "chantiers" | "devis" | "factures" | "dpgf" | "bibliotheque";
-type Session = { accessToken: string; user: { firstName?: string; lastName?: string; email?: string; role?: string } };
+type Section =
+  | "dashboard"
+  | "clients"
+  | "chantiers"
+  | "devis"
+  | "factures"
+  | "dpgf"
+  | "bibliotheque";
+type Session = {
+  accessToken: string;
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+  };
+};
 type ApiRequest = (path: string, options?: RequestInit) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const demoData: Record<Exclude<Section, "dashboard">, RecordValue[]> = {
   clients: [
-    { id: "1", nom: "SCI des Tilleuls", type: "ENTREPRISE", ville: "Tours", telephone: "02 47 18 24 60" },
-    { id: "2", nom: "Maison Bellanger", type: "PARTICULIER", ville: "Amboise", telephone: "06 12 45 78 90" },
-    { id: "3", nom: "Domaine de la Roche", type: "ENTREPRISE", ville: "Chinon", telephone: "02 47 93 11 08" },
+    {
+      id: "1",
+      nom: "SCI des Tilleuls",
+      type: "ENTREPRISE",
+      ville: "Tours",
+      telephone: "02 47 18 24 60",
+    },
+    {
+      id: "2",
+      nom: "Maison Bellanger",
+      type: "PARTICULIER",
+      ville: "Amboise",
+      telephone: "06 12 45 78 90",
+    },
+    {
+      id: "3",
+      nom: "Domaine de la Roche",
+      type: "ENTREPRISE",
+      ville: "Chinon",
+      telephone: "02 47 93 11 08",
+    },
   ],
   chantiers: [
-    { id: "1", reference: "CH-2026-0042", objet: "Réhabilitation corps de ferme", ville: "Chinon", statut: "EN_COURS", avancement: 68 },
-    { id: "2", reference: "CH-2026-0048", objet: "Reprise façade pierre & chaux", ville: "Tours", statut: "EN_COURS", avancement: 34 },
-    { id: "3", reference: "CH-2026-0051", objet: "Rénovation maison de maître", ville: "Loches", statut: "PREPARATION", avancement: 8 },
+    {
+      id: "1",
+      reference: "CH-2026-0042",
+      objet: "Réhabilitation corps de ferme",
+      ville: "Chinon",
+      statut: "EN_COURS",
+      avancement: 68,
+    },
+    {
+      id: "2",
+      reference: "CH-2026-0048",
+      objet: "Reprise façade pierre & chaux",
+      ville: "Tours",
+      statut: "EN_COURS",
+      avancement: 34,
+    },
+    {
+      id: "3",
+      reference: "CH-2026-0051",
+      objet: "Rénovation maison de maître",
+      ville: "Loches",
+      statut: "PREPARATION",
+      avancement: 8,
+    },
   ],
   devis: [
-    { id: "1", numero: "D-2026-0187", objet: "Maçonnerie et enduits chaux", totalTtc: 48720, statut: "ACCEPTE" },
-    { id: "2", numero: "D-2026-0192", objet: "Réfection charpente traditionnelle", totalTtc: 73240, statut: "ENVOYE" },
-    { id: "3", numero: "D-2026-0195", objet: "Travaux conservatoires", totalTtc: 18450, statut: "BROUILLON" },
+    {
+      id: "1",
+      numero: "D-2026-0187",
+      objet: "Maçonnerie et enduits chaux",
+      totalTtc: 48720,
+      statut: "ACCEPTE",
+    },
+    {
+      id: "2",
+      numero: "D-2026-0192",
+      objet: "Réfection charpente traditionnelle",
+      totalTtc: 73240,
+      statut: "ENVOYE",
+    },
+    {
+      id: "3",
+      numero: "D-2026-0195",
+      objet: "Travaux conservatoires",
+      totalTtc: 18450,
+      statut: "BROUILLON",
+    },
   ],
   factures: [
-    { id: "1", numero: "F-2026-0118", objet: "Situation n°3 — Corps de ferme", totalTtc: 32480, montantPaye: 32480, statut: "PAYEE" },
-    { id: "2", numero: "F-2026-0124", objet: "Acompte façade pierre", totalTtc: 14616, montantPaye: 0, statut: "ENVOYEE" },
-    { id: "3", numero: "F-2026-0128", objet: "Situation n°1 — Maison de maître", totalTtc: 22140, montantPaye: 0, statut: "BROUILLON" },
+    {
+      id: "1",
+      numero: "F-2026-0118",
+      objet: "Situation n°3 — Corps de ferme",
+      totalTtc: 32480,
+      montantPaye: 32480,
+      statut: "PAYEE",
+    },
+    {
+      id: "2",
+      numero: "F-2026-0124",
+      objet: "Acompte façade pierre",
+      totalTtc: 14616,
+      montantPaye: 0,
+      statut: "ENVOYEE",
+    },
+    {
+      id: "3",
+      numero: "F-2026-0128",
+      objet: "Situation n°1 — Maison de maître",
+      totalTtc: 22140,
+      montantPaye: 0,
+      statut: "BROUILLON",
+    },
   ],
   dpgf: [
-    { id: "1", numero: "DPGF-2026-0031", objet: "Corps de ferme — lot principal", totalHt: 142800, statut: "VALIDEE" },
-    { id: "2", numero: "DPGF-2026-0035", objet: "Maison de maître", totalHt: 86420, statut: "EN_COURS" },
+    {
+      id: "1",
+      numero: "DPGF-2026-0031",
+      objet: "Corps de ferme — lot principal",
+      totalHt: 142800,
+      statut: "VALIDEE",
+    },
+    {
+      id: "2",
+      numero: "DPGF-2026-0035",
+      objet: "Maison de maître",
+      totalHt: 86420,
+      statut: "EN_COURS",
+    },
   ],
   bibliotheque: [
-    { id: "1", reference: "MAC-CHX-001", designation: "Rejointoiement pierre à la chaux", unite: "m²", categorie: "Maçonnerie ancienne", debourseSec: 54.2, prixUnitaireHt: 82.6 },
-    { id: "2", reference: "CHA-CHN-014", designation: "Reprise de ferme en chêne", unite: "u", categorie: "Charpente", debourseSec: 1860, prixUnitaireHt: 2840 },
+    {
+      id: "1",
+      reference: "MAC-CHX-001",
+      designation: "Rejointoiement pierre à la chaux",
+      unite: "m²",
+      categorie: "Maçonnerie ancienne",
+      debourseSec: 54.2,
+      prixUnitaireHt: 82.6,
+    },
+    {
+      id: "2",
+      reference: "CHA-CHN-014",
+      designation: "Reprise de ferme en chêne",
+      unite: "u",
+      categorie: "Charpente",
+      debourseSec: 1860,
+      prixUnitaireHt: 2840,
+    },
   ],
 };
 
@@ -49,11 +170,25 @@ const nav: { id: Section; label: string; glyph: string }[] = [
 ];
 
 const endpoint: Record<Exclude<Section, "dashboard">, string> = {
-  clients: "/clients?limit=50", chantiers: "/chantiers?limit=50", devis: "/devis?limit=50", factures: "/factures?limit=50", dpgf: "/dpgf", bibliotheque: "/bibliotheque/ouvrages",
+  clients: "/clients?limit=50",
+  chantiers: "/chantiers?limit=50",
+  devis: "/devis?limit=50",
+  factures: "/factures?limit=50",
+  dpgf: "/dpgf",
+  bibliotheque: "/bibliotheque/ouvrages",
 };
 
-const euro = (value: unknown) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value ?? 0));
-const label = (value: unknown) => String(value ?? "—").replaceAll("_", " ").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
+const euro = (value: unknown) =>
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(Number(value ?? 0));
+const label = (value: unknown) =>
+  String(value ?? "—")
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/^./, (letter) => letter.toUpperCase());
 
 export default function KritiaApp() {
   const [section, setSection] = useState<Section>("dashboard");
@@ -73,8 +208,15 @@ export default function KritiaApp() {
       const savedUrl = window.localStorage.getItem("kritia-api-url");
       if (savedUrl) setApiUrl(savedUrl);
       const raw = window.sessionStorage.getItem("kritia-session");
-      if (raw) try { setSession(JSON.parse(raw)); } catch { window.sessionStorage.removeItem("kritia-session"); }
-      setResetToken(new URLSearchParams(window.location.search).get("resetToken") ?? "");
+      if (raw)
+        try {
+          setSession(JSON.parse(raw));
+        } catch {
+          window.sessionStorage.removeItem("kritia-session");
+        }
+      setResetToken(
+        new URLSearchParams(window.location.search).get("resetToken") ?? "",
+      );
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -90,135 +232,792 @@ export default function KritiaApp() {
   async function api(path: string, options: RequestInit = {}) {
     const response = await fetch(`${apiUrl.replace(/\/$/, "")}${path}`, {
       ...options,
-      headers: { "content-type": "application/json", ...(session?.accessToken ? { authorization: `Bearer ${session.accessToken}` } : {}), ...options.headers },
+      headers: {
+        "content-type": "application/json",
+        ...(session?.accessToken
+          ? { authorization: `Bearer ${session.accessToken}` }
+          : {}),
+        ...options.headers,
+      },
     });
     const body = await response.json().catch(() => ({}));
     if (response.status === 401 && session) {
       window.sessionStorage.removeItem("kritia-session");
-      setSession(null); setDemo(false); setSettingsOpen(false); setProfileMenuOpen(false);
-      throw new Error("Votre session a expiré. Reconnectez-vous pour continuer.");
+      setSession(null);
+      setDemo(false);
+      setSettingsOpen(false);
+      setProfileMenuOpen(false);
+      throw new Error(
+        "Votre session a expiré. Reconnectez-vous pour continuer.",
+      );
     }
-    if (!response.ok) throw new Error(Array.isArray(body.message) ? body.message.join(" · ") : body.message || `Erreur ${response.status}`);
+    if (!response.ok)
+      throw new Error(
+        Array.isArray(body.message)
+          ? body.message.join(" · ")
+          : body.message || `Erreur ${response.status}`,
+      );
     return body;
   }
 
   async function login(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     const form = new FormData(event.currentTarget);
     try {
       window.localStorage.setItem("kritia-api-url", apiUrl);
-      const result = await api("/auth/login", { method: "POST", body: JSON.stringify({ email: form.get("email"), password: form.get("password") }) });
-      const next = { accessToken: result.accessToken, user: result.user } as Session;
+      const result = await api("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: form.get("email"),
+          password: form.get("password"),
+        }),
+      });
+      const next = {
+        accessToken: result.accessToken,
+        user: result.user,
+      } as Session;
       window.sessionStorage.setItem("kritia-session", JSON.stringify(next));
       setSession(next);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Connexion impossible"); }
-    finally { setBusy(false); }
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Connexion impossible",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function register(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     const form = new FormData(event.currentTarget);
     const password = String(form.get("password") ?? "");
-    if (password !== String(form.get("passwordConfirmation") ?? "")) { setError("Les mots de passe ne correspondent pas."); setBusy(false); return; }
+    if (password !== String(form.get("passwordConfirmation") ?? "")) {
+      setError("Les mots de passe ne correspondent pas.");
+      setBusy(false);
+      return;
+    }
     try {
       window.localStorage.setItem("kritia-api-url", apiUrl);
-      const result = await api("/auth/register", { method: "POST", body: JSON.stringify({ email: form.get("email"), password, firstName: form.get("firstName"), lastName: form.get("lastName") }) });
-      const next = { accessToken: result.accessToken, user: result.user } as Session;
+      const result = await api("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: form.get("email"),
+          password,
+          firstName: form.get("firstName"),
+          lastName: form.get("lastName"),
+        }),
+      });
+      const next = {
+        accessToken: result.accessToken,
+        user: result.user,
+      } as Session;
       window.sessionStorage.setItem("kritia-session", JSON.stringify(next));
       setSession(next);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Inscription impossible"); }
-    finally { setBusy(false); }
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Inscription impossible",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function loadAll() {
-    setBusy(true); setError("");
-    const sections = Object.keys(endpoint) as (Exclude<Section, "dashboard">)[];
-    const results = await Promise.allSettled(sections.map((key) => api(endpoint[key])));
-    setData((current) => ({ ...current, ...Object.fromEntries(results.map((result, index) => [sections[index], result.status === "fulfilled" && Array.isArray(result.value) ? result.value : []])) }));
-    if (results.every((result) => result.status === "rejected")) setError("Aucune donnée accessible avec ce rôle. Vérifiez l’API et les autorisations.");
+    setBusy(true);
+    setError("");
+    const sections = Object.keys(endpoint) as Exclude<Section, "dashboard">[];
+    const results = await Promise.allSettled(
+      sections.map((key) => api(endpoint[key])),
+    );
+    setData((current) => ({
+      ...current,
+      ...Object.fromEntries(
+        results.map((result, index) => [
+          sections[index],
+          result.status === "fulfilled" && Array.isArray(result.value)
+            ? result.value
+            : [],
+        ]),
+      ),
+    }));
+    if (results.every((result) => result.status === "rejected"))
+      setError(
+        "Aucune donnée accessible avec ce rôle. Vérifiez l’API et les autorisations.",
+      );
     setBusy(false);
   }
 
-  function logout() { window.sessionStorage.removeItem("kritia-session"); setSession(null); setDemo(false); setSection("dashboard"); }
-  if (!session && !demo) return <Login apiUrl={apiUrl} setApiUrl={setApiUrl} login={login} register={register} request={api} resetToken={resetToken} demo={() => setDemo(true)} busy={busy} error={error} />;
+  function logout() {
+    window.sessionStorage.removeItem("kritia-session");
+    setSession(null);
+    setDemo(false);
+    setSection("dashboard");
+  }
+  if (!session && !demo)
+    return (
+      <Login
+        apiUrl={apiUrl}
+        setApiUrl={setApiUrl}
+        login={login}
+        register={register}
+        request={api}
+        resetToken={resetToken}
+        demo={() => setDemo(true)}
+        busy={busy}
+        error={error}
+      />
+    );
 
-  const currentUser = session?.user ?? { firstName: "Bruno", lastName: "Martin", role: "ADMIN" };
-  const title = settingsOpen ? "Paramètres" : nav.find((item) => item.id === section)?.label ?? "Vue d’ensemble";
+  const currentUser = session?.user ?? {
+    firstName: "Bruno",
+    lastName: "Martin",
+    role: "ADMIN",
+  };
+  const title = settingsOpen
+    ? "Paramètres"
+    : (nav.find((item) => item.id === section)?.label ?? "Vue d’ensemble");
 
   return (
     <main className="app-shell">
       <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
-        <div className="brand"><span className="brand-mark">K</span><span><span className="brand-name">KRITIA<small className="product-name">btp</small></span><small className="brand-tagline">PILOTAGE BTP</small></span></div>
+        <div className="brand">
+          <span className="brand-mark">K</span>
+          <span>
+            <span className="brand-name">
+              KRITIA<small className="product-name">btp</small>
+            </span>
+            <small className="brand-tagline">PILOTAGE BTP</small>
+          </span>
+        </div>
         <nav aria-label="Navigation principale">
           <p className="nav-caption">ESPACE DE TRAVAIL</p>
-          {nav.map((item) => <button key={item.id} className={!settingsOpen && section === item.id ? "active" : ""} onClick={() => { setSection(item.id); setSettingsOpen(false); setMenuOpen(false); setProfileMenuOpen(false); }}><span>{item.glyph}</span>{item.label}{item.id === "chantiers" && <b>{data.chantiers.length}</b>}</button>)}
+          {nav.map((item) => (
+            <button
+              key={item.id}
+              className={!settingsOpen && section === item.id ? "active" : ""}
+              onClick={() => {
+                setSection(item.id);
+                setSettingsOpen(false);
+                setMenuOpen(false);
+                setProfileMenuOpen(false);
+              }}
+            >
+              <span>{item.glyph}</span>
+              {item.label}
+              {item.id === "chantiers" && <b>{data.chantiers.length}</b>}
+            </button>
+          ))}
         </nav>
-        <div className="sidebar-foot"><div className="help-card"><span>?</span><strong>Besoin d’aide ?</strong><p>Consultez le guide KRITIA ou contactez votre administrateur.</p></div><div className="version">KRITIA V1 · environnement {demo ? "démo" : "connecté"}</div></div>
+        <div className="sidebar-foot">
+          <div className="help-card">
+            <span>?</span>
+            <strong>Besoin d’aide ?</strong>
+            <p>Consultez le guide KRITIA ou contactez votre administrateur.</p>
+          </div>
+          <div className="version">
+            KRITIA V1 · environnement {demo ? "démo" : "connecté"}
+          </div>
+        </div>
       </aside>
 
       <section className="workspace">
         <header className="topbar">
-          <button className="menu-toggle" aria-label="Ouvrir le menu" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-          <div><p className="eyebrow">Lundi 3 août 2026</p><h1>{title}</h1></div>
-          <div className="top-actions"><span className={`connection ${demo ? "demo" : ""}`}>{demo ? "Mode démonstration" : "API connectée"}</span><button className="notification" aria-label="Notifications">●</button><div className="profile-wrap"><button className="profile" aria-expanded={profileMenuOpen} onClick={() => setProfileMenuOpen((open) => !open)}><span>{String(currentUser.firstName ?? "K")[0]}{String(currentUser.lastName ?? "")[0]}</span><div><strong>{currentUser.firstName} {currentUser.lastName}</strong><small>{label(currentUser.role)}</small></div><i>{profileMenuOpen ? "⌃" : "⌄"}</i></button>{profileMenuOpen && <div className="profile-menu"><button onClick={() => { setSettingsOpen(true); setProfileMenuOpen(false); }}>◎ Mon profil</button><button onClick={() => { setSettingsOpen(true); setProfileMenuOpen(false); }}>⚙ Paramètres</button><span /><button className="logout-action" onClick={logout}>↪ Se déconnecter</button></div>}</div></div>
+          <button
+            className="menu-toggle"
+            aria-label="Ouvrir le menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            ☰
+          </button>
+          <div>
+            <p className="eyebrow">Lundi 3 août 2026</p>
+            <h1>{title}</h1>
+          </div>
+          <div className="top-actions">
+            <span className={`connection ${demo ? "demo" : ""}`}>
+              {demo ? "Mode démonstration" : "API connectée"}
+            </span>
+            <button className="notification" aria-label="Notifications">
+              ●
+            </button>
+            <div className="profile-wrap">
+              <button
+                className="profile"
+                aria-expanded={profileMenuOpen}
+                onClick={() => setProfileMenuOpen((open) => !open)}
+              >
+                <span>
+                  {String(currentUser.firstName ?? "K")[0]}
+                  {String(currentUser.lastName ?? "")[0]}
+                </span>
+                <div>
+                  <strong>
+                    {currentUser.firstName} {currentUser.lastName}
+                  </strong>
+                  <small>{label(currentUser.role)}</small>
+                </div>
+                <i>{profileMenuOpen ? "⌃" : "⌄"}</i>
+              </button>
+              {profileMenuOpen && (
+                <div className="profile-menu">
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      setProfileMenuOpen(false);
+                    }}
+                  >
+                    ◎ Mon profil
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      setProfileMenuOpen(false);
+                    }}
+                  >
+                    ⚙ Paramètres
+                  </button>
+                  <span />
+                  <button className="logout-action" onClick={logout}>
+                    ↪ Se déconnecter
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
 
         <div className="content">
-          {error && <div className="alert">{error}<button onClick={() => setError("")}>×</button></div>}
+          {error && (
+            <div className="alert">
+              {error}
+              <button onClick={() => setError("")}>×</button>
+            </div>
+          )}
           {busy && <div className="loading-line" />}
-          {settingsOpen ? <SettingsPage user={currentUser} demo={demo} request={api} /> : section === "dashboard" ? <Dashboard data={data} navigate={setSection} /> : section === "dpgf" ? <DpgfWorkspace rows={data.dpgf} chantiers={data.chantiers} demo={demo} request={api} refresh={loadAll} /> : <DataView section={section} rows={data[section]} data={data} demo={demo} request={api} refresh={loadAll} />}
+          {settingsOpen ? (
+            <SettingsPage user={currentUser} demo={demo} request={api} />
+          ) : section === "dashboard" ? (
+            <Dashboard data={data} navigate={setSection} />
+          ) : section === "dpgf" ? (
+            <DpgfWorkspace
+              rows={data.dpgf}
+              chantiers={data.chantiers}
+              demo={demo}
+              request={api}
+              refresh={loadAll}
+            />
+          ) : (
+            <DataView
+              section={section}
+              rows={data[section]}
+              data={data}
+              demo={demo}
+              request={api}
+              refresh={loadAll}
+            />
+          )}
         </div>
       </section>
     </main>
   );
 }
 
-function Login({ apiUrl, setApiUrl, login, register, request, resetToken, demo, busy, error }: { apiUrl: string; setApiUrl: (value: string) => void; login: (event: FormEvent<HTMLFormElement>) => void; register: (event: FormEvent<HTMLFormElement>) => void; request: ApiRequest; resetToken: string; demo: () => void; busy: boolean; error: string }) {
+function Login({
+  apiUrl,
+  setApiUrl,
+  login,
+  register,
+  request,
+  resetToken,
+  demo,
+  busy,
+  error,
+}: {
+  apiUrl: string;
+  setApiUrl: (value: string) => void;
+  login: (event: FormEvent<HTMLFormElement>) => void;
+  register: (event: FormEvent<HTMLFormElement>) => void;
+  request: ApiRequest;
+  resetToken: string;
+  demo: () => void;
+  busy: boolean;
+  error: string;
+}) {
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [resetCompleted, setResetCompleted] = useState(false);
   const [working, setWorking] = useState(false);
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
   async function forgot(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget); setWorking(true); setLocalError(""); setNotice("");
-    try { const result = await request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email: form.get("email") }) }); setNotice(result.message); }
-    catch (reason) { setLocalError(reason instanceof Error ? reason.message : "Demande impossible"); }
-    finally { setWorking(false); }
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setWorking(true);
+    setLocalError("");
+    setNotice("");
+    try {
+      const result = await request("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email: form.get("email") }),
+      });
+      setNotice(result.message);
+    } catch (reason) {
+      setLocalError(
+        reason instanceof Error ? reason.message : "Demande impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
   async function reset(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget); const password = String(form.get("password") ?? ""); setLocalError(""); setNotice("");
-    if (password !== String(form.get("passwordConfirmation") ?? "")) { setLocalError("Les mots de passe ne correspondent pas."); return; }
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const password = String(form.get("password") ?? "");
+    setLocalError("");
+    setNotice("");
+    if (password !== String(form.get("passwordConfirmation") ?? "")) {
+      setLocalError("Les mots de passe ne correspondent pas.");
+      return;
+    }
     setWorking(true);
-    try { const result = await request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token: resetToken, password }) }); window.history.replaceState({}, "", window.location.pathname); setNotice(result.message); setResetCompleted(true); setMode("login"); }
-    catch (reason) { setLocalError(reason instanceof Error ? reason.message : "Réinitialisation impossible"); }
-    finally { setWorking(false); }
+    try {
+      const result = await request("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token: resetToken, password }),
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+      setNotice(result.message);
+      setResetCompleted(true);
+      setMode("login");
+    } catch (reason) {
+      setLocalError(
+        reason instanceof Error
+          ? reason.message
+          : "Réinitialisation impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
   const activeMode = resetToken && !resetCompleted ? "reset" : mode;
-  const creating = activeMode === "register"; const forgotten = activeMode === "forgot"; const resetting = activeMode === "reset";
-  const submit = creating ? register : forgotten ? forgot : resetting ? reset : login;
-  return <main className="login-page"><section className="login-story"><div className="login-brand"><span>K</span> KRITIA</div><div className="story-copy"><p className="eyebrow light">CONSTRUIRE · PILOTER · TRANSMETTRE</p><h1>Le chantier avance.<br />Votre gestion aussi.</h1><p>De la première visite à la réception, gardez la maîtrise des coûts, des équipes et du bâti existant.</p><div className="story-stats"><span><strong>360°</strong>Vision chantier</span><span><strong>1 seul</strong>outil de pilotage</span><span><strong>100%</strong>orienté rénovation</span></div></div><p className="story-quote">« La précision du métré. La clarté du pilotage. »</p></section><section className="login-panel"><form onSubmit={submit}><p className="eyebrow">{creating ? "CRÉATION DE COMPTE" : forgotten ? "ACCÈS AU COMPTE" : resetting ? "NOUVEAU MOT DE PASSE" : "ESPACE SÉCURISÉ"}</p><h2>{creating ? "Rejoindre KRITIA" : forgotten ? "Mot de passe oublié" : resetting ? "Choisissez votre mot de passe" : "Bienvenue sur KRITIA"}</h2><p className="muted">{creating ? "Créez votre accès personnel à KRITIA btp." : forgotten ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes." : resetting ? "Le nouveau mot de passe remplacera immédiatement l’ancien." : "Connectez-vous à votre espace de gestion."}</p>{(error || localError) && <div className="form-error">{localError || error}</div>}{notice && <div className="form-notice">{notice}</div>}{creating && <div className="name-fields"><label>Prénom<input name="firstName" required autoComplete="given-name" /></label><label>Nom<input name="lastName" required autoComplete="family-name" /></label></div>}{!resetting && <label>Adresse e-mail<input name="email" type="email" placeholder="vous@entreprise.fr" required autoComplete="username" /></label>}{!forgotten && <label>Mot de passe<input name="password" type="password" placeholder="••••••••••••" required minLength={8} autoComplete={creating || resetting ? "new-password" : "current-password"} /></label>}{(creating || resetting) && <><p className="password-rule">8 caractères minimum, avec majuscule, minuscule et chiffre.</p><label>Confirmer le mot de passe<input name="passwordConfirmation" type="password" placeholder="••••••••••••" required minLength={8} autoComplete="new-password" /></label></>}<details><summary>Configuration de l’API</summary><label>Adresse de l’API<input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} type="url" required /></label></details><button className="primary" disabled={busy || working}>{busy || working ? "Traitement…" : creating ? "Créer mon compte" : forgotten ? "Envoyer le lien" : resetting ? "Enregistrer le nouveau mot de passe" : "Se connecter"}<span>→</span></button>{activeMode === "login" && <button className="auth-switch" type="button" onClick={() => { setMode("forgot"); setLocalError(""); setNotice(""); }}>Mot de passe oublié ?</button>}<button className="auth-switch" type="button" onClick={() => { setMode(activeMode === "register" ? "login" : activeMode === "login" ? "register" : "login"); setLocalError(""); setNotice(""); }}>{activeMode === "register" ? "J’ai déjà un compte" : activeMode === "login" ? "Créer un compte" : "Retour à la connexion"}</button>{activeMode === "login" && <><div className="or"><span>ou</span></div><button className="secondary" type="button" onClick={demo}>Découvrir avec les données de démonstration</button></>}<small className="secure-note">Les liens de réinitialisation sont temporaires et à usage unique.</small></form></section></main>;
+  const creating = activeMode === "register";
+  const forgotten = activeMode === "forgot";
+  const resetting = activeMode === "reset";
+  const submit = creating
+    ? register
+    : forgotten
+      ? forgot
+      : resetting
+        ? reset
+        : login;
+  return (
+    <main className="login-page">
+      <section className="login-story">
+        <div className="login-brand">
+          <span>K</span> KRITIA
+        </div>
+        <div className="story-copy">
+          <p className="eyebrow light">CONSTRUIRE · PILOTER · TRANSMETTRE</p>
+          <h1>
+            Le chantier avance.
+            <br />
+            Votre gestion aussi.
+          </h1>
+          <p>
+            De la première visite à la réception, gardez la maîtrise des coûts,
+            des équipes et du bâti existant.
+          </p>
+          <div className="story-stats">
+            <span>
+              <strong>360°</strong>Vision chantier
+            </span>
+            <span>
+              <strong>1 seul</strong>outil de pilotage
+            </span>
+            <span>
+              <strong>100%</strong>orienté rénovation
+            </span>
+          </div>
+        </div>
+        <p className="story-quote">
+          « La précision du métré. La clarté du pilotage. »
+        </p>
+      </section>
+      <section className="login-panel">
+        <form onSubmit={submit}>
+          <p className="eyebrow">
+            {creating
+              ? "CRÉATION DE COMPTE"
+              : forgotten
+                ? "ACCÈS AU COMPTE"
+                : resetting
+                  ? "NOUVEAU MOT DE PASSE"
+                  : "ESPACE SÉCURISÉ"}
+          </p>
+          <h2>
+            {creating
+              ? "Rejoindre KRITIA"
+              : forgotten
+                ? "Mot de passe oublié"
+                : resetting
+                  ? "Choisissez votre mot de passe"
+                  : "Bienvenue sur KRITIA"}
+          </h2>
+          <p className="muted">
+            {creating
+              ? "Créez votre accès personnel à KRITIA btp."
+              : forgotten
+                ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes."
+                : resetting
+                  ? "Le nouveau mot de passe remplacera immédiatement l’ancien."
+                  : "Connectez-vous à votre espace de gestion."}
+          </p>
+          {(error || localError) && (
+            <div className="form-error">{localError || error}</div>
+          )}
+          {notice && <div className="form-notice">{notice}</div>}
+          {creating && (
+            <div className="name-fields">
+              <label>
+                Prénom
+                <input name="firstName" required autoComplete="given-name" />
+              </label>
+              <label>
+                Nom
+                <input name="lastName" required autoComplete="family-name" />
+              </label>
+            </div>
+          )}
+          {!resetting && (
+            <label>
+              Adresse e-mail
+              <input
+                name="email"
+                type="email"
+                placeholder="vous@entreprise.fr"
+                required
+                autoComplete="username"
+              />
+            </label>
+          )}
+          {!forgotten && (
+            <label>
+              Mot de passe
+              <input
+                name="password"
+                type="password"
+                placeholder="••••••••••••"
+                required
+                minLength={8}
+                autoComplete={
+                  creating || resetting ? "new-password" : "current-password"
+                }
+              />
+            </label>
+          )}
+          {(creating || resetting) && (
+            <>
+              <p className="password-rule">
+                8 caractères minimum, avec majuscule, minuscule et chiffre.
+              </p>
+              <label>
+                Confirmer le mot de passe
+                <input
+                  name="passwordConfirmation"
+                  type="password"
+                  placeholder="••••••••••••"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </label>
+            </>
+          )}
+          <details>
+            <summary>Configuration de l’API</summary>
+            <label>
+              Adresse de l’API
+              <input
+                value={apiUrl}
+                onChange={(event) => setApiUrl(event.target.value)}
+                type="url"
+                required
+              />
+            </label>
+          </details>
+          <button className="primary" disabled={busy || working}>
+            {busy || working
+              ? "Traitement…"
+              : creating
+                ? "Créer mon compte"
+                : forgotten
+                  ? "Envoyer le lien"
+                  : resetting
+                    ? "Enregistrer le nouveau mot de passe"
+                    : "Se connecter"}
+            <span>→</span>
+          </button>
+          {activeMode === "login" && (
+            <button
+              className="auth-switch"
+              type="button"
+              onClick={() => {
+                setMode("forgot");
+                setLocalError("");
+                setNotice("");
+              }}
+            >
+              Mot de passe oublié ?
+            </button>
+          )}
+          <button
+            className="auth-switch"
+            type="button"
+            onClick={() => {
+              setMode(
+                activeMode === "register"
+                  ? "login"
+                  : activeMode === "login"
+                    ? "register"
+                    : "login",
+              );
+              setLocalError("");
+              setNotice("");
+            }}
+          >
+            {activeMode === "register"
+              ? "J’ai déjà un compte"
+              : activeMode === "login"
+                ? "Créer un compte"
+                : "Retour à la connexion"}
+          </button>
+          {activeMode === "login" && (
+            <>
+              <div className="or">
+                <span>ou</span>
+              </div>
+              <button className="secondary" type="button" onClick={demo}>
+                Découvrir avec les données de démonstration
+              </button>
+            </>
+          )}
+          <small className="secure-note">
+            Les liens de réinitialisation sont temporaires et à usage unique.
+          </small>
+        </form>
+      </section>
+    </main>
+  );
 }
 
-function SettingsPage({ user, demo, request }: { user: RecordValue; demo: boolean; request: ApiRequest }) {
+function SettingsPage({
+  user,
+  demo,
+  request,
+}: {
+  user: RecordValue;
+  demo: boolean;
+  request: ApiRequest;
+}) {
   const [view, setView] = useState<"overview" | "company">("overview");
   const groups = [
-    { title: "Mon compte", cards: [["▣", "Mon entreprise", "Identité et coordonnées"], ["♙", "Utilisateurs", "Équipe et droits d’accès"], ["▱", "Mon offre KRITIA", "Abonnement et services"]] },
-    { title: "Mon profil", cards: [["◎", "Mon profil", "Nom, e-mail et téléphone"], ["▣", "Sécurité", "Mot de passe et sessions"], ["⚙", "Préférences", "Affichage et notifications"], ["✉", "Envoi d’e-mails", "Expéditeur et modèles"]] },
-    { title: "Gestion de mes données", cards: [["⇩", "Importer mes données", "Clients, ouvrages et tarifs"], ["⇧", "Exporter mes données", "Archives et portabilité"]] },
-    { title: "Personnaliser KRITIA", cards: [["◉", "Modèles de documents", "Devis, factures et situations"], ["◇", "Extensions", "Services et intégrations"], ["⌁", "Automatisations", "Règles et workflows"]] },
+    {
+      title: "Mon compte",
+      cards: [
+        ["▣", "Mon entreprise", "Identité et coordonnées"],
+        ["♙", "Utilisateurs", "Équipe et droits d’accès"],
+        ["▱", "Mon offre KRITIA", "Abonnement et services"],
+      ],
+    },
+    {
+      title: "Mon profil",
+      cards: [
+        ["◎", "Mon profil", "Nom, e-mail et téléphone"],
+        ["▣", "Sécurité", "Mot de passe et sessions"],
+        ["⚙", "Préférences", "Affichage et notifications"],
+        ["✉", "Envoi d’e-mails", "Expéditeur et modèles"],
+      ],
+    },
+    {
+      title: "Gestion de mes données",
+      cards: [
+        ["⇩", "Importer mes données", "Clients, ouvrages et tarifs"],
+        ["⇧", "Exporter mes données", "Archives et portabilité"],
+      ],
+    },
+    {
+      title: "Personnaliser KRITIA",
+      cards: [
+        ["◉", "Modèles de documents", "Devis, factures et situations"],
+        ["◇", "Extensions", "Services et intégrations"],
+        ["⌁", "Automatisations", "Règles et workflows"],
+      ],
+    },
   ];
-  if (view === "company") return <CompanySettings demo={demo} request={request} back={() => setView("overview")} />;
-  return <section className="settings-page"><div className="settings-intro"><p className="eyebrow">COMPTE · CONFIGURATION</p><h2>Paramètres</h2><p>Retrouvez ici les informations de votre compte et les réglages de KRITIA btp.</p></div><div className="settings-layout"><div>{groups.map((group) => <section className="settings-group" key={group.title}><div className="settings-group-title"><h3>{group.title}</h3><i /></div><div className="settings-cards">{group.cards.map(([icon, title, description]) => <button type="button" className={`settings-card ${title === "Mon entreprise" ? "available" : "planned"}`} key={title} onClick={() => title === "Mon entreprise" && setView("company")}><span>{icon}</span><strong>{title}</strong><small>{description}</small>{title !== "Mon entreprise" && <em>À venir</em>}</button>)}</div></section>)}</div><aside className="account-summary"><div className="account-avatar">{String(user.firstName ?? "K")[0]}{String(user.lastName ?? "")[0]}</div><h3>{String(user.firstName ?? "")} {String(user.lastName ?? "")}</h3><p>{String(user.email ?? (demo ? "demonstration@getkritia.com" : ""))}</p><span className="role-pill">{label(user.role)}</span><div className="connected-user"><i /><div><small>Utilisateur connecté</small><strong>{String(user.firstName ?? "")} {String(user.lastName ?? "")}</strong></div></div></aside></div></section>;
+  if (view === "company")
+    return (
+      <CompanySettings
+        demo={demo}
+        request={request}
+        back={() => setView("overview")}
+      />
+    );
+  return (
+    <section className="settings-page">
+      <div className="settings-intro">
+        <p className="eyebrow">COMPTE · CONFIGURATION</p>
+        <h2>Paramètres</h2>
+        <p>
+          Retrouvez ici les informations de votre compte et les réglages de
+          KRITIA btp.
+        </p>
+      </div>
+      <div className="settings-layout">
+        <div>
+          {groups.map((group) => (
+            <section className="settings-group" key={group.title}>
+              <div className="settings-group-title">
+                <h3>{group.title}</h3>
+                <i />
+              </div>
+              <div className="settings-cards">
+                {group.cards.map(([icon, title, description]) => (
+                  <button
+                    type="button"
+                    className={`settings-card ${title === "Mon entreprise" ? "available" : "planned"}`}
+                    key={title}
+                    onClick={() =>
+                      title === "Mon entreprise" && setView("company")
+                    }
+                  >
+                    <span>{icon}</span>
+                    <strong>{title}</strong>
+                    <small>{description}</small>
+                    {title !== "Mon entreprise" && <em>À venir</em>}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+        <aside className="account-summary">
+          <div className="account-avatar">
+            {String(user.firstName ?? "K")[0]}
+            {String(user.lastName ?? "")[0]}
+          </div>
+          <h3>
+            {String(user.firstName ?? "")} {String(user.lastName ?? "")}
+          </h3>
+          <p>
+            {String(user.email ?? (demo ? "demonstration@getkritia.com" : ""))}
+          </p>
+          <span className="role-pill">{label(user.role)}</span>
+          <div className="connected-user">
+            <i />
+            <div>
+              <small>Utilisateur connecté</small>
+              <strong>
+                {String(user.firstName ?? "")} {String(user.lastName ?? "")}
+              </strong>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
 }
 
-const demoCompany: RecordValue = { raisonSociale: "KRITIA Démonstration", siret: "", siren: "", tvaIntra: "", adresse: "9 Grande Rue", codePostal: "51170", ville: "Brouillet", telephone: "", email: "demonstration@getkritia.com", siteWeb: "https://www.getkritia.com", logoUrl: "", couleurPrimary: "#2563eb", couleurSecondary: "#f59e0b", cgv: "Les présentes conditions générales encadrent les travaux décrits au devis accepté par le client." };
+const demoCompany: RecordValue = {
+  raisonSociale: "KRITIA Démonstration",
+  siret: "",
+  siren: "",
+  tvaIntra: "",
+  adresse: "9 Grande Rue",
+  codePostal: "51170",
+  ville: "Brouillet",
+  telephone: "",
+  email: "demonstration@getkritia.com",
+  siteWeb: "https://www.getkritia.com",
+  logoUrl: "",
+  couleurPrimary: "#2563eb",
+  couleurSecondary: "#f59e0b",
+  cgv: "Les présentes conditions générales encadrent les travaux décrits au devis accepté par le client.",
+};
 
-function CompanySettings({ demo, request, back }: { demo: boolean; request: ApiRequest; back: () => void }) {
-  const [tab, setTab] = useState<"company" | "insurance" | "numbering" | "vat">("company");
+function CompanySettings({
+  demo,
+  request,
+  back,
+}: {
+  demo: boolean;
+  request: ApiRequest;
+  back: () => void;
+}) {
+  const [tab, setTab] = useState<"company" | "insurance" | "numbering" | "vat">(
+    "company",
+  );
   const [company, setCompany] = useState<RecordValue>(demoCompany);
-  const [numbering, setNumbering] = useState<RecordValue[]>(demo ? [{ type: "devis", prefixe: "D-", format: "{PREFIX}{YYYY}-{NUMERO}", numeroActuel: 187 }, { type: "facture", prefixe: "F-", format: "{PREFIX}{YYYY}-{NUMERO}", numeroActuel: 128 }, { type: "chantier", prefixe: "CH-", format: "{PREFIX}{YYYY}-{NUMERO}", numeroActuel: 51 }] : []);
-  const [vatRates, setVatRates] = useState<RecordValue[]>(demo ? [{ id: "20", nom: "Taux normal", taux: 20, isDefault: true }, { id: "10", nom: "Taux intermédiaire rénovation", taux: 10, isDefault: false }, { id: "55", nom: "Taux réduit rénovation énergétique", taux: 5.5, isDefault: false }] : []);
-  const [insurances, setInsurances] = useState<RecordValue[]>(demo ? [{ id: "demo", type: "RC décennale", police: "DEMO-2026-01", compagnie: "Assureur Démonstration", dateDebut: "2026-01-01", dateFin: "2026-12-31", couverture: "Maçonnerie, pierre et enduits à la chaux" }] : []);
+  const [numbering, setNumbering] = useState<RecordValue[]>(
+    demo
+      ? [
+          {
+            type: "devis",
+            prefixe: "D-",
+            format: "{PREFIX}{YYYY}-{NUMERO}",
+            numeroActuel: 187,
+          },
+          {
+            type: "facture",
+            prefixe: "F-",
+            format: "{PREFIX}{YYYY}-{NUMERO}",
+            numeroActuel: 128,
+          },
+          {
+            type: "chantier",
+            prefixe: "CH-",
+            format: "{PREFIX}{YYYY}-{NUMERO}",
+            numeroActuel: 51,
+          },
+        ]
+      : [],
+  );
+  const [vatRates, setVatRates] = useState<RecordValue[]>(
+    demo
+      ? [
+          { id: "20", nom: "Taux normal", taux: 20, isDefault: true },
+          {
+            id: "10",
+            nom: "Taux intermédiaire rénovation",
+            taux: 10,
+            isDefault: false,
+          },
+          {
+            id: "55",
+            nom: "Taux réduit rénovation énergétique",
+            taux: 5.5,
+            isDefault: false,
+          },
+        ]
+      : [],
+  );
+  const [insurances, setInsurances] = useState<RecordValue[]>(
+    demo
+      ? [
+          {
+            id: "demo",
+            type: "RC décennale",
+            police: "DEMO-2026-01",
+            compagnie: "Assureur Démonstration",
+            dateDebut: "2026-01-01",
+            dateFin: "2026-12-31",
+            couverture: "Maçonnerie, pierre et enduits à la chaux",
+          },
+        ]
+      : [],
+  );
   const [loading, setLoading] = useState(!demo);
   const [saving, setSaving] = useState(false);
   const [checkingSiret, setCheckingSiret] = useState(false);
@@ -230,96 +1029,1044 @@ function CompanySettings({ demo, request, back }: { demo: boolean; request: ApiR
   useEffect(() => {
     if (demo) return;
     let active = true;
-    request("/parametres/entreprise").then((value) => { if (active && value) setCompany({ ...demoCompany, ...value }); }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Fiche entreprise inaccessible"); }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    request("/parametres/entreprise")
+      .then((value) => {
+        if (active && value) setCompany({ ...demoCompany, ...value });
+      })
+      .catch((reason) => {
+        if (active)
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Fiche entreprise inaccessible",
+          );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [demo, request]);
   useEffect(() => {
     if (demo) return;
-    if (tab === "numbering") request("/parametres/numerotations").then((value) => setNumbering(Array.isArray(value) ? value : [])).catch((reason) => setError(reason instanceof Error ? reason.message : "Numérotations inaccessibles"));
-    if (tab === "vat") request("/parametres/tva").then((value) => setVatRates(Array.isArray(value) ? value : [])).catch((reason) => setError(reason instanceof Error ? reason.message : "Taux de TVA inaccessibles"));
-    if (tab === "insurance") request("/parametres/assurances").then((value) => setInsurances(Array.isArray(value) ? value : [])).catch((reason) => setError(reason instanceof Error ? reason.message : "Assurances inaccessibles"));
+    if (tab === "numbering")
+      request("/parametres/numerotations")
+        .then((value) => setNumbering(Array.isArray(value) ? value : []))
+        .catch((reason) =>
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Numérotations inaccessibles",
+          ),
+        );
+    if (tab === "vat")
+      request("/parametres/tva")
+        .then((value) => setVatRates(Array.isArray(value) ? value : []))
+        .catch((reason) =>
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Taux de TVA inaccessibles",
+          ),
+        );
+    if (tab === "insurance")
+      request("/parametres/assurances")
+        .then((value) => setInsurances(Array.isArray(value) ? value : []))
+        .catch((reason) =>
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Assurances inaccessibles",
+          ),
+        );
   }, [demo, request, tab]);
-  const change = (key: string, value: string) => setCompany((current) => ({ ...current, [key]: value }));
+  const change = (key: string, value: string) =>
+    setCompany((current) => ({ ...current, [key]: value }));
   async function verifySiret() {
-    const siret = String(company.siret ?? '').replace(/\D/g, ''); setMessage(''); setError(''); setSiretVerified(false);
-    if (!/^\d{14}$/.test(siret)) { setError('Le SIRET doit contenir exactement 14 chiffres.'); return; }
+    const siret = String(company.siret ?? "").replace(/\D/g, "");
+    setMessage("");
+    setError("");
+    setSiretVerified(false);
+    if (!/^\d{14}$/.test(siret)) {
+      setError("Le SIRET doit contenir exactement 14 chiffres.");
+      return;
+    }
     setCheckingSiret(true);
     try {
-      const result = demo ? { company: { nom: 'Entreprise de démonstration', siret, siren: siret.slice(0, 9), adresse: '9 Grande Rue', codePostal: '51170', ville: 'Brouillet' } } : await request(`/clients/recherche/entreprises?siret=${siret}`);
+      const result = demo
+        ? {
+            company: {
+              nom: "Entreprise de démonstration",
+              siret,
+              siren: siret.slice(0, 9),
+              adresse: "9 Grande Rue",
+              codePostal: "51170",
+              ville: "Brouillet",
+            },
+          }
+        : await request(`/clients/recherche/entreprises?siret=${siret}`);
       const source = result.company ?? result.client;
-      if (!source) throw new Error('Aucune entreprise trouvée pour ce SIRET.');
-      setCompany((current) => ({ ...current, raisonSociale: source.nom ?? source.raisonSociale ?? current.raisonSociale, siret, siren: source.siren ?? siret.slice(0, 9), adresse: source.adresse ?? current.adresse, codePostal: source.codePostal ?? current.codePostal, ville: source.ville ?? current.ville }));
-      setSiretVerified(true); setMessage('SIRET vérifié : les coordonnées publiques ont été appliquées.');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Vérification du SIRET impossible'); }
-    finally { setCheckingSiret(false); }
+      if (!source) throw new Error("Aucune entreprise trouvée pour ce SIRET.");
+      setCompany((current) => ({
+        ...current,
+        raisonSociale:
+          source.nom ?? source.raisonSociale ?? current.raisonSociale,
+        siret,
+        siren: source.siren ?? siret.slice(0, 9),
+        adresse: source.adresse ?? current.adresse,
+        codePostal: source.codePostal ?? current.codePostal,
+        ville: source.ville ?? current.ville,
+      }));
+      setSiretVerified(true);
+      setMessage(
+        "SIRET vérifié : les coordonnées publiques ont été appliquées.",
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Vérification du SIRET impossible",
+      );
+    } finally {
+      setCheckingSiret(false);
+    }
   }
   async function verifyVat() {
-    const numero = String(company.tvaIntra ?? '').replace(/[\s.-]/g, '').toUpperCase(); setMessage(''); setError(''); setVatVerified(false);
-    if (!/^[A-Z]{2}[A-Z0-9]{2,14}$/.test(numero)) { setError('Le numéro de TVA doit commencer par le code pays, par exemple FR.'); return; }
+    const numero = String(company.tvaIntra ?? "")
+      .replace(/[\s.-]/g, "")
+      .toUpperCase();
+    setMessage("");
+    setError("");
+    setVatVerified(false);
+    if (!/^[A-Z]{2}[A-Z0-9]{2,14}$/.test(numero)) {
+      setError(
+        "Le numéro de TVA doit commencer par le code pays, par exemple FR.",
+      );
+      return;
+    }
     setCheckingVat(true);
-    try { const result = demo ? { valid: numero === 'FR40303265045', nom: 'Exemple VIES' } : await request('/parametres/tva/verifier', { method: 'POST', body: JSON.stringify({ numero }) }); if (!result.valid) throw new Error('Numéro de TVA invalide selon VIES.'); change('tvaIntra', numero); setVatVerified(true); setMessage(`TVA vérifiée par VIES${result.nom ? ` · ${result.nom}` : ''}.`); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : 'Vérification VIES impossible'); }
-    finally { setCheckingVat(false); }
+    try {
+      const result = demo
+        ? { valid: numero === "FR40303265045", nom: "Exemple VIES" }
+        : await request("/parametres/tva/verifier", {
+            method: "POST",
+            body: JSON.stringify({ numero }),
+          });
+      if (!result.valid) throw new Error("Numéro de TVA invalide selon VIES.");
+      change("tvaIntra", numero);
+      setVatVerified(true);
+      setMessage(
+        `TVA vérifiée par VIES${result.nom ? ` · ${result.nom}` : ""}.`,
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Vérification VIES impossible",
+      );
+    } finally {
+      setCheckingVat(false);
+    }
   }
   async function selectLogo(file?: File) {
-    if (!file) return; setMessage(''); setError('');
-    if (!file.type.startsWith('image/')) { setError('Le logo doit être un fichier image.'); return; }
-    try { const dataUrl = await resizeLogo(file); change('logoUrl', dataUrl); setMessage('Logo chargé et optimisé. Cliquez sur Enregistrer pour le conserver.'); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : 'Lecture du logo impossible'); }
+    if (!file) return;
+    setMessage("");
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("Le logo doit être un fichier image.");
+      return;
+    }
+    try {
+      const dataUrl = await resizeLogo(file);
+      change("logoUrl", dataUrl);
+      setMessage(
+        "Logo chargé et optimisé. Cliquez sur Enregistrer pour le conserver.",
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Lecture du logo impossible",
+      );
+    }
+  }
+  async function selectGeneratedLogo(dataUrl: string) {
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const optimized = await resizeLogo(
+        new File([blob], "logo-kritia.png", { type: blob.type || "image/png" }),
+      );
+      change("logoUrl", optimized);
+      setMessage(
+        "Logo IA retenu et optimisé. Cliquez sur Enregistrer pour le conserver.",
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Le logo généré ne peut pas être préparé.",
+      );
+    }
   }
   async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setMessage(""); setError("");
-    if (company.siret && !siretVerified) { setError('Vérifiez le SIRET avant d’enregistrer.'); return; }
-    if (company.tvaIntra && !vatVerified) { setError('Vérifiez le numéro de TVA avec VIES avant d’enregistrer.'); return; }
-    if (demo) { setMessage("Mode démonstration : aperçu modifié sans écriture dans la base."); return; }
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    if (company.siret && !siretVerified) {
+      setError("Vérifiez le SIRET avant d’enregistrer.");
+      return;
+    }
+    if (company.tvaIntra && !vatVerified) {
+      setError("Vérifiez le numéro de TVA avec VIES avant d’enregistrer.");
+      return;
+    }
+    if (demo) {
+      setMessage(
+        "Mode démonstration : aperçu modifié sans écriture dans la base.",
+      );
+      return;
+    }
     setSaving(true);
-    const allowed = ["raisonSociale", "siret", "siren", "tvaIntra", "adresse", "codePostal", "ville", "telephone", "email", "siteWeb", "logoUrl", "couleurPrimary", "couleurSecondary"];
-    const payload = Object.fromEntries(allowed.map((key) => [key, String(company[key] ?? "").trim()]).filter(([, value]) => value !== ""));
-    try { const saved = await request("/parametres/entreprise", { method: "PATCH", body: JSON.stringify(payload) }); setCompany({ ...demoCompany, ...saved }); setMessage("Les informations de l’entreprise sont enregistrées."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Enregistrement impossible"); }
-    finally { setSaving(false); }
+    const allowed = [
+      "raisonSociale",
+      "siret",
+      "siren",
+      "tvaIntra",
+      "adresse",
+      "codePostal",
+      "ville",
+      "telephone",
+      "email",
+      "siteWeb",
+      "logoUrl",
+      "couleurPrimary",
+      "couleurSecondary",
+    ];
+    const payload = Object.fromEntries(
+      allowed
+        .map((key) => [key, String(company[key] ?? "").trim()])
+        .filter(([, value]) => value !== ""),
+    );
+    try {
+      const saved = await request("/parametres/entreprise", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      setCompany({ ...demoCompany, ...saved });
+      setMessage("Les informations de l’entreprise sont enregistrées.");
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Enregistrement impossible",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
   async function saveNumbering(item: RecordValue) {
-    setMessage(""); setError("");
-    if (demo) { setMessage("Mode démonstration : numérotation modifiée uniquement dans cet aperçu."); return; }
-    try { const saved = await request(`/parametres/numerotations/${encodeURIComponent(String(item.type))}`, { method: "PATCH", body: JSON.stringify({ prefixe: String(item.prefixe ?? ""), format: String(item.format ?? "") }) }); setNumbering((rows) => rows.map((row) => row.type === saved.type ? saved : row)); setMessage(`Numérotation ${label(item.type)} enregistrée.`); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Enregistrement impossible"); }
+    setMessage("");
+    setError("");
+    if (demo) {
+      setMessage(
+        "Mode démonstration : numérotation modifiée uniquement dans cet aperçu.",
+      );
+      return;
+    }
+    try {
+      const saved = await request(
+        `/parametres/numerotations/${encodeURIComponent(String(item.type))}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            prefixe: String(item.prefixe ?? ""),
+            format: String(item.format ?? ""),
+          }),
+        },
+      );
+      setNumbering((rows) =>
+        rows.map((row) => (row.type === saved.type ? saved : row)),
+      );
+      setMessage(`Numérotation ${label(item.type)} enregistrée.`);
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Enregistrement impossible",
+      );
+    }
   }
   async function addVat(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setMessage(""); setError(""); const form = new FormData(event.currentTarget);
-    if (demo) { setMessage("Mode démonstration : aucun taux n’a été ajouté à la base."); return; }
-    try { const saved = await request("/parametres/tva", { method: "POST", body: JSON.stringify({ nom: form.get("nom"), taux: Number(form.get("taux")), isDefault: form.get("isDefault") === "on" }) }); setVatRates((rows) => [...rows, saved]); event.currentTarget.reset(); setMessage("Le taux de TVA a été ajouté."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Ajout impossible"); }
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    const form = new FormData(event.currentTarget);
+    if (demo) {
+      setMessage("Mode démonstration : aucun taux n’a été ajouté à la base.");
+      return;
+    }
+    try {
+      const saved = await request("/parametres/tva", {
+        method: "POST",
+        body: JSON.stringify({
+          nom: form.get("nom"),
+          taux: Number(form.get("taux")),
+          isDefault: form.get("isDefault") === "on",
+        }),
+      });
+      setVatRates((rows) => [...rows, saved]);
+      event.currentTarget.reset();
+      setMessage("Le taux de TVA a été ajouté.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Ajout impossible");
+    }
   }
   async function saveCgv() {
-    setMessage(""); setError("");
-    if (demo) { setMessage("Mode démonstration : les CGV ne sont pas enregistrées dans la base."); return; }
-    try { const saved = await request("/parametres/entreprise", { method: "PATCH", body: JSON.stringify({ cgv: String(company.cgv ?? "") }) }); setCompany((current) => ({ ...current, cgv: saved.cgv ?? "" })); setMessage("Les conditions générales de vente sont enregistrées."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Enregistrement des CGV impossible"); }
+    setMessage("");
+    setError("");
+    if (demo) {
+      setMessage(
+        "Mode démonstration : les CGV ne sont pas enregistrées dans la base.",
+      );
+      return;
+    }
+    try {
+      const saved = await request("/parametres/entreprise", {
+        method: "PATCH",
+        body: JSON.stringify({ cgv: String(company.cgv ?? "") }),
+      });
+      setCompany((current) => ({ ...current, cgv: saved.cgv ?? "" }));
+      setMessage("Les conditions générales de vente sont enregistrées.");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Enregistrement des CGV impossible",
+      );
+    }
   }
   async function addInsurance(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setMessage(""); setError(""); const form = new FormData(event.currentTarget); const payload = { type: form.get("type"), police: form.get("police"), compagnie: form.get("compagnie"), dateDebut: form.get("dateDebut"), dateFin: form.get("dateFin"), couverture: form.get("couverture") };
-    if (new Date(String(payload.dateFin)) < new Date(String(payload.dateDebut))) { setError("La date de fin doit être postérieure à la date de début."); return; }
-    if (demo) { setMessage("Mode démonstration : l’assurance n’est pas ajoutée à la base."); return; }
-    try { const saved = await request("/parametres/assurances", { method: "POST", body: JSON.stringify(payload) }); setInsurances((rows) => [...rows, saved]); event.currentTarget.reset(); setMessage("L’assurance a été ajoutée."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Ajout de l’assurance impossible"); }
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      type: form.get("type"),
+      police: form.get("police"),
+      compagnie: form.get("compagnie"),
+      dateDebut: form.get("dateDebut"),
+      dateFin: form.get("dateFin"),
+      couverture: form.get("couverture"),
+    };
+    if (
+      new Date(String(payload.dateFin)) < new Date(String(payload.dateDebut))
+    ) {
+      setError("La date de fin doit être postérieure à la date de début.");
+      return;
+    }
+    if (demo) {
+      setMessage(
+        "Mode démonstration : l’assurance n’est pas ajoutée à la base.",
+      );
+      return;
+    }
+    try {
+      const saved = await request("/parametres/assurances", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setInsurances((rows) => [...rows, saved]);
+      event.currentTarget.reset();
+      setMessage("L’assurance a été ajoutée.");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Ajout de l’assurance impossible",
+      );
+    }
   }
-  const fields: [string, string, string][] = [["raisonSociale", "Raison sociale", "KRITIA BTP"], ["siret", "SIRET", "14 chiffres"], ["siren", "SIREN", "9 chiffres"], ["tvaIntra", "TVA intracommunautaire", "FR…"], ["adresse", "Adresse", "Numéro et voie"], ["codePostal", "Code postal", "51170"], ["ville", "Ville", "Brouillet"], ["telephone", "Téléphone", "01 23 45 67 89"], ["email", "E-mail", "contact@entreprise.fr"], ["siteWeb", "Site internet", "https://…"], ["logoUrl", "Adresse du logo", "https://…"]];
-  const unavailable = ["Horaires", "Marges", "Comptes bancaires", "Autres paramètres", "Attestation"];
-  return <section className="settings-page company-settings"><div className="company-heading"><button type="button" className="secondary compact" onClick={back}>← Retour aux paramètres</button><div><p className="eyebrow">PARAMÈTRES · ENTREPRISE</p><h2>Mon entreprise</h2></div></div><nav className="company-tabs" aria-label="Paramètres de l’entreprise"><button type="button" className={tab === "company" ? "active" : ""} onClick={() => setTab("company")}>Mon entreprise</button><button type="button" className={tab === "insurance" ? "active" : ""} onClick={() => setTab("insurance")}>Assurances · CGV</button><button type="button" className={tab === "numbering" ? "active" : ""} onClick={() => setTab("numbering")}>Numérotation</button><button type="button" className={tab === "vat" ? "active" : ""} onClick={() => setTab("vat")}>TVA</button>{unavailable.map((item) => <button type="button" disabled key={item}>{item}<small>À venir</small></button>)}</nav>{error && <div className="form-error settings-feedback">{error}</div>}{message && <div className="form-notice settings-feedback">{message}</div>}{tab === "company" && (loading ? <div className="panel">Chargement de la fiche entreprise…</div> : <form className="company-form" onSubmit={save}><div className="company-form-grid"><section><h3>▣ Informations générales</h3><div className="company-fields">{fields.slice(0, 4).map(([key, title, placeholder]) => <label key={key}>{title}{key === "raisonSociale" && <b>*</b>}<div className={key === 'siret' || key === 'tvaIntra' ? 'verified-input' : ''}><input value={String(company[key] ?? "")} onChange={(event) => { change(key, event.target.value); if (key === 'siret') setSiretVerified(false); if (key === 'tvaIntra') setVatVerified(false); }} placeholder={placeholder} required={key === "raisonSociale"} />{key === 'siret' && <button type="button" onClick={() => void verifySiret()} disabled={checkingSiret}>{checkingSiret ? 'Contrôle…' : siretVerified ? '✓ Vérifié' : 'Vérifier'}</button>}{key === 'tvaIntra' && <button type="button" onClick={() => void verifyVat()} disabled={checkingVat}>{checkingVat ? 'VIES…' : vatVerified ? '✓ Valide' : 'Vérifier'}</button>}</div></label>)}</div></section><section><h3>⌂ Coordonnées</h3><div className="company-fields two-columns">{fields.slice(4, 9).map(([key, title, placeholder]) => <label className={key === "adresse" ? "full" : ""} key={key}>{title}<input type={key === "email" ? "email" : "text"} value={String(company[key] ?? "")} onChange={(event) => change(key, event.target.value)} placeholder={placeholder} /></label>)}</div></section><section><h3>◇ Identité visuelle</h3><div className="logo-uploader">{company.logoUrl ? <img src={String(company.logoUrl)} alt="Aperçu du logo de l’entreprise" /> : <div><strong>Votre logo</strong><small>PNG, JPEG ou WebP</small></div>}<label className="secondary compact">Choisir un fichier<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void selectLogo(event.target.files?.[0])} /></label>{company.logoUrl && <button type="button" className="auth-switch" onClick={() => change('logoUrl', '')}>Retirer le logo</button>}</div><div className="company-fields"><label>Site internet<input type="url" value={String(company.siteWeb ?? "")} onChange={(event) => change('siteWeb', event.target.value)} placeholder="https://…" /></label><div className="color-fields"><label>Couleur principale<input type="color" value={String(company.couleurPrimary ?? "#2563eb")} onChange={(event) => change("couleurPrimary", event.target.value)} /></label><label>Couleur secondaire<input type="color" value={String(company.couleurSecondary ?? "#f59e0b")} onChange={(event) => change("couleurSecondary", event.target.value)} /></label></div><div className="ai-logo-note"><strong>Création de logo assistée par IA</strong><span>Module en préparation : propositions, variantes et validation avant utilisation.</span><em>À venir</em></div></div></section></div><div className="company-save"><span>{demo ? "Aucun changement de démonstration ne sera conservé." : "Modification réservée aux administrateurs."}</span><button className="primary compact" disabled={saving}>{saving ? "Enregistrement…" : "✓ Enregistrer"}</button></div></form>)}{tab === "insurance" && <section className="parameter-workspace"><div className="parameter-intro"><h3>Assurances et conditions générales</h3><p>Centralisez les garanties de l’entreprise et le texte contractuel joint aux documents.</p></div><div className="insurance-layout"><div><div className="insurance-list">{insurances.length ? insurances.map((item) => <article key={String(item.id)}><div><strong>{String(item.type)}</strong><small>{String(item.compagnie)} · Police {String(item.police)}</small></div><span>Du {new Date(String(item.dateDebut)).toLocaleDateString('fr-FR')} au {new Date(String(item.dateFin)).toLocaleDateString('fr-FR')}</span><p>{String(item.couverture ?? 'Couverture non renseignée')}</p></article>) : <div className="empty"><h3>Aucune assurance enregistrée</h3></div>}</div><form className="insurance-form" onSubmit={addInsurance}><h3>Ajouter une assurance</h3><label>Type<input name="type" required placeholder="RC décennale" /></label><label>Compagnie<input name="compagnie" required /></label><label>Numéro de police<input name="police" required /></label><label>Début de validité<input name="dateDebut" type="date" required /></label><label>Fin de validité<input name="dateFin" type="date" required /></label><label className="full">Activités couvertes<textarea name="couverture" rows={3} placeholder="Maçonnerie, couverture, enduits…" /></label><button className="primary compact">＋ Ajouter l’assurance</button></form></div><div className="cgv-editor"><h3>Conditions générales de vente</h3><p>Ce texte pourra être repris dans les devis et documents commerciaux.</p><textarea value={String(company.cgv ?? '')} onChange={(event) => change('cgv', event.target.value)} rows={16} placeholder="Saisissez les conditions générales applicables…" /><button type="button" className="primary compact" onClick={() => void saveCgv()}>✓ Enregistrer les CGV</button></div></div></section>}{tab === "numbering" && <section className="parameter-workspace"><div className="parameter-intro"><h3>Numérotation des documents</h3><p>Définissez les préfixes et formats utilisés pour les prochains documents.</p></div><div className="numbering-list">{numbering.length ? numbering.map((item, index) => <article key={String(item.type)}><div><strong>{label(item.type)}</strong><small>Numéro actuel : {String(item.numeroActuel ?? 0)}</small></div><label>Préfixe<input value={String(item.prefixe ?? "")} onChange={(event) => setNumbering((rows) => rows.map((row, rowIndex) => rowIndex === index ? { ...row, prefixe: event.target.value } : row))} /></label><label>Format<input value={String(item.format ?? "")} onChange={(event) => setNumbering((rows) => rows.map((row, rowIndex) => rowIndex === index ? { ...row, format: event.target.value } : row))} /></label><button type="button" className="secondary compact" onClick={() => void saveNumbering(item)}>Enregistrer</button></article>) : <div className="empty"><h3>Aucune numérotation configurée</h3><p>Les lignes apparaîtront après leur initialisation côté serveur.</p></div>}</div></section>}{tab === "vat" && <section className="parameter-workspace"><div className="parameter-intro"><h3>Taux de TVA</h3><p>Consultez les taux disponibles et ajoutez ceux nécessaires à votre activité.</p></div><div className="vat-layout"><div className="vat-list">{vatRates.map((item) => <article key={String(item.id)}><strong>{Number(item.taux).toLocaleString("fr-FR")} %</strong><span>{String(item.nom)}</span>{Boolean(item.isDefault) && <em>Par défaut</em>}</article>)}</div><form className="vat-form" onSubmit={addVat}><h3>Ajouter un taux</h3><label>Intitulé<input name="nom" required placeholder="Ex. Taux réduit rénovation" /></label><label>Taux (%)<input name="taux" type="number" min="0" max="100" step="0.01" required /></label><label className="checkbox-line"><input name="isDefault" type="checkbox" /> Utiliser par défaut</label><button className="primary compact">＋ Ajouter le taux</button></form></div></section>}</section>;
+  const fields: [string, string, string][] = [
+    ["raisonSociale", "Raison sociale", "KRITIA BTP"],
+    ["siret", "SIRET", "14 chiffres"],
+    ["siren", "SIREN", "9 chiffres"],
+    ["tvaIntra", "TVA intracommunautaire", "FR…"],
+    ["adresse", "Adresse", "Numéro et voie"],
+    ["codePostal", "Code postal", "51170"],
+    ["ville", "Ville", "Brouillet"],
+    ["telephone", "Téléphone", "01 23 45 67 89"],
+    ["email", "E-mail", "contact@entreprise.fr"],
+    ["siteWeb", "Site internet", "https://…"],
+    ["logoUrl", "Adresse du logo", "https://…"],
+  ];
+  const unavailable = [
+    "Horaires",
+    "Marges",
+    "Comptes bancaires",
+    "Autres paramètres",
+    "Attestation",
+  ];
+  return (
+    <section className="settings-page company-settings">
+      <div className="company-heading">
+        <button type="button" className="secondary compact" onClick={back}>
+          ← Retour aux paramètres
+        </button>
+        <div>
+          <p className="eyebrow">PARAMÈTRES · ENTREPRISE</p>
+          <h2>Mon entreprise</h2>
+        </div>
+      </div>
+      <nav className="company-tabs" aria-label="Paramètres de l’entreprise">
+        <button
+          type="button"
+          className={tab === "company" ? "active" : ""}
+          onClick={() => setTab("company")}
+        >
+          Mon entreprise
+        </button>
+        <button
+          type="button"
+          className={tab === "insurance" ? "active" : ""}
+          onClick={() => setTab("insurance")}
+        >
+          Assurances · CGV
+        </button>
+        <button
+          type="button"
+          className={tab === "numbering" ? "active" : ""}
+          onClick={() => setTab("numbering")}
+        >
+          Numérotation
+        </button>
+        <button
+          type="button"
+          className={tab === "vat" ? "active" : ""}
+          onClick={() => setTab("vat")}
+        >
+          TVA
+        </button>
+        {unavailable.map((item) => (
+          <button type="button" disabled key={item}>
+            {item}
+            <small>À venir</small>
+          </button>
+        ))}
+      </nav>
+      {error && <div className="form-error settings-feedback">{error}</div>}
+      {message && (
+        <div className="form-notice settings-feedback">{message}</div>
+      )}
+      {tab === "company" &&
+        (loading ? (
+          <div className="panel">Chargement de la fiche entreprise…</div>
+        ) : (
+          <form className="company-form" onSubmit={save}>
+            <div className="company-form-grid">
+              <section>
+                <h3>▣ Informations générales</h3>
+                <div className="company-fields">
+                  {fields.slice(0, 4).map(([key, title, placeholder]) => (
+                    <label key={key}>
+                      {title}
+                      {key === "raisonSociale" && <b>*</b>}
+                      <div
+                        className={
+                          key === "siret" || key === "tvaIntra"
+                            ? "verified-input"
+                            : ""
+                        }
+                      >
+                        <input
+                          value={String(company[key] ?? "")}
+                          onChange={(event) => {
+                            change(key, event.target.value);
+                            if (key === "siret") setSiretVerified(false);
+                            if (key === "tvaIntra") setVatVerified(false);
+                          }}
+                          placeholder={placeholder}
+                          required={key === "raisonSociale"}
+                        />
+                        {key === "siret" && (
+                          <button
+                            type="button"
+                            onClick={() => void verifySiret()}
+                            disabled={checkingSiret}
+                          >
+                            {checkingSiret
+                              ? "Contrôle…"
+                              : siretVerified
+                                ? "✓ Vérifié"
+                                : "Vérifier"}
+                          </button>
+                        )}
+                        {key === "tvaIntra" && (
+                          <button
+                            type="button"
+                            onClick={() => void verifyVat()}
+                            disabled={checkingVat}
+                          >
+                            {checkingVat
+                              ? "VIES…"
+                              : vatVerified
+                                ? "✓ Valide"
+                                : "Vérifier"}
+                          </button>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </section>
+              <section>
+                <h3>⌂ Coordonnées</h3>
+                <div className="company-fields two-columns">
+                  {fields.slice(4, 9).map(([key, title, placeholder]) => (
+                    <label
+                      className={key === "adresse" ? "full" : ""}
+                      key={key}
+                    >
+                      {title}
+                      <input
+                        type={key === "email" ? "email" : "text"}
+                        value={String(company[key] ?? "")}
+                        onChange={(event) => change(key, event.target.value)}
+                        placeholder={placeholder}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </section>
+              <section>
+                <h3>◇ Identité visuelle</h3>
+                <div className="logo-uploader">
+                  {company.logoUrl ? (
+                    <img
+                      src={String(company.logoUrl)}
+                      alt="Aperçu du logo de l’entreprise"
+                    />
+                  ) : (
+                    <div>
+                      <strong>Votre logo</strong>
+                      <small>PNG, JPEG ou WebP</small>
+                    </div>
+                  )}
+                  <label className="secondary compact">
+                    Choisir un fichier
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) =>
+                        void selectLogo(event.target.files?.[0])
+                      }
+                    />
+                  </label>
+                  {company.logoUrl && (
+                    <button
+                      type="button"
+                      className="auth-switch"
+                      onClick={() => change("logoUrl", "")}
+                    >
+                      Retirer le logo
+                    </button>
+                  )}
+                </div>
+                <div className="company-fields">
+                  <label>
+                    Site internet
+                    <input
+                      type="url"
+                      value={String(company.siteWeb ?? "")}
+                      onChange={(event) =>
+                        change("siteWeb", event.target.value)
+                      }
+                      placeholder="https://…"
+                    />
+                  </label>
+                  <div className="color-fields">
+                    <label>
+                      Couleur principale
+                      <input
+                        type="color"
+                        value={String(company.couleurPrimary ?? "#2563eb")}
+                        onChange={(event) =>
+                          change("couleurPrimary", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      Couleur secondaire
+                      <input
+                        type="color"
+                        value={String(company.couleurSecondary ?? "#f59e0b")}
+                        onChange={(event) =>
+                          change("couleurSecondary", event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+                  <LogoAiStudio
+                    demo={demo}
+                    request={request}
+                    company={company}
+                    onSelect={(image) => void selectGeneratedLogo(image)}
+                  />
+                </div>
+              </section>
+            </div>
+            <div className="company-save">
+              <span>
+                {demo
+                  ? "Aucun changement de démonstration ne sera conservé."
+                  : "Modification réservée aux administrateurs."}
+              </span>
+              <button className="primary compact" disabled={saving}>
+                {saving ? "Enregistrement…" : "✓ Enregistrer"}
+              </button>
+            </div>
+          </form>
+        ))}
+      {tab === "insurance" && (
+        <section className="parameter-workspace">
+          <div className="parameter-intro">
+            <h3>Assurances et conditions générales</h3>
+            <p>
+              Centralisez les garanties de l’entreprise et le texte contractuel
+              joint aux documents.
+            </p>
+          </div>
+          <div className="insurance-layout">
+            <div>
+              <div className="insurance-list">
+                {insurances.length ? (
+                  insurances.map((item) => (
+                    <article key={String(item.id)}>
+                      <div>
+                        <strong>{String(item.type)}</strong>
+                        <small>
+                          {String(item.compagnie)} · Police{" "}
+                          {String(item.police)}
+                        </small>
+                      </div>
+                      <span>
+                        Du{" "}
+                        {new Date(String(item.dateDebut)).toLocaleDateString(
+                          "fr-FR",
+                        )}{" "}
+                        au{" "}
+                        {new Date(String(item.dateFin)).toLocaleDateString(
+                          "fr-FR",
+                        )}
+                      </span>
+                      <p>
+                        {String(item.couverture ?? "Couverture non renseignée")}
+                      </p>
+                    </article>
+                  ))
+                ) : (
+                  <div className="empty">
+                    <h3>Aucune assurance enregistrée</h3>
+                  </div>
+                )}
+              </div>
+              <form className="insurance-form" onSubmit={addInsurance}>
+                <h3>Ajouter une assurance</h3>
+                <label>
+                  Type
+                  <input name="type" required placeholder="RC décennale" />
+                </label>
+                <label>
+                  Compagnie
+                  <input name="compagnie" required />
+                </label>
+                <label>
+                  Numéro de police
+                  <input name="police" required />
+                </label>
+                <label>
+                  Début de validité
+                  <input name="dateDebut" type="date" required />
+                </label>
+                <label>
+                  Fin de validité
+                  <input name="dateFin" type="date" required />
+                </label>
+                <label className="full">
+                  Activités couvertes
+                  <textarea
+                    name="couverture"
+                    rows={3}
+                    placeholder="Maçonnerie, couverture, enduits…"
+                  />
+                </label>
+                <button className="primary compact">
+                  ＋ Ajouter l’assurance
+                </button>
+              </form>
+            </div>
+            <div className="cgv-editor">
+              <h3>Conditions générales de vente</h3>
+              <p>
+                Ce texte pourra être repris dans les devis et documents
+                commerciaux.
+              </p>
+              <textarea
+                value={String(company.cgv ?? "")}
+                onChange={(event) => change("cgv", event.target.value)}
+                rows={16}
+                placeholder="Saisissez les conditions générales applicables…"
+              />
+              <button
+                type="button"
+                className="primary compact"
+                onClick={() => void saveCgv()}
+              >
+                ✓ Enregistrer les CGV
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+      {tab === "numbering" && (
+        <section className="parameter-workspace">
+          <div className="parameter-intro">
+            <h3>Numérotation des documents</h3>
+            <p>
+              Définissez les préfixes et formats utilisés pour les prochains
+              documents.
+            </p>
+          </div>
+          <div className="numbering-list">
+            {numbering.length ? (
+              numbering.map((item, index) => (
+                <article key={String(item.type)}>
+                  <div>
+                    <strong>{label(item.type)}</strong>
+                    <small>
+                      Numéro actuel : {String(item.numeroActuel ?? 0)}
+                    </small>
+                  </div>
+                  <label>
+                    Préfixe
+                    <input
+                      value={String(item.prefixe ?? "")}
+                      onChange={(event) =>
+                        setNumbering((rows) =>
+                          rows.map((row, rowIndex) =>
+                            rowIndex === index
+                              ? { ...row, prefixe: event.target.value }
+                              : row,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    Format
+                    <input
+                      value={String(item.format ?? "")}
+                      onChange={(event) =>
+                        setNumbering((rows) =>
+                          rows.map((row, rowIndex) =>
+                            rowIndex === index
+                              ? { ...row, format: event.target.value }
+                              : row,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="secondary compact"
+                    onClick={() => void saveNumbering(item)}
+                  >
+                    Enregistrer
+                  </button>
+                </article>
+              ))
+            ) : (
+              <div className="empty">
+                <h3>Aucune numérotation configurée</h3>
+                <p>
+                  Les lignes apparaîtront après leur initialisation côté
+                  serveur.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+      {tab === "vat" && (
+        <section className="parameter-workspace">
+          <div className="parameter-intro">
+            <h3>Taux de TVA</h3>
+            <p>
+              Consultez les taux disponibles et ajoutez ceux nécessaires à votre
+              activité.
+            </p>
+          </div>
+          <div className="vat-layout">
+            <div className="vat-list">
+              {vatRates.map((item) => (
+                <article key={String(item.id)}>
+                  <strong>{Number(item.taux).toLocaleString("fr-FR")} %</strong>
+                  <span>{String(item.nom)}</span>
+                  {Boolean(item.isDefault) && <em>Par défaut</em>}
+                </article>
+              ))}
+            </div>
+            <form className="vat-form" onSubmit={addVat}>
+              <h3>Ajouter un taux</h3>
+              <label>
+                Intitulé
+                <input
+                  name="nom"
+                  required
+                  placeholder="Ex. Taux réduit rénovation"
+                />
+              </label>
+              <label>
+                Taux (%)
+                <input
+                  name="taux"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  required
+                />
+              </label>
+              <label className="checkbox-line">
+                <input name="isDefault" type="checkbox" /> Utiliser par défaut
+              </label>
+              <button className="primary compact">＋ Ajouter le taux</button>
+            </form>
+          </div>
+        </section>
+      )}
+    </section>
+  );
+}
+
+function LogoAiStudio({
+  demo,
+  request,
+  company,
+  onSelect,
+}: {
+  demo: boolean;
+  request: ApiRequest;
+  company: RecordValue;
+  onSelect: (image: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [configured, setConfigured] = useState<boolean | null>(
+    demo ? false : null,
+  );
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open || demo || configured !== null) return;
+    request("/parametres/logo/ia/status")
+      .then((result) => setConfigured(Boolean(result.configured)))
+      .catch(() => setConfigured(false));
+  }, [configured, demo, open, request]);
+
+  async function generate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (demo) {
+      setError("La création IA est désactivée dans le mode démonstration.");
+      return;
+    }
+    const form = new FormData(event.currentTarget);
+    setWorking(true);
+    setError("");
+    try {
+      const result = await request("/parametres/logo/ia/generer", {
+        method: "POST",
+        body: JSON.stringify({
+          raisonSociale: form.get("raisonSociale"),
+          activite: form.get("activite"),
+          style: form.get("style"),
+          slogan: form.get("slogan") || undefined,
+          couleurPrincipale: form.get("couleurPrincipale"),
+          couleurSecondaire: form.get("couleurSecondaire"),
+          symboles: form.get("symboles") || undefined,
+        }),
+      });
+      if (!result.image) throw new Error("Aucune proposition reçue.");
+      setImages((current) => [String(result.image), ...current].slice(0, 3));
+      setConfigured(true);
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Création impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <div className="ai-logo-studio">
+      <div className="ai-logo-intro">
+        <div>
+          <strong>Création de logo assistée par IA</strong>
+          <span>
+            Décrivez votre identité, générez jusqu’à trois pistes puis retenez
+            votre préférée.
+          </span>
+        </div>
+        <button
+          type="button"
+          className="secondary compact"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Fermer l’atelier" : "✦ Créer un logo"}
+        </button>
+      </div>
+      {open && (
+        <div className="ai-logo-workspace">
+          {configured === false && !demo && (
+            <div className="form-error">
+              Le service IA doit être activé sur le serveur avec une clé OpenAI.
+            </div>
+          )}
+          <form onSubmit={generate}>
+            <label>
+              Nom exact de l’entreprise
+              <input
+                name="raisonSociale"
+                required
+                minLength={2}
+                defaultValue={String(company.raisonSociale ?? "")}
+              />
+            </label>
+            <label>
+              Activité et spécialités
+              <textarea
+                name="activite"
+                required
+                minLength={3}
+                rows={3}
+                placeholder="Rénovation du bâti ancien, pierre, chaux…"
+              />
+            </label>
+            <div className="ai-logo-grid">
+              <label>
+                Style
+                <select name="style" defaultValue="moderne">
+                  <option value="moderne">Moderne</option>
+                  <option value="patrimoine">Patrimoine</option>
+                  <option value="minimaliste">Minimaliste</option>
+                  <option value="premium">Premium</option>
+                  <option value="artisanal">Artisanal</option>
+                </select>
+              </label>
+              <label>
+                Slogan facultatif
+                <input
+                  name="slogan"
+                  maxLength={100}
+                  placeholder="Bâtir, rénover, transmettre"
+                />
+              </label>
+              <label>
+                Couleur principale
+                <input
+                  name="couleurPrincipale"
+                  type="color"
+                  defaultValue={String(company.couleurPrimary ?? "#2563eb")}
+                />
+              </label>
+              <label>
+                Couleur secondaire
+                <input
+                  name="couleurSecondaire"
+                  type="color"
+                  defaultValue={String(company.couleurSecondary ?? "#f59e0b")}
+                />
+              </label>
+            </div>
+            <label>
+              Symboles ou idées facultatives
+              <input
+                name="symboles"
+                maxLength={160}
+                placeholder="Monogramme, pierre, maison ancienne…"
+              />
+            </label>
+            <div className="ai-logo-actions">
+              <small>
+                Chaque clic crée une nouvelle image et utilise le crédit de
+                votre compte IA.
+              </small>
+              <button
+                className="primary compact"
+                disabled={working || configured === false}
+              >
+                {working
+                  ? "Création en cours… (jusqu’à 2 min)"
+                  : "✦ Générer une proposition"}
+              </button>
+            </div>
+          </form>
+          {error && <div className="form-error">{error}</div>}
+          {images.length > 0 && (
+            <div className="ai-logo-results">
+              {images.map((image, index) => (
+                <article key={`${image.slice(-24)}-${index}`}>
+                  <img
+                    src={image}
+                    alt={`Proposition de logo IA ${index + 1}`}
+                  />
+                  <button
+                    type="button"
+                    className="secondary compact"
+                    onClick={() => onSelect(image)}
+                  >
+                    Utiliser ce logo
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function resizeLogo(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Impossible de lire ce fichier.'));
+    reader.onerror = () => reject(new Error("Impossible de lire ce fichier."));
     reader.onload = () => {
       const image = new Image();
-      image.onerror = () => reject(new Error('Le fichier image est invalide.'));
+      image.onerror = () => reject(new Error("Le fichier image est invalide."));
       image.onload = () => {
-        const scale = Math.min(1, 700 / image.width, 350 / image.height); const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale)); const context = canvas.getContext('2d'); if (!context) return reject(new Error('Traitement du logo indisponible.')); context.clearRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        let quality = .86; let output = canvas.toDataURL('image/webp', quality); while (output.length > 70000 && quality > .35) { quality -= .1; output = canvas.toDataURL('image/webp', quality); }
-        if (output.length > 90000) return reject(new Error('Le logo reste trop volumineux après optimisation. Choisissez une image plus simple.')); resolve(output);
+        const scale = Math.min(1, 700 / image.width, 350 / image.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context)
+          return reject(new Error("Traitement du logo indisponible."));
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        let quality = 0.86;
+        let output = canvas.toDataURL("image/webp", quality);
+        while (output.length > 70000 && quality > 0.35) {
+          quality -= 0.1;
+          output = canvas.toDataURL("image/webp", quality);
+        }
+        if (output.length > 90000)
+          return reject(
+            new Error(
+              "Le logo reste trop volumineux après optimisation. Choisissez une image plus simple.",
+            ),
+          );
+        resolve(output);
       };
       image.src = String(reader.result);
     };
@@ -327,33 +2074,366 @@ function resizeLogo(file: File): Promise<string> {
   });
 }
 
-function Dashboard({ data, navigate }: { data: typeof demoData; navigate: (section: Section) => void }) {
-  const pipeline = data.devis.reduce((sum, item) => sum + Number(item.totalTtc ?? 0), 0);
-  const invoiced = data.factures.reduce((sum, item) => sum + Number(item.totalTtc ?? 0), 0);
-  const paid = data.factures.reduce((sum, item) => sum + Number(item.montantPaye ?? 0), 0);
-  return <><section className="hero-row"><div><p className="eyebrow">SYNTHÈSE DE L’ACTIVITÉ</p><h2>Bonjour, prêt pour une nouvelle journée&nbsp;?</h2><p>Voici les points qui méritent votre attention.</p></div><button className="primary compact" onClick={() => navigate("devis")}>＋ Nouveau devis</button></section><section className="kpi-grid"><Kpi label="Chantiers actifs" value={data.chantiers.filter((item) => item.statut === "EN_COURS").length} note={`${data.chantiers.length} au total`} accent="orange" /><Kpi label="Devis en portefeuille" value={euro(pipeline)} note={`${data.devis.length} opportunités`} /><Kpi label="Facturé" value={euro(invoiced)} note={`${euro(paid)} encaissé`} /><Kpi label="Reste à encaisser" value={euro(invoiced - paid)} note="À suivre cette semaine" accent="dark" /></section><section className="dashboard-grid"><div className="panel wide"><PanelTitle title="Avancement des chantiers" action="Voir tous" onClick={() => navigate("chantiers")} />{data.chantiers.slice(0, 4).map((item) => <div className="project-line" key={String(item.id)}><div className="project-icon">{String(item.objet ?? "C")[0]}</div><div className="project-name"><strong>{String(item.objet)}</strong><small>{String(item.reference ?? item.ville ?? "Chantier")}</small></div><div className="progress"><span><i style={{ width: `${Number(item.avancement ?? 0)}%` }} /></span><b>{Number(item.avancement ?? 0)}%</b></div><Status value={item.statut} /></div>)}</div><div className="panel"><PanelTitle title="À traiter" action="Tout voir" /><div className="todo-list"><Todo tone="red" title="2 factures à relancer" text="Échéance dépassée" /><Todo tone="orange" title="3 devis en attente" text="Depuis plus de 7 jours" /><Todo tone="blue" title="Réception à préparer" text="Corps de ferme · 12 août" /><Todo tone="green" title="Attestation reçue" text="Sous-traitant validé" /></div></div><div className="panel wide"><PanelTitle title="Activité commerciale" action="Ouvrir les devis" onClick={() => navigate("devis")} /><div className="chart"><div className="chart-scale"><span>80k</span><span>60k</span><span>40k</span><span>20k</span><span>0</span></div><div className="bars">{[42,58,38,72,64,86,68,91,75,82,60,88].map((height, index) => <div key={index}><i style={{ height: `${height}%` }} /><small>{["S36","S37","S38","S39","S40","S41","S42","S43","S44","S45","S46","S47"][index]}</small></div>)}</div></div></div><div className="panel"><PanelTitle title="Marge prévisionnelle" /><div className="margin-donut"><div><strong>28,4%</strong><span>marge moyenne</span></div></div><div className="legend"><span><i className="orange-dot" />Marge brute <b>{euro(82400)}</b></span><span><i />Déboursé <b>{euro(207700)}</b></span></div></div></section></>;
+function Dashboard({
+  data,
+  navigate,
+}: {
+  data: typeof demoData;
+  navigate: (section: Section) => void;
+}) {
+  const pipeline = data.devis.reduce(
+    (sum, item) => sum + Number(item.totalTtc ?? 0),
+    0,
+  );
+  const invoiced = data.factures.reduce(
+    (sum, item) => sum + Number(item.totalTtc ?? 0),
+    0,
+  );
+  const paid = data.factures.reduce(
+    (sum, item) => sum + Number(item.montantPaye ?? 0),
+    0,
+  );
+  return (
+    <>
+      <section className="hero-row">
+        <div>
+          <p className="eyebrow">SYNTHÈSE DE L’ACTIVITÉ</p>
+          <h2>Bonjour, prêt pour une nouvelle journée&nbsp;?</h2>
+          <p>Voici les points qui méritent votre attention.</p>
+        </div>
+        <button className="primary compact" onClick={() => navigate("devis")}>
+          ＋ Nouveau devis
+        </button>
+      </section>
+      <section className="kpi-grid">
+        <Kpi
+          label="Chantiers actifs"
+          value={
+            data.chantiers.filter((item) => item.statut === "EN_COURS").length
+          }
+          note={`${data.chantiers.length} au total`}
+          accent="orange"
+        />
+        <Kpi
+          label="Devis en portefeuille"
+          value={euro(pipeline)}
+          note={`${data.devis.length} opportunités`}
+        />
+        <Kpi
+          label="Facturé"
+          value={euro(invoiced)}
+          note={`${euro(paid)} encaissé`}
+        />
+        <Kpi
+          label="Reste à encaisser"
+          value={euro(invoiced - paid)}
+          note="À suivre cette semaine"
+          accent="dark"
+        />
+      </section>
+      <section className="dashboard-grid">
+        <div className="panel wide">
+          <PanelTitle
+            title="Avancement des chantiers"
+            action="Voir tous"
+            onClick={() => navigate("chantiers")}
+          />
+          {data.chantiers.slice(0, 4).map((item) => (
+            <div className="project-line" key={String(item.id)}>
+              <div className="project-icon">{String(item.objet ?? "C")[0]}</div>
+              <div className="project-name">
+                <strong>{String(item.objet)}</strong>
+                <small>
+                  {String(item.reference ?? item.ville ?? "Chantier")}
+                </small>
+              </div>
+              <div className="progress">
+                <span>
+                  <i style={{ width: `${Number(item.avancement ?? 0)}%` }} />
+                </span>
+                <b>{Number(item.avancement ?? 0)}%</b>
+              </div>
+              <Status value={item.statut} />
+            </div>
+          ))}
+        </div>
+        <div className="panel">
+          <PanelTitle title="À traiter" action="Tout voir" />
+          <div className="todo-list">
+            <Todo
+              tone="red"
+              title="2 factures à relancer"
+              text="Échéance dépassée"
+            />
+            <Todo
+              tone="orange"
+              title="3 devis en attente"
+              text="Depuis plus de 7 jours"
+            />
+            <Todo
+              tone="blue"
+              title="Réception à préparer"
+              text="Corps de ferme · 12 août"
+            />
+            <Todo
+              tone="green"
+              title="Attestation reçue"
+              text="Sous-traitant validé"
+            />
+          </div>
+        </div>
+        <div className="panel wide">
+          <PanelTitle
+            title="Activité commerciale"
+            action="Ouvrir les devis"
+            onClick={() => navigate("devis")}
+          />
+          <div className="chart">
+            <div className="chart-scale">
+              <span>80k</span>
+              <span>60k</span>
+              <span>40k</span>
+              <span>20k</span>
+              <span>0</span>
+            </div>
+            <div className="bars">
+              {[42, 58, 38, 72, 64, 86, 68, 91, 75, 82, 60, 88].map(
+                (height, index) => (
+                  <div key={index}>
+                    <i style={{ height: `${height}%` }} />
+                    <small>
+                      {
+                        [
+                          "S36",
+                          "S37",
+                          "S38",
+                          "S39",
+                          "S40",
+                          "S41",
+                          "S42",
+                          "S43",
+                          "S44",
+                          "S45",
+                          "S46",
+                          "S47",
+                        ][index]
+                      }
+                    </small>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="panel">
+          <PanelTitle title="Marge prévisionnelle" />
+          <div className="margin-donut">
+            <div>
+              <strong>28,4%</strong>
+              <span>marge moyenne</span>
+            </div>
+          </div>
+          <div className="legend">
+            <span>
+              <i className="orange-dot" />
+              Marge brute <b>{euro(82400)}</b>
+            </span>
+            <span>
+              <i />
+              Déboursé <b>{euro(207700)}</b>
+            </span>
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }
 
-function DataView({ section, rows, data, demo, request, refresh }: { section: Exclude<Section, "dashboard" | "dpgf">; rows: RecordValue[]; data: typeof demoData; demo: boolean; request: ApiRequest; refresh: () => void }) {
+function DataView({
+  section,
+  rows,
+  data,
+  demo,
+  request,
+  refresh,
+}: {
+  section: Exclude<Section, "dashboard" | "dpgf">;
+  rows: RecordValue[];
+  data: typeof demoData;
+  demo: boolean;
+  request: ApiRequest;
+  refresh: () => void;
+}) {
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<RecordValue | null>(null);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
-  const config = { clients: ["nom", "type", "ville", "telephone"], chantiers: ["reference", "objet", "ville", "statut", "avancement"], devis: ["numero", "objet", "totalTtc", "statut"], factures: ["numero", "objet", "totalTtc", "montantPaye", "statut"], bibliotheque: ["reference", "designation", "unite", "categorie", "debourseSec", "prixUnitaireHt"] }[section];
-  const filtered = rows.filter((row) => !search || Object.values(row).some((value) => String(value ?? "").toLowerCase().includes(search.toLowerCase())));
-  return <><section className="hero-row"><div><p className="eyebrow">GESTION · {section.toUpperCase()}</p><h2>{nav.find((item) => item.id === section)?.label}</h2><p>{rows.length} élément{rows.length > 1 ? "s" : ""} dans votre périmètre.</p></div><div className="view-actions"><button className="secondary compact" onClick={refresh}>↻ Actualiser</button><button className="primary compact" onClick={() => setCreating(true)}>＋ Ajouter</button></div></section>{message && <div className="alert">{message}<button onClick={() => setMessage("")}>×</button></div>}<section className="panel table-panel"><div className="table-toolbar"><label>⌕<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Rechercher dans ${section}…`} /></label><span className="toolbar-count">{filtered.length} résultat{filtered.length > 1 ? "s" : ""}</span></div>{filtered.length ? <div className="table-scroll"><table><thead><tr>{config.map((key) => <th key={key}>{label(key)}</th>)}<th /></tr></thead><tbody>{filtered.map((row, index) => <tr key={String(row.id ?? index)} onClick={() => setSelected(row)} className="clickable-row">{config.map((key) => <td key={key}>{key === "statut" ? <Status value={row[key]} /> : key.toLowerCase().includes("total") || key === "montantPaye" || key === "debourseSec" || key === "prixUnitaireHt" ? <strong>{euro(row[key])}</strong> : key === "avancement" ? <span className="mini-progress"><i style={{ width: `${Number(row[key])}%` }} />{String(row[key])}%</span> : String(row[key] ?? "—")}</td>)}<td><button className="row-action" aria-label="Ouvrir la fiche">→</button></td></tr>)}</tbody></table></div> : <div className="empty"><span>◇</span><h3>Aucune donnée accessible</h3><p>Ajoutez un premier élément ou vérifiez le périmètre de votre rôle.</p></div>}</section>{creating && <CreateEntityDialog section={section} data={data} demo={demo} request={request} close={() => setCreating(false)} done={async (text) => { setCreating(false); setMessage(text); await refresh(); }} />}{selected && <EntityDetail section={section} row={selected} close={() => setSelected(null)} />}</>;
+  const config = {
+    clients: ["nom", "type", "ville", "telephone"],
+    chantiers: ["reference", "objet", "ville", "statut", "avancement"],
+    devis: ["numero", "objet", "totalTtc", "statut"],
+    factures: ["numero", "objet", "totalTtc", "montantPaye", "statut"],
+    bibliotheque: [
+      "reference",
+      "designation",
+      "unite",
+      "categorie",
+      "debourseSec",
+      "prixUnitaireHt",
+    ],
+  }[section];
+  const filtered = rows.filter(
+    (row) =>
+      !search ||
+      Object.values(row).some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      ),
+  );
+  return (
+    <>
+      <section className="hero-row">
+        <div>
+          <p className="eyebrow">GESTION · {section.toUpperCase()}</p>
+          <h2>{nav.find((item) => item.id === section)?.label}</h2>
+          <p>
+            {rows.length} élément{rows.length > 1 ? "s" : ""} dans votre
+            périmètre.
+          </p>
+        </div>
+        <div className="view-actions">
+          <button className="secondary compact" onClick={refresh}>
+            ↻ Actualiser
+          </button>
+          <button className="primary compact" onClick={() => setCreating(true)}>
+            ＋ Ajouter
+          </button>
+        </div>
+      </section>
+      {message && (
+        <div className="alert">
+          {message}
+          <button onClick={() => setMessage("")}>×</button>
+        </div>
+      )}
+      <section className="panel table-panel">
+        <div className="table-toolbar">
+          <label>
+            ⌕
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={`Rechercher dans ${section}…`}
+            />
+          </label>
+          <span className="toolbar-count">
+            {filtered.length} résultat{filtered.length > 1 ? "s" : ""}
+          </span>
+        </div>
+        {filtered.length ? (
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  {config.map((key) => (
+                    <th key={key}>{label(key)}</th>
+                  ))}
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((row, index) => (
+                  <tr
+                    key={String(row.id ?? index)}
+                    onClick={() => setSelected(row)}
+                    className="clickable-row"
+                  >
+                    {config.map((key) => (
+                      <td key={key}>
+                        {key === "statut" ? (
+                          <Status value={row[key]} />
+                        ) : key.toLowerCase().includes("total") ||
+                          key === "montantPaye" ||
+                          key === "debourseSec" ||
+                          key === "prixUnitaireHt" ? (
+                          <strong>{euro(row[key])}</strong>
+                        ) : key === "avancement" ? (
+                          <span className="mini-progress">
+                            <i style={{ width: `${Number(row[key])}%` }} />
+                            {String(row[key])}%
+                          </span>
+                        ) : (
+                          String(row[key] ?? "—")
+                        )}
+                      </td>
+                    ))}
+                    <td>
+                      <button
+                        className="row-action"
+                        aria-label="Ouvrir la fiche"
+                      >
+                        →
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty">
+            <span>◇</span>
+            <h3>Aucune donnée accessible</h3>
+            <p>
+              Ajoutez un premier élément ou vérifiez le périmètre de votre rôle.
+            </p>
+          </div>
+        )}
+      </section>
+      {creating && (
+        <CreateEntityDialog
+          section={section}
+          data={data}
+          demo={demo}
+          request={request}
+          close={() => setCreating(false)}
+          done={async (text) => {
+            setCreating(false);
+            setMessage(text);
+            await refresh();
+          }}
+        />
+      )}
+      {selected && (
+        <EntityDetail
+          section={section}
+          row={selected}
+          close={() => setSelected(null)}
+        />
+      )}
+    </>
+  );
 }
 
 type CrudSection = Exclude<Section, "dashboard" | "dpgf">;
 
-type AddressSuggestion = { label: string; adresse: string; codePostal: string; ville: string };
+type AddressSuggestion = {
+  label: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+};
 
-async function publicAddressSearch(query: string): Promise<AddressSuggestion[]> {
+async function publicAddressSearch(
+  query: string,
+): Promise<AddressSuggestion[]> {
   const url = new URL("https://data.geopf.fr/geocodage/completion");
   url.searchParams.set("text", query);
   url.searchParams.set("maximumResponses", "6");
   const response = await fetch(url);
-  if (!response.ok) throw new Error("Le service national des adresses est indisponible.");
+  if (!response.ok)
+    throw new Error("Le service national des adresses est indisponible.");
   const payload = await response.json();
   return (payload.results ?? []).map((item: RecordValue) => ({
     label: String(item.fulltext ?? ""),
@@ -364,12 +2444,20 @@ async function publicAddressSearch(query: string): Promise<AddressSuggestion[]> 
 }
 
 async function publicCompanySearch(siret: string) {
-  const response = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${encodeURIComponent(siret)}&per_page=1`);
-  if (!response.ok) throw new Error("Le registre public des entreprises est indisponible.");
+  const response = await fetch(
+    `https://recherche-entreprises.api.gouv.fr/search?q=${encodeURIComponent(siret)}&per_page=1`,
+  );
+  if (!response.ok)
+    throw new Error("Le registre public des entreprises est indisponible.");
   const payload = await response.json();
   const company = payload.results?.[0];
   if (!company) throw new Error("Aucune entreprise trouvée pour ce SIRET.");
-  const establishment = (company.matching_etablissements ?? []).find((item: RecordValue) => item.siret === siret) ?? company.siege ?? {};
+  const establishment =
+    (company.matching_etablissements ?? []).find(
+      (item: RecordValue) => item.siret === siret,
+    ) ??
+    company.siege ??
+    {};
   return {
     nom: company.nom_raison_sociale ?? company.nom_complet ?? "",
     siret,
@@ -379,93 +2467,234 @@ async function publicCompanySearch(siret: string) {
   };
 }
 
-function useAddressSelectionBeforeBlur(suggestions: AddressSuggestion[], select: (item: AddressSuggestion) => void) {
+function useAddressSelectionBeforeBlur(
+  suggestions: AddressSuggestion[],
+  select: (item: AddressSuggestion) => void,
+) {
   useEffect(() => {
     const selectBeforeBlur = (event: PointerEvent) => {
-      const target = event.target instanceof Element ? event.target.closest(".suggestion-list button") : null;
+      const target =
+        event.target instanceof Element
+          ? event.target.closest(".suggestion-list button")
+          : null;
       if (!(target instanceof HTMLButtonElement)) return;
-      const item = suggestions.find((suggestion) => suggestion.label === target.textContent?.trim());
+      const item = suggestions.find(
+        (suggestion) => suggestion.label === target.textContent?.trim(),
+      );
       if (!item) return;
       event.preventDefault();
       select(item);
     };
     document.addEventListener("pointerdown", selectBeforeBlur, true);
-    return () => document.removeEventListener("pointerdown", selectBeforeBlur, true);
+    return () =>
+      document.removeEventListener("pointerdown", selectBeforeBlur, true);
   }, [suggestions]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 function AddressFields({ request }: { request: ApiRequest }) {
-  const [value, setValue] = useState({ adresse: "", codePostal: "", ville: "" });
+  const [value, setValue] = useState({
+    adresse: "",
+    codePostal: "",
+    ville: "",
+  });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const skipAddressLookup = useRef(false);
   const selectSuggestion = (item: AddressSuggestion) => {
     skipAddressLookup.current = true;
-    setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville });
+    setValue({
+      adresse: item.label,
+      codePostal: item.codePostal,
+      ville: item.ville,
+    });
     setSuggestions([]);
   };
   useEffect(() => {
-    if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
+    if (skipAddressLookup.current) {
+      skipAddressLookup.current = false;
+      return;
+    }
     if (value.adresse.trim().length < 3) return;
     const timer = window.setTimeout(async () => {
       try {
-        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).catch(() => publicAddressSearch(value.adresse));
-        if (results.length === 1 && value.adresse.trim().length >= 8) { selectSuggestion(results[0]); return; }
+        const results = await request(
+          `/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`,
+        ).catch(() => publicAddressSearch(value.adresse));
+        if (results.length === 1 && value.adresse.trim().length >= 8) {
+          selectSuggestion(results[0]);
+          return;
+        }
         setSuggestions(results);
-      } catch { setSuggestions([]); }
+      } catch {
+        setSuggestions([]);
+      }
     }, 350);
     return () => window.clearTimeout(timer);
   }, [value.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <>
-    <label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>
-      Adresse
-      <input name="adresse" autoComplete="off" value={value.adresse} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} onChange={(event) => setValue((current) => ({ ...current, adresse: event.target.value }))} />
-      {value.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onMouseDown={(event) => { event.preventDefault(); selectSuggestion(item); }} onTouchStart={() => selectSuggestion(item)} onClick={() => selectSuggestion(item)}>{item.label}</button>)}</span>}
-    </label>
-    <div className="form-grid">
-      <label>Code postal<input name="codePostal" value={value.codePostal} onChange={(event) => setValue((current) => ({ ...current, codePostal: event.target.value }))} /></label>
-      <label>Ville<input name="ville" value={value.ville} onChange={(event) => setValue((current) => ({ ...current, ville: event.target.value }))} /></label>
-    </div>
-  </>;
+  return (
+    <>
+      <label
+        className="suggestion-field"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setSuggestions([]);
+        }}
+      >
+        Adresse
+        <input
+          name="adresse"
+          autoComplete="off"
+          value={value.adresse}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSuggestions([]);
+          }}
+          onChange={(event) =>
+            setValue((current) => ({ ...current, adresse: event.target.value }))
+          }
+        />
+        {value.adresse.trim().length >= 3 && suggestions.length > 0 && (
+          <span className="suggestion-list">
+            {suggestions.map((item) => (
+              <button
+                type="button"
+                key={item.label}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  selectSuggestion(item);
+                }}
+                onTouchStart={() => selectSuggestion(item)}
+                onClick={() => selectSuggestion(item)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </span>
+        )}
+      </label>
+      <div className="form-grid">
+        <label>
+          Code postal
+          <input
+            name="codePostal"
+            value={value.codePostal}
+            onChange={(event) =>
+              setValue((current) => ({
+                ...current,
+                codePostal: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Ville
+          <input
+            name="ville"
+            value={value.ville}
+            onChange={(event) =>
+              setValue((current) => ({ ...current, ville: event.target.value }))
+            }
+          />
+        </label>
+      </div>
+    </>
+  );
 }
 
-function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCreated: (client: RecordValue) => void }) {
-  const [client, setClient] = useState({ type: "PARTICULIER", nom: "", siret: "", adresse: "", codePostal: "", ville: "", telephone: "", email: "" });
+function InlineClientCreator({
+  request,
+  onCreated,
+}: {
+  request: ApiRequest;
+  onCreated: (client: RecordValue) => void;
+}) {
+  const [client, setClient] = useState({
+    type: "PARTICULIER",
+    nom: "",
+    siret: "",
+    adresse: "",
+    codePostal: "",
+    ville: "",
+    telephone: "",
+    email: "",
+  });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   const skipAddressLookup = useRef(false);
   useAddressSelectionBeforeBlur(suggestions, (item) => {
     skipAddressLookup.current = true;
-    setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
+    setClient((current) => ({
+      ...current,
+      adresse: item.label,
+      codePostal: item.codePostal,
+      ville: item.ville,
+    }));
     setSuggestions([]);
   });
   useEffect(() => {
-    if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
+    if (skipAddressLookup.current) {
+      skipAddressLookup.current = false;
+      return;
+    }
     if (client.adresse.trim().length < 3) return;
     const timer = window.setTimeout(async () => {
       setMessage("Recherche de l’adresse…");
       try {
-        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).catch(() => publicAddressSearch(client.adresse));
+        const results = await request(
+          `/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`,
+        ).catch(() => publicAddressSearch(client.adresse));
         setSuggestions(results);
-        setMessage(results.length ? "Sélectionnez l’adresse proposée." : "Aucune adresse trouvée.");
+        setMessage(
+          results.length
+            ? "Sélectionnez l’adresse proposée."
+            : "Aucune adresse trouvée.",
+        );
       } catch (reason) {
         setSuggestions([]);
-        setMessage(reason instanceof Error ? reason.message : "Recherche d’adresse impossible");
+        setMessage(
+          reason instanceof Error
+            ? reason.message
+            : "Recherche d’adresse impossible",
+        );
       }
     }, 350);
     return () => window.clearTimeout(timer);
   }, [client.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
-  const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
+  const update = (key: string, value: string) =>
+    setClient((current) => ({ ...current, [key]: value }));
   async function lookupSiret() {
-    if (!/^\d{14}$/.test(client.siret)) { setMessage("Le SIRET doit contenir 14 chiffres."); return; }
-    setWorking(true); setMessage("Recherche de l’entreprise…");
+    if (!/^\d{14}$/.test(client.siret)) {
+      setMessage("Le SIRET doit contenir 14 chiffres.");
+      return;
+    }
+    setWorking(true);
+    setMessage("Recherche de l’entreprise…");
     try {
-      const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`).catch(async () => ({ existing: false, company: await publicCompanySearch(client.siret) }));
-      if (result.existing) { onCreated(result.client); setMessage("Ce client existait déjà : il a été sélectionné."); return; }
-      setClient((current) => ({ ...current, type: "ENTREPRISE", ...result.company }));
-      setMessage("Entreprise retrouvée. Vérifiez les informations avant création.");
-    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Recherche impossible"); }
-    finally { setWorking(false); }
+      const result = await request(
+        `/clients/recherche/entreprises?siret=${client.siret}`,
+      ).catch(async () => ({
+        existing: false,
+        company: await publicCompanySearch(client.siret),
+      }));
+      if (result.existing) {
+        onCreated(result.client);
+        setMessage("Ce client existait déjà : il a été sélectionné.");
+        return;
+      }
+      setClient((current) => ({
+        ...current,
+        type: "ENTREPRISE",
+        ...result.company,
+      }));
+      setMessage(
+        "Entreprise retrouvée. Vérifiez les informations avant création.",
+      );
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error ? reason.message : "Recherche impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
   useEffect(() => {
     if (client.type !== "ENTREPRISE" || !/^\d{14}$/.test(client.siret)) return;
@@ -473,38 +2702,211 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
     return () => window.clearTimeout(timer);
   }, [client.siret, client.type]); // eslint-disable-line react-hooks/exhaustive-deps
   async function create() {
-    if (!client.nom.trim()) { setMessage("Indiquez le nom du client."); return; }
-    setWorking(true); setMessage("");
-    try { const created = await request("/clients", { method: "POST", body: JSON.stringify({ ...client, siret: client.siret || undefined }) }); onCreated(created); setMessage("Client créé et sélectionné dans le devis."); }
-    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Création impossible"); }
-    finally { setWorking(false); }
+    if (!client.nom.trim()) {
+      setMessage("Indiquez le nom du client.");
+      return;
+    }
+    setWorking(true);
+    setMessage("");
+    try {
+      const created = await request("/clients", {
+        method: "POST",
+        body: JSON.stringify({ ...client, siret: client.siret || undefined }),
+      });
+      onCreated(created);
+      setMessage("Client créé et sélectionné dans le devis.");
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error ? reason.message : "Création impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
-  return <section className="inline-creator"><div className="section-heading"><div><strong>Coordonnées du nouveau client</strong><small>La fiche sera enregistrée automatiquement dans Clients.</small></div></div><div className="form-grid"><label>Type<select value={client.type} onChange={(event) => update("type", event.target.value)}><option value="PARTICULIER">Particulier</option><option value="ENTREPRISE">Entreprise</option><option value="COPROPRIETE">Copropriété</option><option value="COLLECTIVITE">Collectivité</option></select></label><label>Nom ou raison sociale<input value={client.nom} onChange={(event) => update("nom", event.target.value)} /></label></div>{client.type === "ENTREPRISE" && <div className="lookup-row"><label>SIRET<input inputMode="numeric" maxLength={14} value={client.siret} onChange={(event) => update("siret", event.target.value.replace(/\D/g, ""))} /></label><button className="secondary compact" type="button" disabled={working} onClick={lookupSiret}>Rechercher le SIRET</button></div>}<label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>Adresse<input value={client.adresse} autoComplete="off" onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} onChange={(event) => update("adresse", event.target.value)} />{client.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { skipAddressLookup.current = true; setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville })); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid three"><label>Code postal<input value={client.codePostal} onChange={(event) => update("codePostal", event.target.value)} /></label><label>Ville<input value={client.ville} onChange={(event) => update("ville", event.target.value)} /></label><label>Téléphone<input value={client.telephone} onChange={(event) => update("telephone", event.target.value)} /></label></div><label>E-mail<input type="email" value={client.email} onChange={(event) => update("email", event.target.value)} /></label>{message && <p className="form-hint">{message}</p>}<button className="primary compact client-save" type="button" disabled={working} onClick={create}>{working ? "Enregistrement…" : "Enregistrer le client et continuer"}</button></section>;
+  return (
+    <section className="inline-creator">
+      <div className="section-heading">
+        <div>
+          <strong>Coordonnées du nouveau client</strong>
+          <small>La fiche sera enregistrée automatiquement dans Clients.</small>
+        </div>
+      </div>
+      <div className="form-grid">
+        <label>
+          Type
+          <select
+            value={client.type}
+            onChange={(event) => update("type", event.target.value)}
+          >
+            <option value="PARTICULIER">Particulier</option>
+            <option value="ENTREPRISE">Entreprise</option>
+            <option value="COPROPRIETE">Copropriété</option>
+            <option value="COLLECTIVITE">Collectivité</option>
+          </select>
+        </label>
+        <label>
+          Nom ou raison sociale
+          <input
+            value={client.nom}
+            onChange={(event) => update("nom", event.target.value)}
+          />
+        </label>
+      </div>
+      {client.type === "ENTREPRISE" && (
+        <div className="lookup-row">
+          <label>
+            SIRET
+            <input
+              inputMode="numeric"
+              maxLength={14}
+              value={client.siret}
+              onChange={(event) =>
+                update("siret", event.target.value.replace(/\D/g, ""))
+              }
+            />
+          </label>
+          <button
+            className="secondary compact"
+            type="button"
+            disabled={working}
+            onClick={lookupSiret}
+          >
+            Rechercher le SIRET
+          </button>
+        </div>
+      )}
+      <label
+        className="suggestion-field"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setSuggestions([]);
+        }}
+      >
+        Adresse
+        <input
+          value={client.adresse}
+          autoComplete="off"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSuggestions([]);
+          }}
+          onChange={(event) => update("adresse", event.target.value)}
+        />
+        {client.adresse.trim().length >= 3 && suggestions.length > 0 && (
+          <span className="suggestion-list">
+            {suggestions.map((item) => (
+              <button
+                type="button"
+                key={item.label}
+                onClick={() => {
+                  skipAddressLookup.current = true;
+                  setClient((current) => ({
+                    ...current,
+                    adresse: item.label,
+                    codePostal: item.codePostal,
+                    ville: item.ville,
+                  }));
+                  setSuggestions([]);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </span>
+        )}
+      </label>
+      <div className="form-grid three">
+        <label>
+          Code postal
+          <input
+            value={client.codePostal}
+            onChange={(event) => update("codePostal", event.target.value)}
+          />
+        </label>
+        <label>
+          Ville
+          <input
+            value={client.ville}
+            onChange={(event) => update("ville", event.target.value)}
+          />
+        </label>
+        <label>
+          Téléphone
+          <input
+            value={client.telephone}
+            onChange={(event) => update("telephone", event.target.value)}
+          />
+        </label>
+      </div>
+      <label>
+        E-mail
+        <input
+          type="email"
+          value={client.email}
+          onChange={(event) => update("email", event.target.value)}
+        />
+      </label>
+      {message && <p className="form-hint">{message}</p>}
+      <button
+        className="primary compact client-save"
+        type="button"
+        disabled={working}
+        onClick={create}
+      >
+        {working ? "Enregistrement…" : "Enregistrer le client et continuer"}
+      </button>
+    </section>
+  );
 }
 
 function ClientFormFields({ request }: { request: ApiRequest }) {
-  const [client, setClient] = useState({ type: "PARTICULIER", nom: "", siret: "", adresse: "", codePostal: "", ville: "" });
+  const [client, setClient] = useState({
+    type: "PARTICULIER",
+    nom: "",
+    siret: "",
+    adresse: "",
+    codePostal: "",
+    ville: "",
+  });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [message, setMessage] = useState("");
   const skipAddressLookup = useRef(false);
-  const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
+  const update = (key: string, value: string) =>
+    setClient((current) => ({ ...current, [key]: value }));
   useAddressSelectionBeforeBlur(suggestions, (item) => {
     skipAddressLookup.current = true;
-    setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
+    setClient((current) => ({
+      ...current,
+      adresse: item.label,
+      codePostal: item.codePostal,
+      ville: item.ville,
+    }));
     setSuggestions([]);
   });
   useEffect(() => {
-    if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
+    if (skipAddressLookup.current) {
+      skipAddressLookup.current = false;
+      return;
+    }
     if (client.adresse.trim().length < 3) return;
     const timer = window.setTimeout(async () => {
       setMessage("Recherche de l’adresse…");
       try {
-        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).catch(() => publicAddressSearch(client.adresse));
+        const results = await request(
+          `/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`,
+        ).catch(() => publicAddressSearch(client.adresse));
         setSuggestions(results);
-        setMessage(results.length ? "Sélectionnez l’adresse proposée." : "Aucune adresse trouvée.");
+        setMessage(
+          results.length
+            ? "Sélectionnez l’adresse proposée."
+            : "Aucune adresse trouvée.",
+        );
       } catch (reason) {
         setSuggestions([]);
-        setMessage(reason instanceof Error ? reason.message : "Recherche d’adresse impossible");
+        setMessage(
+          reason instanceof Error
+            ? reason.message
+            : "Recherche d’adresse impossible",
+        );
       }
     }, 350);
     return () => window.clearTimeout(timer);
@@ -514,141 +2916,1282 @@ function ClientFormFields({ request }: { request: ApiRequest }) {
     const timer = window.setTimeout(async () => {
       setMessage("Recherche de l’entreprise…");
       try {
-        const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`).catch(async () => ({ existing: false, company: await publicCompanySearch(client.siret) }));
-        if (result.existing) { setMessage(`Ce SIRET appartient déjà au client ${String(result.client.nom)}.`); return; }
-        setClient((current) => ({ ...current, ...result.company, type: "ENTREPRISE" }));
+        const result = await request(
+          `/clients/recherche/entreprises?siret=${client.siret}`,
+        ).catch(async () => ({
+          existing: false,
+          company: await publicCompanySearch(client.siret),
+        }));
+        if (result.existing) {
+          setMessage(
+            `Ce SIRET appartient déjà au client ${String(result.client.nom)}.`,
+          );
+          return;
+        }
+        setClient((current) => ({
+          ...current,
+          ...result.company,
+          type: "ENTREPRISE",
+        }));
         setMessage("Entreprise retrouvée et fiche préremplie.");
-      } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Recherche impossible"); }
+      } catch (reason) {
+        setMessage(
+          reason instanceof Error ? reason.message : "Recherche impossible",
+        );
+      }
     }, 250);
     return () => window.clearTimeout(timer);
   }, [client.siret, client.type]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <><div className="form-grid"><label>Type<select name="type" value={client.type} onChange={(event) => update("type", event.target.value)}><option value="PARTICULIER">Particulier</option><option value="ENTREPRISE">Entreprise</option><option value="COPROPRIETE">Copropriété</option><option value="COLLECTIVITE">Collectivité</option></select></label><label>Nom ou raison sociale<input name="nom" value={client.nom} onChange={(event) => update("nom", event.target.value)} required /></label></div><div className="form-grid"><label>SIRET<input name="siret" inputMode="numeric" maxLength={14} value={client.siret} onChange={(event) => update("siret", event.target.value.replace(/\D/g, ""))} /></label><label>Contact<input name="contactNom" /></label></div>{message && <p className="form-hint">{message}</p>}<label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>Adresse<input name="adresse" value={client.adresse} autoComplete="off" onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} onChange={(event) => update("adresse", event.target.value)} />{client.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { skipAddressLookup.current = true; setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville })); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid"><label>Code postal<input name="codePostal" value={client.codePostal} onChange={(event) => update("codePostal", event.target.value)} /></label><label>Ville<input name="ville" value={client.ville} onChange={(event) => update("ville", event.target.value)} /></label></div><label>Téléphone<input name="telephone" /></label><label>E-mail<input name="email" type="email" /></label><label>Notes<textarea name="notes" /></label></>;
+  return (
+    <>
+      <div className="form-grid">
+        <label>
+          Type
+          <select
+            name="type"
+            value={client.type}
+            onChange={(event) => update("type", event.target.value)}
+          >
+            <option value="PARTICULIER">Particulier</option>
+            <option value="ENTREPRISE">Entreprise</option>
+            <option value="COPROPRIETE">Copropriété</option>
+            <option value="COLLECTIVITE">Collectivité</option>
+          </select>
+        </label>
+        <label>
+          Nom ou raison sociale
+          <input
+            name="nom"
+            value={client.nom}
+            onChange={(event) => update("nom", event.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div className="form-grid">
+        <label>
+          SIRET
+          <input
+            name="siret"
+            inputMode="numeric"
+            maxLength={14}
+            value={client.siret}
+            onChange={(event) =>
+              update("siret", event.target.value.replace(/\D/g, ""))
+            }
+          />
+        </label>
+        <label>
+          Contact
+          <input name="contactNom" />
+        </label>
+      </div>
+      {message && <p className="form-hint">{message}</p>}
+      <label
+        className="suggestion-field"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setSuggestions([]);
+        }}
+      >
+        Adresse
+        <input
+          name="adresse"
+          value={client.adresse}
+          autoComplete="off"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSuggestions([]);
+          }}
+          onChange={(event) => update("adresse", event.target.value)}
+        />
+        {client.adresse.trim().length >= 3 && suggestions.length > 0 && (
+          <span className="suggestion-list">
+            {suggestions.map((item) => (
+              <button
+                type="button"
+                key={item.label}
+                onClick={() => {
+                  skipAddressLookup.current = true;
+                  setClient((current) => ({
+                    ...current,
+                    adresse: item.label,
+                    codePostal: item.codePostal,
+                    ville: item.ville,
+                  }));
+                  setSuggestions([]);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </span>
+        )}
+      </label>
+      <div className="form-grid">
+        <label>
+          Code postal
+          <input
+            name="codePostal"
+            value={client.codePostal}
+            onChange={(event) => update("codePostal", event.target.value)}
+          />
+        </label>
+        <label>
+          Ville
+          <input
+            name="ville"
+            value={client.ville}
+            onChange={(event) => update("ville", event.target.value)}
+          />
+        </label>
+      </div>
+      <label>
+        Téléphone
+        <input name="telephone" />
+      </label>
+      <label>
+        E-mail
+        <input name="email" type="email" />
+      </label>
+      <label>
+        Notes
+        <textarea name="notes" />
+      </label>
+    </>
+  );
 }
 
-function InlineChantierCreator({ clientId, request, onCreated }: { clientId: string; request: ApiRequest; onCreated: (chantier: RecordValue) => void }) {
+function InlineChantierCreator({
+  clientId,
+  request,
+  onCreated,
+}: {
+  clientId: string;
+  request: ApiRequest;
+  onCreated: (chantier: RecordValue) => void;
+}) {
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   async function create(button: HTMLButtonElement) {
     const container = button.closest(".inline-creator");
     if (!container) return;
-    const get = (name: string) => (container.querySelector(`[name=${name}]`) as HTMLInputElement | HTMLTextAreaElement | null)?.value.trim() ?? "";
-    if (!clientId) { setMessage("Sélectionnez d’abord le client facturé."); return; }
-    if (!get("chantierObjet")) { setMessage("Indiquez la désignation du chantier."); return; }
-    setWorking(true); setMessage("");
+    const get = (name: string) =>
+      (
+        container.querySelector(`[name=${name}]`) as
+          HTMLInputElement | HTMLTextAreaElement | null
+      )?.value.trim() ?? "";
+    if (!clientId) {
+      setMessage("Sélectionnez d’abord le client facturé.");
+      return;
+    }
+    if (!get("chantierObjet")) {
+      setMessage("Indiquez la désignation du chantier.");
+      return;
+    }
+    setWorking(true);
+    setMessage("");
     try {
-      const chantier = await request("/chantiers", { method: "POST", body: JSON.stringify({
-        clientId,
-        objet: get("chantierObjet"),
-        adresse: get("adresse") || undefined,
-        codePostal: get("codePostal") || undefined,
-        ville: get("ville") || undefined,
-        dateDebutPrevue: get("chantierDebut") || undefined,
-        dateFinPrevue: get("chantierFin") || undefined,
-        montantPrevu: get("chantierBudget") ? Number(get("chantierBudget")) : undefined,
-        description: get("chantierDescription") || undefined,
-      }) });
+      const chantier = await request("/chantiers", {
+        method: "POST",
+        body: JSON.stringify({
+          clientId,
+          objet: get("chantierObjet"),
+          adresse: get("adresse") || undefined,
+          codePostal: get("codePostal") || undefined,
+          ville: get("ville") || undefined,
+          dateDebutPrevue: get("chantierDebut") || undefined,
+          dateFinPrevue: get("chantierFin") || undefined,
+          montantPrevu: get("chantierBudget")
+            ? Number(get("chantierBudget"))
+            : undefined,
+          description: get("chantierDescription") || undefined,
+        }),
+      });
       onCreated(chantier);
-    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Création du chantier impossible"); }
-    finally { setWorking(false); }
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error
+          ? reason.message
+          : "Création du chantier impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
-  return <section className="inline-creator"><div className="section-heading"><div><strong>Nouveau chantier</strong><small>Le chantier sera enregistré et associé au devis.</small></div></div><label>Désignation du chantier<input name="chantierObjet" placeholder="Ex. Rénovation maison ancienne" /></label><AddressFields request={request} /><div className="form-grid"><label>Début prévu<input name="chantierDebut" type="date" /></label><label>Fin prévue<input name="chantierFin" type="date" /></label></div><label>Budget prévisionnel HT<input name="chantierBudget" type="number" min="0" step="0.01" /></label><label>Description<textarea name="chantierDescription" /></label>{message && <p className="form-hint">{message}</p>}<button className="primary compact client-save" type="button" disabled={working} onClick={(event) => create(event.currentTarget)}>{working ? "Enregistrement…" : "Enregistrer le chantier et continuer"}</button></section>;
+  return (
+    <section className="inline-creator">
+      <div className="section-heading">
+        <div>
+          <strong>Nouveau chantier</strong>
+          <small>Le chantier sera enregistré et associé au devis.</small>
+        </div>
+      </div>
+      <label>
+        Désignation du chantier
+        <input
+          name="chantierObjet"
+          placeholder="Ex. Rénovation maison ancienne"
+        />
+      </label>
+      <AddressFields request={request} />
+      <div className="form-grid">
+        <label>
+          Début prévu
+          <input name="chantierDebut" type="date" />
+        </label>
+        <label>
+          Fin prévue
+          <input name="chantierFin" type="date" />
+        </label>
+      </div>
+      <label>
+        Budget prévisionnel HT
+        <input name="chantierBudget" type="number" min="0" step="0.01" />
+      </label>
+      <label>
+        Description
+        <textarea name="chantierDescription" />
+      </label>
+      {message && <p className="form-hint">{message}</p>}
+      <button
+        className="primary compact client-save"
+        type="button"
+        disabled={working}
+        onClick={(event) => create(event.currentTarget)}
+      >
+        {working ? "Enregistrement…" : "Enregistrer le chantier et continuer"}
+      </button>
+    </section>
+  );
 }
 
-function InlineApporteurCreator({ request, onCreated }: { request: ApiRequest; onCreated: (item: RecordValue) => void }) {
+function InlineApporteurCreator({
+  request,
+  onCreated,
+}: {
+  request: ApiRequest;
+  onCreated: (item: RecordValue) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   async function submit(button: HTMLButtonElement) {
-    const container = button.closest(".apporteur-fields"); if (!container) return;
-    const get = (name: string) => (container.querySelector(`[name=${name}]`) as HTMLInputElement | HTMLSelectElement | null)?.value.trim() ?? "";
-    if (!get("apporteurNom")) { setError("Indiquez le nom de l’apporteur."); return; }
-    setWorking(true); setError("");
-    try { const item = await request("/apporteurs", { method: "POST", body: JSON.stringify({ type: get("apporteurType"), nom: get("apporteurNom"), siret: get("apporteurSiret") || undefined, referenceMandat: get("apporteurMandat") || undefined }) }); onCreated(item); setOpen(false); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Création impossible"); }
-    finally { setWorking(false); }
+    const container = button.closest(".apporteur-fields");
+    if (!container) return;
+    const get = (name: string) =>
+      (
+        container.querySelector(`[name=${name}]`) as
+          HTMLInputElement | HTMLSelectElement | null
+      )?.value.trim() ?? "";
+    if (!get("apporteurNom")) {
+      setError("Indiquez le nom de l’apporteur.");
+      return;
+    }
+    setWorking(true);
+    setError("");
+    try {
+      const item = await request("/apporteurs", {
+        method: "POST",
+        body: JSON.stringify({
+          type: get("apporteurType"),
+          nom: get("apporteurNom"),
+          siret: get("apporteurSiret") || undefined,
+          referenceMandat: get("apporteurMandat") || undefined,
+        }),
+      });
+      onCreated(item);
+      setOpen(false);
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Création impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
-  if (!open) return <button className="text-action" type="button" onClick={() => setOpen(true)}>＋ Créer une agence ou un apporteur</button>;
-  return <div className="apporteur-fields"><div className="form-grid"><label>Type<select name="apporteurType" defaultValue="AGENCE_IMMOBILIERE"><option value="AGENCE_IMMOBILIERE">Agence immobilière</option><option value="APPORTEUR_AFFAIRES">Apporteur d’affaires</option><option value="ARCHITECTE">Architecte</option><option value="MAITRE_OEUVRE">Maître d’œuvre</option><option value="SYNDIC">Syndic</option><option value="AUTRE">Autre</option></select></label><label>Nom<input name="apporteurNom" /></label></div><div className="form-grid"><label>SIRET<input name="apporteurSiret" inputMode="numeric" maxLength={14} /></label><label>Référence du mandat<input name="apporteurMandat" /></label></div>{error && <p className="form-error">{error}</p>}<div className="inline-buttons"><button type="button" className="secondary compact" onClick={() => setOpen(false)}>Annuler</button><button type="button" className="secondary compact" disabled={working} onClick={(event) => submit(event.currentTarget)}>{working ? "Création…" : "Créer l’apporteur"}</button></div></div>;
+  if (!open)
+    return (
+      <button
+        className="text-action"
+        type="button"
+        onClick={() => setOpen(true)}
+      >
+        ＋ Créer une agence ou un apporteur
+      </button>
+    );
+  return (
+    <div className="apporteur-fields">
+      <div className="form-grid">
+        <label>
+          Type
+          <select name="apporteurType" defaultValue="AGENCE_IMMOBILIERE">
+            <option value="AGENCE_IMMOBILIERE">Agence immobilière</option>
+            <option value="APPORTEUR_AFFAIRES">Apporteur d’affaires</option>
+            <option value="ARCHITECTE">Architecte</option>
+            <option value="MAITRE_OEUVRE">Maître d’œuvre</option>
+            <option value="SYNDIC">Syndic</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </label>
+        <label>
+          Nom
+          <input name="apporteurNom" />
+        </label>
+      </div>
+      <div className="form-grid">
+        <label>
+          SIRET
+          <input name="apporteurSiret" inputMode="numeric" maxLength={14} />
+        </label>
+        <label>
+          Référence du mandat
+          <input name="apporteurMandat" />
+        </label>
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      <div className="inline-buttons">
+        <button
+          type="button"
+          className="secondary compact"
+          onClick={() => setOpen(false)}
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          className="secondary compact"
+          disabled={working}
+          onClick={(event) => submit(event.currentTarget)}
+        >
+          {working ? "Création…" : "Créer l’apporteur"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
-function CreateEntityDialog({ section, data, demo, request, close, done }: { section: CrudSection; data: typeof demoData; demo: boolean; request: ApiRequest; close: () => void; done: (message: string) => void }) {
+function CreateEntityDialog({
+  section,
+  data,
+  demo,
+  request,
+  close,
+  done,
+}: {
+  section: CrudSection;
+  data: typeof demoData;
+  demo: boolean;
+  request: ApiRequest;
+  close: () => void;
+  done: (message: string) => void;
+}) {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
-  const [clientOptions, setClientOptions] = useState<RecordValue[]>(data.clients);
+  const [clientOptions, setClientOptions] = useState<RecordValue[]>(
+    data.clients,
+  );
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [clientMode, setClientMode] = useState<"existing" | "new">(data.clients.length ? "existing" : "new");
-  const [chantierOptions, setChantierOptions] = useState<RecordValue[]>(data.chantiers);
+  const [clientMode, setClientMode] = useState<"existing" | "new">(
+    data.clients.length ? "existing" : "new",
+  );
+  const [chantierOptions, setChantierOptions] = useState<RecordValue[]>(
+    data.chantiers,
+  );
   const [selectedChantierId, setSelectedChantierId] = useState("");
-  const [chantierMode, setChantierMode] = useState<"none" | "existing" | "new">("none");
+  const [chantierMode, setChantierMode] = useState<"none" | "existing" | "new">(
+    "none",
+  );
   const [apporteurs, setApporteurs] = useState<RecordValue[]>([]);
   const [selectedApporteurId, setSelectedApporteurId] = useState("");
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 30);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 30);
   useEffect(() => {
     if (demo || section !== "devis") return;
-    request("/apporteurs").then((items) => setApporteurs(Array.isArray(items) ? items : [])).catch(() => setApporteurs([]));
+    request("/apporteurs")
+      .then((items) => setApporteurs(Array.isArray(items) ? items : []))
+      .catch(() => setApporteurs([]));
   }, [demo, section]); // eslint-disable-line react-hooks/exhaustive-deps
   async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget); const get = (name: string) => String(form.get(name) ?? "").trim(); const num = (name: string) => Number(get(name));
-    if (demo) { done("Mode démonstration : formulaire validé, sans écriture dans la base."); return; }
-    const line = { designation: get("ligneDesignation"), unite: get("ligneUnite") || "u", quantite: num("ligneQuantite"), prixUnitaireHt: num("lignePrix") };
-    const payloads: Record<CrudSection, { path: string; body: Record<string, unknown> }> = {
-      clients: { path: "/clients", body: { type: get("type"), nom: get("nom"), siret: get("siret") || undefined, adresse: get("adresse") || undefined, codePostal: get("codePostal") || undefined, ville: get("ville") || undefined, telephone: get("telephone") || undefined, email: get("email") || undefined, contactNom: get("contactNom") || undefined, notes: get("notes") || undefined } },
-      chantiers: { path: "/chantiers", body: { clientId: get("clientId"), objet: get("objet"), adresse: get("adresse") || undefined, codePostal: get("codePostal") || undefined, ville: get("ville") || undefined, dateDebutPrevue: get("dateDebutPrevue") || undefined, dateFinPrevue: get("dateFinPrevue") || undefined, montantPrevu: get("montantPrevu") ? num("montantPrevu") : undefined, description: get("description") || undefined } },
-      devis: { path: "/devis", body: { clientId: get("clientId"), chantierId: get("chantierId") || undefined, apporteurId: get("apporteurId") || undefined, referenceMandat: get("referenceMandat") || undefined, objet: get("objet"), dateValidite: get("dateValidite"), tauxTva: num("tauxTva"), conditions: get("conditions") || undefined, lignes: [line] } },
-      factures: { path: "/factures", body: { clientId: get("clientId"), chantierId: get("chantierId") || undefined, type: get("type"), objet: get("objet"), dateEcheance: get("dateEcheance"), tauxTva: num("tauxTva"), modeReglement: get("modeReglement") || undefined, lignes: [line] } },
-      bibliotheque: { path: "/bibliotheque/ouvrages", body: { reference: get("reference"), designation: get("designation"), unite: get("unite"), categorie: get("categorie") || undefined, sousCategorie: get("sousCategorie") || undefined, coefficientVente: num("coefficientVente"), tempsPoseHeures: get("tempsPoseHeures") ? num("tempsPoseHeures") : undefined, descriptionTechnique: get("descriptionTechnique") || undefined, composants: [{ type: get("ressourceType"), designation: get("composantDesignation"), unite: get("composantUnite"), quantite: num("composantQuantite"), prixUnitaire: num("composantPrix"), fournisseur: get("fournisseur") || undefined }] } },
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const get = (name: string) => String(form.get(name) ?? "").trim();
+    const num = (name: string) => Number(get(name));
+    if (demo) {
+      done(
+        "Mode démonstration : formulaire validé, sans écriture dans la base.",
+      );
+      return;
+    }
+    const line = {
+      designation: get("ligneDesignation"),
+      unite: get("ligneUnite") || "u",
+      quantite: num("ligneQuantite"),
+      prixUnitaireHt: num("lignePrix"),
     };
-    setWorking(true); setError("");
-    const entityName: Record<CrudSection, string> = { clients: "Client", chantiers: "Chantier", devis: "Devis", factures: "Facture", bibliotheque: "Ouvrage" };
-    try { const result = await request(payloads[section].path, { method: "POST", body: JSON.stringify(payloads[section].body) }); done(`${entityName[section]} ${String(result.numero ?? result.reference ?? result.nom ?? "")} créé avec succès.`); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Enregistrement impossible"); }
-    finally { setWorking(false); }
+    const payloads: Record<
+      CrudSection,
+      { path: string; body: Record<string, unknown> }
+    > = {
+      clients: {
+        path: "/clients",
+        body: {
+          type: get("type"),
+          nom: get("nom"),
+          siret: get("siret") || undefined,
+          adresse: get("adresse") || undefined,
+          codePostal: get("codePostal") || undefined,
+          ville: get("ville") || undefined,
+          telephone: get("telephone") || undefined,
+          email: get("email") || undefined,
+          contactNom: get("contactNom") || undefined,
+          notes: get("notes") || undefined,
+        },
+      },
+      chantiers: {
+        path: "/chantiers",
+        body: {
+          clientId: get("clientId"),
+          objet: get("objet"),
+          adresse: get("adresse") || undefined,
+          codePostal: get("codePostal") || undefined,
+          ville: get("ville") || undefined,
+          dateDebutPrevue: get("dateDebutPrevue") || undefined,
+          dateFinPrevue: get("dateFinPrevue") || undefined,
+          montantPrevu: get("montantPrevu") ? num("montantPrevu") : undefined,
+          description: get("description") || undefined,
+        },
+      },
+      devis: {
+        path: "/devis",
+        body: {
+          clientId: get("clientId"),
+          chantierId: get("chantierId") || undefined,
+          apporteurId: get("apporteurId") || undefined,
+          referenceMandat: get("referenceMandat") || undefined,
+          objet: get("objet"),
+          dateValidite: get("dateValidite"),
+          tauxTva: num("tauxTva"),
+          conditions: get("conditions") || undefined,
+          lignes: [line],
+        },
+      },
+      factures: {
+        path: "/factures",
+        body: {
+          clientId: get("clientId"),
+          chantierId: get("chantierId") || undefined,
+          type: get("type"),
+          objet: get("objet"),
+          dateEcheance: get("dateEcheance"),
+          tauxTva: num("tauxTva"),
+          modeReglement: get("modeReglement") || undefined,
+          lignes: [line],
+        },
+      },
+      bibliotheque: {
+        path: "/bibliotheque/ouvrages",
+        body: {
+          reference: get("reference"),
+          designation: get("designation"),
+          unite: get("unite"),
+          categorie: get("categorie") || undefined,
+          sousCategorie: get("sousCategorie") || undefined,
+          coefficientVente: num("coefficientVente"),
+          tempsPoseHeures: get("tempsPoseHeures")
+            ? num("tempsPoseHeures")
+            : undefined,
+          descriptionTechnique: get("descriptionTechnique") || undefined,
+          composants: [
+            {
+              type: get("ressourceType"),
+              designation: get("composantDesignation"),
+              unite: get("composantUnite"),
+              quantite: num("composantQuantite"),
+              prixUnitaire: num("composantPrix"),
+              fournisseur: get("fournisseur") || undefined,
+            },
+          ],
+        },
+      },
+    };
+    setWorking(true);
+    setError("");
+    const entityName: Record<CrudSection, string> = {
+      clients: "Client",
+      chantiers: "Chantier",
+      devis: "Devis",
+      factures: "Facture",
+      bibliotheque: "Ouvrage",
+    };
+    try {
+      const result = await request(payloads[section].path, {
+        method: "POST",
+        body: JSON.stringify(payloads[section].body),
+      });
+      done(
+        `${entityName[section]} ${String(result.numero ?? result.reference ?? result.nom ?? "")} créé avec succès.`,
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Enregistrement impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
-  const dialogTitle: Record<CrudSection, string> = { clients: "Nouveau client", chantiers: "Nouveau chantier", devis: "Nouveau devis", factures: "Nouvelle facture", bibliotheque: "Nouvel ouvrage" };
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><form className="modal-card entity-form" onSubmit={send}><div className="modal-head"><div><p className="eyebrow">CRÉATION · {section.toUpperCase()}</p><h3>{dialogTitle[section]}</h3></div><button type="button" onClick={close}>×</button></div>
-    {section === "clients" && <ClientFormFields request={request} />}
-    {section === "chantiers" && <><label>Client<select name="clientId" required defaultValue=""><option value="" disabled>Choisir un client…</option>{clientOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.nom)}</option>)}</select></label><label>Objet du chantier<input name="objet" required /></label><AddressFields request={request} /><div className="form-grid"><label>Début prévu<input name="dateDebutPrevue" type="date" /></label><label>Fin prévue<input name="dateFinPrevue" type="date" /></label></div><label>Budget prévisionnel HT<input name="montantPrevu" type="number" min="0" step="0.01" /></label><label>Description<textarea name="description" /></label></>}
-    {(section === "devis" || section === "factures") && <>
-      <section className="client-block"><div className="section-heading"><div><strong>1. Client facturé</strong><small>Choisissez une fiche existante ou créez le client ici.</small></div></div>{selectedClientId ? <div className="selected-summary"><div><small>Client retenu</small><strong>{String(clientOptions.find((item) => String(item.id) === selectedClientId)?.nom ?? "Client sélectionné")}</strong></div><button type="button" className="text-action" onClick={() => { setSelectedClientId(""); setSelectedChantierId(""); setChantierMode("none"); }}>Changer de client</button><input type="hidden" name="clientId" value={selectedClientId} /></div> : <><div className="client-choice"><button type="button" className={clientMode === "existing" ? "active" : ""} onClick={() => setClientMode("existing")}>Client existant</button><button type="button" className={clientMode === "new" ? "active" : ""} onClick={() => setClientMode("new")}>＋ Nouveau client</button></div>{clientMode === "existing" ? <label>Rechercher et sélectionner le client<select required value="" onChange={(event) => setSelectedClientId(event.target.value)}><option value="" disabled>Choisir un client…</option>{clientOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.nom)}</option>)}</select></label> : <InlineClientCreator request={request} onCreated={(client) => { setClientOptions((current) => current.some((item) => item.id === client.id) ? current : [...current, client]); setSelectedClientId(String(client.id)); }} />}</>}</section>
-      <section className="client-block"><div className="section-heading"><div><strong>2. Chantier associé</strong><small>Facultatif : choisissez, créez ou passez cette étape.</small></div></div>{selectedChantierId ? <div className="selected-summary"><div><small>Chantier retenu</small><strong>{String(chantierOptions.find((item) => String(item.id) === selectedChantierId)?.objet ?? "Chantier sélectionné")}</strong></div><button type="button" className="text-action" onClick={() => { setSelectedChantierId(""); setChantierMode("none"); }}>Changer</button><input type="hidden" name="chantierId" value={selectedChantierId} /></div> : <><div className="client-choice three"><button type="button" className={chantierMode === "none" ? "active" : ""} onClick={() => setChantierMode("none")}>Sans chantier</button><button type="button" className={chantierMode === "existing" ? "active" : ""} onClick={() => setChantierMode("existing")}>Chantier existant</button><button type="button" className={chantierMode === "new" ? "active" : ""} disabled={!selectedClientId} onClick={() => setChantierMode("new")}>＋ Nouveau chantier</button></div>{chantierMode === "none" && <><input type="hidden" name="chantierId" value="" /><p className="form-hint">Le devis peut être créé sans chantier et rattaché plus tard.</p></>}{chantierMode === "existing" && <label>Sélectionner le chantier<select value="" onChange={(event) => setSelectedChantierId(event.target.value)}><option value="" disabled>Choisir un chantier…</option>{chantierOptions.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.reference)} · {String(item.objet)}</option>)}</select></label>}{chantierMode === "new" && <InlineChantierCreator clientId={selectedClientId} request={request} onCreated={(chantier) => { setChantierOptions((current) => current.some((item) => item.id === chantier.id) ? current : [...current, chantier]); setSelectedChantierId(String(chantier.id)); }} />}</>}</section>
-      {section === "devis" && <details className="optional-section"><summary>Apporteur, agence ou mandataire <span>Facultatif</span></summary><div className="optional-content"><p className="form-hint">Le client reste le destinataire du devis et de la facture. Le mandataire est enregistré séparément.</p><div className="form-grid"><label>Mandataire<select name="apporteurId" value={selectedApporteurId} onChange={(event) => setSelectedApporteurId(event.target.value)}><option value="">Aucun apporteur</option>{apporteurs.map((item) => <option key={String(item.id)} value={String(item.id)}>{String(item.nom)} · {label(item.type)}</option>)}</select></label><label>Référence du mandat<input name="referenceMandat" /></label></div><InlineApporteurCreator request={request} onCreated={(item) => { setApporteurs((current) => [...current, item]); setSelectedApporteurId(String(item.id)); }} /></div></details>}
-      <label>Objet<input name="objet" required /></label><div className="form-grid three">{section === "devis" ? <label>Validité<input name="dateValidite" type="date" defaultValue={tomorrow.toISOString().slice(0, 10)} required /></label> : <><label>Type<select name="type" defaultValue="DEFINITIVE"><option value="DEFINITIVE">Définitive</option><option value="ACOMPTE">Acompte</option><option value="SITUATION">Situation</option></select></label><label>Échéance<input name="dateEcheance" type="date" defaultValue={tomorrow.toISOString().slice(0, 10)} required /></label></>}<label>TVA (%)<input name="tauxTva" type="number" min="0" max="100" step="0.1" defaultValue="20" required /></label></div><fieldset><legend>Première ligne</legend><label>Désignation<input name="ligneDesignation" required /></label><div className="form-grid three"><label>Unité<input name="ligneUnite" defaultValue="u" required /></label><label>Quantité<input name="ligneQuantite" type="number" min="0.01" step="0.001" defaultValue="1" required /></label><label>Prix unitaire HT<input name="lignePrix" type="number" min="0" step="0.01" required /></label></div></fieldset>{section === "devis" ? <label>Conditions<textarea name="conditions" defaultValue="Validité 30 jours." /></label> : <label>Mode de règlement<input name="modeReglement" defaultValue="Virement à 30 jours" /></label>}
-    </>}
-    {section === "bibliotheque" && <><div className="form-grid three"><label>Référence<input name="reference" required /></label><label>Unité<select name="unite" defaultValue="m²"><option>m²</option><option>ml</option><option>m³</option><option>u</option><option>h</option><option>forfait</option></select></label><label>Coefficient vente<input name="coefficientVente" type="number" min="1" step="0.01" defaultValue="1.35" required /></label></div><label>Désignation de l’ouvrage<input name="designation" required /></label><div className="form-grid"><label>Catégorie<input name="categorie" placeholder="Maçonnerie ancienne" /></label><label>Sous-catégorie<input name="sousCategorie" placeholder="Pierre et chaux" /></label></div><label>Temps de pose (h/unité)<input name="tempsPoseHeures" type="number" min="0" step="0.01" /></label><label>Description technique<textarea name="descriptionTechnique" /></label><fieldset><legend>Premier composant du déboursé</legend><div className="form-grid"><label>Type<select name="ressourceType" defaultValue="MATERIAU"><option value="MATERIAU">Matériau</option><option value="MAIN_OEUVRE">Main-d’œuvre</option><option value="MATERIEL">Matériel</option><option value="SOUS_TRAITANCE">Sous-traitance</option></select></label><label>Désignation<input name="composantDesignation" required /></label></div><div className="form-grid three"><label>Unité<input name="composantUnite" defaultValue="u" required /></label><label>Quantité<input name="composantQuantite" type="number" min="0" step="0.001" defaultValue="1" required /></label><label>Prix unitaire<input name="composantPrix" type="number" min="0" step="0.01" required /></label></div><label>Fournisseur<input name="fournisseur" /></label></fieldset></>}
-    {error && <div className="form-error">{error}</div>}<div className="modal-actions"><button className="secondary compact" type="button" onClick={close}>Annuler</button><button className="primary compact" disabled={working || (!demo && (section === "devis" || section === "factures") && !selectedClientId) || (!demo && section === "chantiers" && !clientOptions.length)}>{working ? "Enregistrement…" : "Créer"}</button></div>{!demo && (section === "devis" || section === "factures") && !selectedClientId && <p className="form-hint">Sélectionnez un client existant ou enregistrez le nouveau client pour continuer le devis.</p>}{!demo && section === "chantiers" && !clientOptions.length && <p className="form-error">Créez d’abord un client.</p>}</form></div>;
+  const dialogTitle: Record<CrudSection, string> = {
+    clients: "Nouveau client",
+    chantiers: "Nouveau chantier",
+    devis: "Nouveau devis",
+    factures: "Nouvelle facture",
+    bibliotheque: "Nouvel ouvrage",
+  };
+  return (
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
+    >
+      <form className="modal-card entity-form" onSubmit={send}>
+        <div className="modal-head">
+          <div>
+            <p className="eyebrow">CRÉATION · {section.toUpperCase()}</p>
+            <h3>{dialogTitle[section]}</h3>
+          </div>
+          <button type="button" onClick={close}>
+            ×
+          </button>
+        </div>
+        {section === "clients" && <ClientFormFields request={request} />}
+        {section === "chantiers" && (
+          <>
+            <label>
+              Client
+              <select name="clientId" required defaultValue="">
+                <option value="" disabled>
+                  Choisir un client…
+                </option>
+                {clientOptions.map((item) => (
+                  <option key={String(item.id)} value={String(item.id)}>
+                    {String(item.nom)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Objet du chantier
+              <input name="objet" required />
+            </label>
+            <AddressFields request={request} />
+            <div className="form-grid">
+              <label>
+                Début prévu
+                <input name="dateDebutPrevue" type="date" />
+              </label>
+              <label>
+                Fin prévue
+                <input name="dateFinPrevue" type="date" />
+              </label>
+            </div>
+            <label>
+              Budget prévisionnel HT
+              <input name="montantPrevu" type="number" min="0" step="0.01" />
+            </label>
+            <label>
+              Description
+              <textarea name="description" />
+            </label>
+          </>
+        )}
+        {(section === "devis" || section === "factures") && (
+          <>
+            <section className="client-block">
+              <div className="section-heading">
+                <div>
+                  <strong>1. Client facturé</strong>
+                  <small>
+                    Choisissez une fiche existante ou créez le client ici.
+                  </small>
+                </div>
+              </div>
+              {selectedClientId ? (
+                <div className="selected-summary">
+                  <div>
+                    <small>Client retenu</small>
+                    <strong>
+                      {String(
+                        clientOptions.find(
+                          (item) => String(item.id) === selectedClientId,
+                        )?.nom ?? "Client sélectionné",
+                      )}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-action"
+                    onClick={() => {
+                      setSelectedClientId("");
+                      setSelectedChantierId("");
+                      setChantierMode("none");
+                    }}
+                  >
+                    Changer de client
+                  </button>
+                  <input
+                    type="hidden"
+                    name="clientId"
+                    value={selectedClientId}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="client-choice">
+                    <button
+                      type="button"
+                      className={clientMode === "existing" ? "active" : ""}
+                      onClick={() => setClientMode("existing")}
+                    >
+                      Client existant
+                    </button>
+                    <button
+                      type="button"
+                      className={clientMode === "new" ? "active" : ""}
+                      onClick={() => setClientMode("new")}
+                    >
+                      ＋ Nouveau client
+                    </button>
+                  </div>
+                  {clientMode === "existing" ? (
+                    <label>
+                      Rechercher et sélectionner le client
+                      <select
+                        required
+                        value=""
+                        onChange={(event) =>
+                          setSelectedClientId(event.target.value)
+                        }
+                      >
+                        <option value="" disabled>
+                          Choisir un client…
+                        </option>
+                        {clientOptions.map((item) => (
+                          <option key={String(item.id)} value={String(item.id)}>
+                            {String(item.nom)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <InlineClientCreator
+                      request={request}
+                      onCreated={(client) => {
+                        setClientOptions((current) =>
+                          current.some((item) => item.id === client.id)
+                            ? current
+                            : [...current, client],
+                        );
+                        setSelectedClientId(String(client.id));
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </section>
+            <section className="client-block">
+              <div className="section-heading">
+                <div>
+                  <strong>2. Chantier associé</strong>
+                  <small>
+                    Facultatif : choisissez, créez ou passez cette étape.
+                  </small>
+                </div>
+              </div>
+              {selectedChantierId ? (
+                <div className="selected-summary">
+                  <div>
+                    <small>Chantier retenu</small>
+                    <strong>
+                      {String(
+                        chantierOptions.find(
+                          (item) => String(item.id) === selectedChantierId,
+                        )?.objet ?? "Chantier sélectionné",
+                      )}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-action"
+                    onClick={() => {
+                      setSelectedChantierId("");
+                      setChantierMode("none");
+                    }}
+                  >
+                    Changer
+                  </button>
+                  <input
+                    type="hidden"
+                    name="chantierId"
+                    value={selectedChantierId}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="client-choice three">
+                    <button
+                      type="button"
+                      className={chantierMode === "none" ? "active" : ""}
+                      onClick={() => setChantierMode("none")}
+                    >
+                      Sans chantier
+                    </button>
+                    <button
+                      type="button"
+                      className={chantierMode === "existing" ? "active" : ""}
+                      onClick={() => setChantierMode("existing")}
+                    >
+                      Chantier existant
+                    </button>
+                    <button
+                      type="button"
+                      className={chantierMode === "new" ? "active" : ""}
+                      disabled={!selectedClientId}
+                      onClick={() => setChantierMode("new")}
+                    >
+                      ＋ Nouveau chantier
+                    </button>
+                  </div>
+                  {chantierMode === "none" && (
+                    <>
+                      <input type="hidden" name="chantierId" value="" />
+                      <p className="form-hint">
+                        Le devis peut être créé sans chantier et rattaché plus
+                        tard.
+                      </p>
+                    </>
+                  )}
+                  {chantierMode === "existing" && (
+                    <label>
+                      Sélectionner le chantier
+                      <select
+                        value=""
+                        onChange={(event) =>
+                          setSelectedChantierId(event.target.value)
+                        }
+                      >
+                        <option value="" disabled>
+                          Choisir un chantier…
+                        </option>
+                        {chantierOptions.map((item) => (
+                          <option key={String(item.id)} value={String(item.id)}>
+                            {String(item.reference)} · {String(item.objet)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {chantierMode === "new" && (
+                    <InlineChantierCreator
+                      clientId={selectedClientId}
+                      request={request}
+                      onCreated={(chantier) => {
+                        setChantierOptions((current) =>
+                          current.some((item) => item.id === chantier.id)
+                            ? current
+                            : [...current, chantier],
+                        );
+                        setSelectedChantierId(String(chantier.id));
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </section>
+            {section === "devis" && (
+              <details className="optional-section">
+                <summary>
+                  Apporteur, agence ou mandataire <span>Facultatif</span>
+                </summary>
+                <div className="optional-content">
+                  <p className="form-hint">
+                    Le client reste le destinataire du devis et de la facture.
+                    Le mandataire est enregistré séparément.
+                  </p>
+                  <div className="form-grid">
+                    <label>
+                      Mandataire
+                      <select
+                        name="apporteurId"
+                        value={selectedApporteurId}
+                        onChange={(event) =>
+                          setSelectedApporteurId(event.target.value)
+                        }
+                      >
+                        <option value="">Aucun apporteur</option>
+                        {apporteurs.map((item) => (
+                          <option key={String(item.id)} value={String(item.id)}>
+                            {String(item.nom)} · {label(item.type)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Référence du mandat
+                      <input name="referenceMandat" />
+                    </label>
+                  </div>
+                  <InlineApporteurCreator
+                    request={request}
+                    onCreated={(item) => {
+                      setApporteurs((current) => [...current, item]);
+                      setSelectedApporteurId(String(item.id));
+                    }}
+                  />
+                </div>
+              </details>
+            )}
+            <label>
+              Objet
+              <input name="objet" required />
+            </label>
+            <div className="form-grid three">
+              {section === "devis" ? (
+                <label>
+                  Validité
+                  <input
+                    name="dateValidite"
+                    type="date"
+                    defaultValue={tomorrow.toISOString().slice(0, 10)}
+                    required
+                  />
+                </label>
+              ) : (
+                <>
+                  <label>
+                    Type
+                    <select name="type" defaultValue="DEFINITIVE">
+                      <option value="DEFINITIVE">Définitive</option>
+                      <option value="ACOMPTE">Acompte</option>
+                      <option value="SITUATION">Situation</option>
+                    </select>
+                  </label>
+                  <label>
+                    Échéance
+                    <input
+                      name="dateEcheance"
+                      type="date"
+                      defaultValue={tomorrow.toISOString().slice(0, 10)}
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              <label>
+                TVA (%)
+                <input
+                  name="tauxTva"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  defaultValue="20"
+                  required
+                />
+              </label>
+            </div>
+            <fieldset>
+              <legend>Première ligne</legend>
+              <label>
+                Désignation
+                <input name="ligneDesignation" required />
+              </label>
+              <div className="form-grid three">
+                <label>
+                  Unité
+                  <input name="ligneUnite" defaultValue="u" required />
+                </label>
+                <label>
+                  Quantité
+                  <input
+                    name="ligneQuantite"
+                    type="number"
+                    min="0.01"
+                    step="0.001"
+                    defaultValue="1"
+                    required
+                  />
+                </label>
+                <label>
+                  Prix unitaire HT
+                  <input
+                    name="lignePrix"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </label>
+              </div>
+            </fieldset>
+            {section === "devis" ? (
+              <label>
+                Conditions
+                <textarea name="conditions" defaultValue="Validité 30 jours." />
+              </label>
+            ) : (
+              <label>
+                Mode de règlement
+                <input
+                  name="modeReglement"
+                  defaultValue="Virement à 30 jours"
+                />
+              </label>
+            )}
+          </>
+        )}
+        {section === "bibliotheque" && (
+          <>
+            <div className="form-grid three">
+              <label>
+                Référence
+                <input name="reference" required />
+              </label>
+              <label>
+                Unité
+                <select name="unite" defaultValue="m²">
+                  <option>m²</option>
+                  <option>ml</option>
+                  <option>m³</option>
+                  <option>u</option>
+                  <option>h</option>
+                  <option>forfait</option>
+                </select>
+              </label>
+              <label>
+                Coefficient vente
+                <input
+                  name="coefficientVente"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  defaultValue="1.35"
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              Désignation de l’ouvrage
+              <input name="designation" required />
+            </label>
+            <div className="form-grid">
+              <label>
+                Catégorie
+                <input name="categorie" placeholder="Maçonnerie ancienne" />
+              </label>
+              <label>
+                Sous-catégorie
+                <input name="sousCategorie" placeholder="Pierre et chaux" />
+              </label>
+            </div>
+            <label>
+              Temps de pose (h/unité)
+              <input name="tempsPoseHeures" type="number" min="0" step="0.01" />
+            </label>
+            <label>
+              Description technique
+              <textarea name="descriptionTechnique" />
+            </label>
+            <fieldset>
+              <legend>Premier composant du déboursé</legend>
+              <div className="form-grid">
+                <label>
+                  Type
+                  <select name="ressourceType" defaultValue="MATERIAU">
+                    <option value="MATERIAU">Matériau</option>
+                    <option value="MAIN_OEUVRE">Main-d’œuvre</option>
+                    <option value="MATERIEL">Matériel</option>
+                    <option value="SOUS_TRAITANCE">Sous-traitance</option>
+                  </select>
+                </label>
+                <label>
+                  Désignation
+                  <input name="composantDesignation" required />
+                </label>
+              </div>
+              <div className="form-grid three">
+                <label>
+                  Unité
+                  <input name="composantUnite" defaultValue="u" required />
+                </label>
+                <label>
+                  Quantité
+                  <input
+                    name="composantQuantite"
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    defaultValue="1"
+                    required
+                  />
+                </label>
+                <label>
+                  Prix unitaire
+                  <input
+                    name="composantPrix"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </label>
+              </div>
+              <label>
+                Fournisseur
+                <input name="fournisseur" />
+              </label>
+            </fieldset>
+          </>
+        )}
+        {error && <div className="form-error">{error}</div>}
+        <div className="modal-actions">
+          <button className="secondary compact" type="button" onClick={close}>
+            Annuler
+          </button>
+          <button
+            className="primary compact"
+            disabled={
+              working ||
+              (!demo &&
+                (section === "devis" || section === "factures") &&
+                !selectedClientId) ||
+              (!demo && section === "chantiers" && !clientOptions.length)
+            }
+          >
+            {working ? "Enregistrement…" : "Créer"}
+          </button>
+        </div>
+        {!demo &&
+          (section === "devis" || section === "factures") &&
+          !selectedClientId && (
+            <p className="form-hint">
+              Sélectionnez un client existant ou enregistrez le nouveau client
+              pour continuer le devis.
+            </p>
+          )}
+        {!demo && section === "chantiers" && !clientOptions.length && (
+          <p className="form-error">Créez d’abord un client.</p>
+        )}
+      </form>
+    </div>
+  );
 }
 
-function EntityDetail({ section, row, close }: { section: CrudSection; row: RecordValue; close: () => void }) {
-  const hidden = new Set(["id", "createdAt", "updatedAt", "clientId", "chantierId", "createdById"]);
-  const entries = Object.entries(row).filter(([key, value]) => !hidden.has(key) && value !== null && value !== undefined && typeof value !== "object");
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><section className="modal-card detail-card"><div className="modal-head"><div><p className="eyebrow">FICHE · {section.toUpperCase()}</p><h3>{String(row.nom ?? row.objet ?? row.designation ?? row.numero ?? row.reference ?? "Détail")}</h3></div><button onClick={close}>×</button></div><div className="detail-grid">{entries.map(([key, value]) => <div key={key}><small>{label(key)}</small><strong>{key.toLowerCase().includes("total") || key.toLowerCase().includes("prix") || key.toLowerCase().includes("debourse") || key.toLowerCase().includes("montant") ? euro(value) : label(value)}</strong></div>)}</div><div className="modal-actions"><button className="primary compact" onClick={close}>Fermer</button></div></section></div>;
+function EntityDetail({
+  section,
+  row,
+  close,
+}: {
+  section: CrudSection;
+  row: RecordValue;
+  close: () => void;
+}) {
+  const hidden = new Set([
+    "id",
+    "createdAt",
+    "updatedAt",
+    "clientId",
+    "chantierId",
+    "createdById",
+  ]);
+  const entries = Object.entries(row).filter(
+    ([key, value]) =>
+      !hidden.has(key) &&
+      value !== null &&
+      value !== undefined &&
+      typeof value !== "object",
+  );
+  return (
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
+    >
+      <section className="modal-card detail-card">
+        <div className="modal-head">
+          <div>
+            <p className="eyebrow">FICHE · {section.toUpperCase()}</p>
+            <h3>
+              {String(
+                row.nom ??
+                  row.objet ??
+                  row.designation ??
+                  row.numero ??
+                  row.reference ??
+                  "Détail",
+              )}
+            </h3>
+          </div>
+          <button onClick={close}>×</button>
+        </div>
+        <div className="detail-grid">
+          {entries.map(([key, value]) => (
+            <div key={key}>
+              <small>{label(key)}</small>
+              <strong>
+                {key.toLowerCase().includes("total") ||
+                key.toLowerCase().includes("prix") ||
+                key.toLowerCase().includes("debourse") ||
+                key.toLowerCase().includes("montant")
+                  ? euro(value)
+                  : label(value)}
+              </strong>
+            </div>
+          ))}
+        </div>
+        <div className="modal-actions">
+          <button className="primary compact" onClick={close}>
+            Fermer
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-type Metre = { id: string; libelle: string; formule?: string; quantite: number };
-type Poste = { id: string; code: string; designation: string; unite: string; quantite: number; debourseUnitaire: number; prixUnitaireHt: number; totalVenteHt: number; isSelected: boolean; metres: Metre[] };
+type Metre = {
+  id: string;
+  libelle: string;
+  formule?: string;
+  quantite: number;
+};
+type Poste = {
+  id: string;
+  code: string;
+  designation: string;
+  unite: string;
+  quantite: number;
+  debourseUnitaire: number;
+  prixUnitaireHt: number;
+  totalVenteHt: number;
+  isSelected: boolean;
+  metres: Metre[];
+};
 type Lot = { id: string; code: string; designation: string; postes: Poste[] };
-type DpgfDetail = { id: string; reference: string; nom: string; statut: string; totalDebourseSec: number; totalVenteHt: number; coefficientFraisGeneraux: number; coefficientMarge: number; chantier?: { objet?: string; reference?: string }; lots: Lot[] };
+type DpgfDetail = {
+  id: string;
+  reference: string;
+  nom: string;
+  statut: string;
+  totalDebourseSec: number;
+  totalVenteHt: number;
+  coefficientFraisGeneraux: number;
+  coefficientMarge: number;
+  chantier?: { objet?: string; reference?: string };
+  lots: Lot[];
+};
 
 const demoDpgf: DpgfDetail = {
-  id: "demo-dpgf", reference: "DPGF-2026-0035", nom: "Rénovation maison de maître", statut: "BROUILLON",
-  totalDebourseSec: 52270, totalVenteHt: 86420, coefficientFraisGeneraux: 1.12, coefficientMarge: 1.18,
+  id: "demo-dpgf",
+  reference: "DPGF-2026-0035",
+  nom: "Rénovation maison de maître",
+  statut: "BROUILLON",
+  totalDebourseSec: 52270,
+  totalVenteHt: 86420,
+  coefficientFraisGeneraux: 1.12,
+  coefficientMarge: 1.18,
   chantier: { reference: "CH-2026-0051", objet: "Rénovation maison de maître" },
   lots: [
-    { id: "lot-1", code: "01", designation: "Maçonnerie ancienne", postes: [
-      { id: "p-1", code: "01.01", designation: "Piquage des enduits ciment", unite: "m²", quantite: 186.4, debourseUnitaire: 16.8, prixUnitaireHt: 25.6, totalVenteHt: 4771.84, isSelected: true, metres: [{ id: "m-1", libelle: "Façades cour et jardin", formule: "(L*H)-OUVERTURES", quantite: 186.4 }] },
-      { id: "p-2", code: "01.02", designation: "Rejointoiement pierre à la chaux", unite: "m²", quantite: 186.4, debourseUnitaire: 54.2, prixUnitaireHt: 82.6, totalVenteHt: 15396.64, isSelected: true, metres: [] },
-    ] },
-    { id: "lot-2", code: "02", designation: "Charpente traditionnelle", postes: [
-      { id: "p-3", code: "02.01", designation: "Reprise de fermes en chêne", unite: "u", quantite: 4, debourseUnitaire: 1860, prixUnitaireHt: 2840, totalVenteHt: 11360, isSelected: true, metres: [{ id: "m-2", libelle: "Fermes à reprendre", quantite: 4 }] },
-      { id: "p-4", code: "02.02", designation: "Option isolation biosourcée", unite: "m²", quantite: 142, debourseUnitaire: 62, prixUnitaireHt: 94, totalVenteHt: 13348, isSelected: false, metres: [] },
-    ] },
+    {
+      id: "lot-1",
+      code: "01",
+      designation: "Maçonnerie ancienne",
+      postes: [
+        {
+          id: "p-1",
+          code: "01.01",
+          designation: "Piquage des enduits ciment",
+          unite: "m²",
+          quantite: 186.4,
+          debourseUnitaire: 16.8,
+          prixUnitaireHt: 25.6,
+          totalVenteHt: 4771.84,
+          isSelected: true,
+          metres: [
+            {
+              id: "m-1",
+              libelle: "Façades cour et jardin",
+              formule: "(L*H)-OUVERTURES",
+              quantite: 186.4,
+            },
+          ],
+        },
+        {
+          id: "p-2",
+          code: "01.02",
+          designation: "Rejointoiement pierre à la chaux",
+          unite: "m²",
+          quantite: 186.4,
+          debourseUnitaire: 54.2,
+          prixUnitaireHt: 82.6,
+          totalVenteHt: 15396.64,
+          isSelected: true,
+          metres: [],
+        },
+      ],
+    },
+    {
+      id: "lot-2",
+      code: "02",
+      designation: "Charpente traditionnelle",
+      postes: [
+        {
+          id: "p-3",
+          code: "02.01",
+          designation: "Reprise de fermes en chêne",
+          unite: "u",
+          quantite: 4,
+          debourseUnitaire: 1860,
+          prixUnitaireHt: 2840,
+          totalVenteHt: 11360,
+          isSelected: true,
+          metres: [{ id: "m-2", libelle: "Fermes à reprendre", quantite: 4 }],
+        },
+        {
+          id: "p-4",
+          code: "02.02",
+          designation: "Option isolation biosourcée",
+          unite: "m²",
+          quantite: 142,
+          debourseUnitaire: 62,
+          prixUnitaireHt: 94,
+          totalVenteHt: 13348,
+          isSelected: false,
+          metres: [],
+        },
+      ],
+    },
   ],
 };
 
-function DpgfWorkspace({ rows, chantiers, demo, request, refresh }: { rows: RecordValue[]; chantiers: RecordValue[]; demo: boolean; request: ApiRequest; refresh: () => void }) {
-  const [selectedId, setSelectedId] = useState<string>(demo ? demoDpgf.id : String(rows[0]?.id ?? ""));
-  const [detail, setDetail] = useState<DpgfDetail | null>(demo ? demoDpgf : null);
-  const [editor, setEditor] = useState<"dpgf" | "lot" | "poste" | "metre" | null>(null);
+function DpgfWorkspace({
+  rows,
+  chantiers,
+  demo,
+  request,
+  refresh,
+}: {
+  rows: RecordValue[];
+  chantiers: RecordValue[];
+  demo: boolean;
+  request: ApiRequest;
+  refresh: () => void;
+}) {
+  const [selectedId, setSelectedId] = useState<string>(
+    demo ? demoDpgf.id : String(rows[0]?.id ?? ""),
+  );
+  const [detail, setDetail] = useState<DpgfDetail | null>(
+    demo ? demoDpgf : null,
+  );
+  const [editor, setEditor] = useState<
+    "dpgf" | "lot" | "poste" | "metre" | null
+  >(null);
   const [targetLot, setTargetLot] = useState("");
   const [targetPoste, setTargetPoste] = useState("");
   const [message, setMessage] = useState("");
@@ -657,87 +4200,810 @@ function DpgfWorkspace({ rows, chantiers, demo, request, refresh }: { rows: Reco
 
   useEffect(() => {
     if (demo || !effectiveSelectedId) return;
-    request(`/dpgf/${effectiveSelectedId}`).then(setDetail).catch((reason) => setMessage(reason instanceof Error ? reason.message : "DPGF inaccessible"));
+    request(`/dpgf/${effectiveSelectedId}`)
+      .then(setDetail)
+      .catch((reason) =>
+        setMessage(
+          reason instanceof Error ? reason.message : "DPGF inaccessible",
+        ),
+      );
   }, [effectiveSelectedId, demo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function submit(path: string, body: Record<string, unknown>, after?: (result: any) => void) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (demo) { setMessage("Mode démonstration : les calculs sont visibles, sans modifier la base."); setEditor(null); return; }
-    setWorking(true); setMessage("");
-    try { const result = await request(path, { method: "POST", body: JSON.stringify(body) }); after?.(result); setEditor(null); await refresh(); if (effectiveSelectedId) setDetail(await request(`/dpgf/${effectiveSelectedId}`)); }
-    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Opération impossible"); }
-    finally { setWorking(false); }
+  async function submit(
+    path: string,
+    body: Record<string, unknown>,
+    after?: (result: any) => void,
+  ) {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (demo) {
+      setMessage(
+        "Mode démonstration : les calculs sont visibles, sans modifier la base.",
+      );
+      setEditor(null);
+      return;
+    }
+    setWorking(true);
+    setMessage("");
+    try {
+      const result = await request(path, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      after?.(result);
+      setEditor(null);
+      await refresh();
+      if (effectiveSelectedId)
+        setDetail(await request(`/dpgf/${effectiveSelectedId}`));
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error ? reason.message : "Opération impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
 
   async function togglePoste(poste: Poste) {
-    if (demo) { setDetail((current) => current ? { ...current, lots: current.lots.map((lot) => ({ ...lot, postes: lot.postes.map((item) => item.id === poste.id ? { ...item, isSelected: !item.isSelected } : item) })) } : current); return; }
+    if (demo) {
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              lots: current.lots.map((lot) => ({
+                ...lot,
+                postes: lot.postes.map((item) =>
+                  item.id === poste.id
+                    ? { ...item, isSelected: !item.isSelected }
+                    : item,
+                ),
+              })),
+            }
+          : current,
+      );
+      return;
+    }
     setWorking(true);
-    try { await request(`/dpgf/postes/${poste.id}/selection`, { method: "PATCH", body: JSON.stringify({ isSelected: !poste.isSelected }) }); setDetail(await request(`/dpgf/${effectiveSelectedId}`)); }
-    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Sélection impossible"); }
-    finally { setWorking(false); }
+    try {
+      await request(`/dpgf/postes/${poste.id}/selection`, {
+        method: "PATCH",
+        body: JSON.stringify({ isSelected: !poste.isSelected }),
+      });
+      setDetail(await request(`/dpgf/${effectiveSelectedId}`));
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error ? reason.message : "Sélection impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
 
   async function validateDpgf() {
-    if (!detail || demo) { setMessage(demo ? "La validation est désactivée dans la démonstration." : "DPGF absente"); return; }
+    if (!detail || demo) {
+      setMessage(
+        demo
+          ? "La validation est désactivée dans la démonstration."
+          : "DPGF absente",
+      );
+      return;
+    }
     setWorking(true);
-    try { await request(`/dpgf/${detail.id}/statut`, { method: "PATCH", body: JSON.stringify({ statut: "VALIDE" }) }); setDetail(await request(`/dpgf/${detail.id}`)); setMessage("DPGF validée : elle est maintenant figée et prête à devenir un devis."); }
-    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Validation impossible"); }
-    finally { setWorking(false); }
+    try {
+      await request(`/dpgf/${detail.id}/statut`, {
+        method: "PATCH",
+        body: JSON.stringify({ statut: "VALIDE" }),
+      });
+      setDetail(await request(`/dpgf/${detail.id}`));
+      setMessage(
+        "DPGF validée : elle est maintenant figée et prête à devenir un devis.",
+      );
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error ? reason.message : "Validation impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
 
   async function createDevis() {
-    if (!detail || demo) { setMessage(demo ? "La génération du devis est désactivée dans la démonstration." : "DPGF absente"); return; }
-    const dateValidite = new Date(); dateValidite.setDate(dateValidite.getDate() + 30);
-    setWorking(true); setMessage("");
-    try { const devis = await request(`/dpgf/${detail.id}/devis`, { method: "POST", body: JSON.stringify({ dateValidite: dateValidite.toISOString().slice(0, 10), tauxTva: 20, conditions: "Validité 30 jours. Modalités à confirmer avant émission." }) }); setMessage(`Devis ${devis.numero} créé avec succès à partir de la DPGF.`); await refresh(); }
-    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Création du devis impossible"); }
-    finally { setWorking(false); }
+    if (!detail || demo) {
+      setMessage(
+        demo
+          ? "La génération du devis est désactivée dans la démonstration."
+          : "DPGF absente",
+      );
+      return;
+    }
+    const dateValidite = new Date();
+    dateValidite.setDate(dateValidite.getDate() + 30);
+    setWorking(true);
+    setMessage("");
+    try {
+      const devis = await request(`/dpgf/${detail.id}/devis`, {
+        method: "POST",
+        body: JSON.stringify({
+          dateValidite: dateValidite.toISOString().slice(0, 10),
+          tauxTva: 20,
+          conditions:
+            "Validité 30 jours. Modalités à confirmer avant émission.",
+        }),
+      });
+      setMessage(`Devis ${devis.numero} créé avec succès à partir de la DPGF.`);
+      await refresh();
+    } catch (reason) {
+      setMessage(
+        reason instanceof Error
+          ? reason.message
+          : "Création du devis impossible",
+      );
+    } finally {
+      setWorking(false);
+    }
   }
 
   const allPostes = detail?.lots.flatMap((lot) => lot.postes) ?? [];
   const selected = allPostes.filter((poste) => poste.isSelected);
-  const totalVente = selected.reduce((sum, poste) => sum + Number(poste.totalVenteHt), 0);
-  const totalDebourse = selected.reduce((sum, poste) => sum + Number(poste.quantite) * Number(poste.debourseUnitaire), 0);
-  const marge = totalVente ? ((totalVente - totalDebourse) / totalVente) * 100 : 0;
+  const totalVente = selected.reduce(
+    (sum, poste) => sum + Number(poste.totalVenteHt),
+    0,
+  );
+  const totalDebourse = selected.reduce(
+    (sum, poste) =>
+      sum + Number(poste.quantite) * Number(poste.debourseUnitaire),
+    0,
+  );
+  const marge = totalVente
+    ? ((totalVente - totalDebourse) / totalVente) * 100
+    : 0;
   const dpgfRows = demo ? [{ ...demoData.dpgf[1], id: demoDpgf.id }] : rows;
 
-  return <div className="dpgf-workspace">
-    <section className="hero-row dpgf-hero"><div><p className="eyebrow">CHIFFRAGE · DPGF · MÉTRÉS</p><h2>Construire le prix, poste par poste</h2><p>Lots, ouvrages, quantités, déboursés et marge consolidés avant le devis.</p></div><div className="view-actions"><button className="secondary compact" onClick={refresh}>↻ Actualiser</button><button className="primary compact" onClick={() => setEditor("dpgf")}>＋ Nouvelle DPGF</button></div></section>
-    {message && <div className="alert dpgf-alert">{message}<button onClick={() => setMessage("")}>×</button></div>}
-    <div className="dpgf-layout">
-        <aside className="dpgf-list panel"><div className="panel-title"><h3>Chiffrages</h3><span>{dpgfRows.length}</span></div>{dpgfRows.map((row) => { const id = String(row.id); return <button key={id} className={effectiveSelectedId === id ? "active" : ""} onClick={() => setSelectedId(id)}><span><strong>{String(row.reference ?? row.numero ?? "DPGF")}</strong><small>{String(row.nom ?? row.objet ?? "Sans objet")}</small></span><Status value={row.statut} /></button>; })}{!demo && !rows.length && <div className="dpgf-empty"><strong>Aucun chiffrage</strong><p>Créez d’abord un chantier, puis sa première DPGF.</p></div>}</aside>
-      <section className="dpgf-main">
-        {detail ? <>
-          <div className="panel dpgf-summary"><div><p className="eyebrow">{detail.reference}</p><h3>{detail.nom}</h3><small>{detail.chantier?.reference} · {detail.chantier?.objet}</small></div><div className="dpgf-summary-actions"><Status value={detail.statut} />{detail.statut === "BROUILLON" && <button className="secondary compact" onClick={validateDpgf} disabled={working}>✓ Valider</button>}<button className="primary compact" onClick={createDevis} disabled={detail.statut !== "VALIDE" || working} title={detail.statut !== "VALIDE" ? "Validez la DPGF avant de générer le devis" : "Générer le devis"}>Créer le devis →</button></div></div>
-          <div className="dpgf-kpis"><Kpi label="Déboursé sec" value={euro(totalDebourse)} note={`${selected.length} postes retenus`} /><Kpi label="Vente HT" value={euro(totalVente)} note={`FG ×${detail.coefficientFraisGeneraux} · marge ×${detail.coefficientMarge}`} accent="orange" /><Kpi label="Marge brute" value={`${marge.toFixed(1)} %`} note={euro(totalVente - totalDebourse)} accent={marge < 20 ? "dark" : "plain"} /></div>
-          <div className="panel dpgf-editor"><div className="table-toolbar"><strong>Décomposition des travaux</strong><span /><button onClick={() => setEditor("lot")} disabled={detail.statut !== "BROUILLON"}>＋ Lot</button><button onClick={() => { setTargetLot(detail.lots[0]?.id ?? ""); setEditor("poste"); }} disabled={!detail.lots.length || detail.statut !== "BROUILLON"}>＋ Poste</button></div>
-            {detail.lots.map((lot) => <div className="dpgf-lot" key={lot.id}><div className="lot-heading"><span>{lot.code}</span><strong>{lot.designation}</strong><small>{lot.postes.length} poste{lot.postes.length > 1 ? "s" : ""}</small></div><div className="table-scroll"><table><thead><tr><th>Retenu</th><th>Code · Désignation</th><th>Unité</th><th>Quantité</th><th>Déboursé/u.</th><th>Vente/u.</th><th>Total HT</th><th /></tr></thead><tbody>{lot.postes.map((poste) => <tr key={poste.id} className={!poste.isSelected ? "option-row" : ""}><td><input type="checkbox" checked={poste.isSelected} onChange={() => togglePoste(poste)} disabled={detail.statut !== "BROUILLON" || working} /></td><td><strong>{poste.code}</strong><span className="poste-name">{poste.designation}</span>{poste.metres.length > 0 && <small className="metre-note">⌗ {poste.metres.map((metre) => `${metre.libelle} : ${metre.quantite}`).join(" · ")}</small>}</td><td>{poste.unite}</td><td><strong>{Number(poste.quantite).toLocaleString("fr-FR")}</strong></td><td>{euro(poste.debourseUnitaire)}</td><td>{euro(poste.prixUnitaireHt)}</td><td><strong>{euro(poste.totalVenteHt)}</strong></td><td><button className="row-action" title="Ajouter un métré" onClick={() => { setTargetPoste(poste.id); setEditor("metre"); }} disabled={detail.statut !== "BROUILLON"}>⌗</button></td></tr>)}</tbody></table></div></div>)}
-            {!detail.lots.length && <div className="empty"><span>⌗</span><h3>Commencez par un lot</h3><p>Exemple : 01 Maçonnerie, 02 Charpente, 03 Couverture.</p></div>}
-          </div>
-        </> : <div className="panel empty"><span>⌗</span><h3>Sélectionnez ou créez une DPGF</h3><p>Le chiffrage détaillé apparaîtra ici.</p></div>}
+  return (
+    <div className="dpgf-workspace">
+      <section className="hero-row dpgf-hero">
+        <div>
+          <p className="eyebrow">CHIFFRAGE · DPGF · MÉTRÉS</p>
+          <h2>Construire le prix, poste par poste</h2>
+          <p>
+            Lots, ouvrages, quantités, déboursés et marge consolidés avant le
+            devis.
+          </p>
+        </div>
+        <div className="view-actions">
+          <button className="secondary compact" onClick={refresh}>
+            ↻ Actualiser
+          </button>
+          <button className="primary compact" onClick={() => setEditor("dpgf")}>
+            ＋ Nouvelle DPGF
+          </button>
+        </div>
       </section>
+      {message && (
+        <div className="alert dpgf-alert">
+          {message}
+          <button onClick={() => setMessage("")}>×</button>
+        </div>
+      )}
+      <div className="dpgf-layout">
+        <aside className="dpgf-list panel">
+          <div className="panel-title">
+            <h3>Chiffrages</h3>
+            <span>{dpgfRows.length}</span>
+          </div>
+          {dpgfRows.map((row) => {
+            const id = String(row.id);
+            return (
+              <button
+                key={id}
+                className={effectiveSelectedId === id ? "active" : ""}
+                onClick={() => setSelectedId(id)}
+              >
+                <span>
+                  <strong>
+                    {String(row.reference ?? row.numero ?? "DPGF")}
+                  </strong>
+                  <small>{String(row.nom ?? row.objet ?? "Sans objet")}</small>
+                </span>
+                <Status value={row.statut} />
+              </button>
+            );
+          })}
+          {!demo && !rows.length && (
+            <div className="dpgf-empty">
+              <strong>Aucun chiffrage</strong>
+              <p>Créez d’abord un chantier, puis sa première DPGF.</p>
+            </div>
+          )}
+        </aside>
+        <section className="dpgf-main">
+          {detail ? (
+            <>
+              <div className="panel dpgf-summary">
+                <div>
+                  <p className="eyebrow">{detail.reference}</p>
+                  <h3>{detail.nom}</h3>
+                  <small>
+                    {detail.chantier?.reference} · {detail.chantier?.objet}
+                  </small>
+                </div>
+                <div className="dpgf-summary-actions">
+                  <Status value={detail.statut} />
+                  {detail.statut === "BROUILLON" && (
+                    <button
+                      className="secondary compact"
+                      onClick={validateDpgf}
+                      disabled={working}
+                    >
+                      ✓ Valider
+                    </button>
+                  )}
+                  <button
+                    className="primary compact"
+                    onClick={createDevis}
+                    disabled={detail.statut !== "VALIDE" || working}
+                    title={
+                      detail.statut !== "VALIDE"
+                        ? "Validez la DPGF avant de générer le devis"
+                        : "Générer le devis"
+                    }
+                  >
+                    Créer le devis →
+                  </button>
+                </div>
+              </div>
+              <div className="dpgf-kpis">
+                <Kpi
+                  label="Déboursé sec"
+                  value={euro(totalDebourse)}
+                  note={`${selected.length} postes retenus`}
+                />
+                <Kpi
+                  label="Vente HT"
+                  value={euro(totalVente)}
+                  note={`FG ×${detail.coefficientFraisGeneraux} · marge ×${detail.coefficientMarge}`}
+                  accent="orange"
+                />
+                <Kpi
+                  label="Marge brute"
+                  value={`${marge.toFixed(1)} %`}
+                  note={euro(totalVente - totalDebourse)}
+                  accent={marge < 20 ? "dark" : "plain"}
+                />
+              </div>
+              <div className="panel dpgf-editor">
+                <div className="table-toolbar">
+                  <strong>Décomposition des travaux</strong>
+                  <span />
+                  <button
+                    onClick={() => setEditor("lot")}
+                    disabled={detail.statut !== "BROUILLON"}
+                  >
+                    ＋ Lot
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTargetLot(detail.lots[0]?.id ?? "");
+                      setEditor("poste");
+                    }}
+                    disabled={
+                      !detail.lots.length || detail.statut !== "BROUILLON"
+                    }
+                  >
+                    ＋ Poste
+                  </button>
+                </div>
+                {detail.lots.map((lot) => (
+                  <div className="dpgf-lot" key={lot.id}>
+                    <div className="lot-heading">
+                      <span>{lot.code}</span>
+                      <strong>{lot.designation}</strong>
+                      <small>
+                        {lot.postes.length} poste
+                        {lot.postes.length > 1 ? "s" : ""}
+                      </small>
+                    </div>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Retenu</th>
+                            <th>Code · Désignation</th>
+                            <th>Unité</th>
+                            <th>Quantité</th>
+                            <th>Déboursé/u.</th>
+                            <th>Vente/u.</th>
+                            <th>Total HT</th>
+                            <th />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lot.postes.map((poste) => (
+                            <tr
+                              key={poste.id}
+                              className={!poste.isSelected ? "option-row" : ""}
+                            >
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={poste.isSelected}
+                                  onChange={() => togglePoste(poste)}
+                                  disabled={
+                                    detail.statut !== "BROUILLON" || working
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <strong>{poste.code}</strong>
+                                <span className="poste-name">
+                                  {poste.designation}
+                                </span>
+                                {poste.metres.length > 0 && (
+                                  <small className="metre-note">
+                                    ⌗{" "}
+                                    {poste.metres
+                                      .map(
+                                        (metre) =>
+                                          `${metre.libelle} : ${metre.quantite}`,
+                                      )
+                                      .join(" · ")}
+                                  </small>
+                                )}
+                              </td>
+                              <td>{poste.unite}</td>
+                              <td>
+                                <strong>
+                                  {Number(poste.quantite).toLocaleString(
+                                    "fr-FR",
+                                  )}
+                                </strong>
+                              </td>
+                              <td>{euro(poste.debourseUnitaire)}</td>
+                              <td>{euro(poste.prixUnitaireHt)}</td>
+                              <td>
+                                <strong>{euro(poste.totalVenteHt)}</strong>
+                              </td>
+                              <td>
+                                <button
+                                  className="row-action"
+                                  title="Ajouter un métré"
+                                  onClick={() => {
+                                    setTargetPoste(poste.id);
+                                    setEditor("metre");
+                                  }}
+                                  disabled={detail.statut !== "BROUILLON"}
+                                >
+                                  ⌗
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+                {!detail.lots.length && (
+                  <div className="empty">
+                    <span>⌗</span>
+                    <h3>Commencez par un lot</h3>
+                    <p>Exemple : 01 Maçonnerie, 02 Charpente, 03 Couverture.</p>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="panel empty">
+              <span>⌗</span>
+              <h3>Sélectionnez ou créez une DPGF</h3>
+              <p>Le chiffrage détaillé apparaîtra ici.</p>
+            </div>
+          )}
+        </section>
+      </div>
+      {editor && (
+        <DpgfDialog
+          kind={editor}
+          detail={detail}
+          chantiers={chantiers}
+          targetLot={targetLot}
+          targetPoste={targetPoste}
+          working={working}
+          close={() => setEditor(null)}
+          submit={submit}
+          setSelectedId={setSelectedId}
+        />
+      )}
     </div>
-    {editor && <DpgfDialog kind={editor} detail={detail} chantiers={chantiers} targetLot={targetLot} targetPoste={targetPoste} working={working} close={() => setEditor(null)} submit={submit} setSelectedId={setSelectedId} />}
-  </div>;
+  );
 }
 
-function DpgfDialog({ kind, detail, chantiers, targetLot, targetPoste, working, close, submit, setSelectedId }: { kind: "dpgf" | "lot" | "poste" | "metre"; detail: DpgfDetail | null; chantiers: RecordValue[]; targetLot: string; targetPoste: string; working: boolean; close: () => void; submit: (path: string, body: Record<string, unknown>, after?: (result: any) => void) => void; setSelectedId: (id: string) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  function send(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); const value = (name: string) => String(form.get(name) ?? ""); const number = (name: string) => Number(value(name));
-    if (kind === "dpgf") return submit("/dpgf", { chantierId: value("chantierId"), nom: value("nom"), coefficientFraisGeneraux: number("coefficientFraisGeneraux"), coefficientMarge: number("coefficientMarge") }, (result) => setSelectedId(result.id));
-    if (kind === "lot") return submit(`/dpgf/${detail?.id}/lots`, { code: value("code"), designation: value("designation"), ordre: number("ordre") });
-    if (kind === "poste") return submit(`/dpgf/lots/${value("lotId")}/postes`, { code: value("code"), designation: value("designation"), unite: value("unite"), quantite: number("quantite"), debourseUnitaire: number("debourseUnitaire"), coefficientVente: number("coefficientVente"), type: value("type"), isSelected: true });
-    const variables = Object.fromEntries(value("variables").split(";").filter(Boolean).map((entry) => { const [key, raw] = entry.split("="); return [key.trim(), Number(raw)]; }));
-    return submit(`/dpgf/postes/${value("posteId")}/metres`, { libelle: value("libelle"), formule: value("formule") || undefined, variables, quantite: value("quantite") ? number("quantite") : undefined, coefficient: number("coefficient") });
+function DpgfDialog({
+  kind,
+  detail,
+  chantiers,
+  targetLot,
+  targetPoste,
+  working,
+  close,
+  submit,
+  setSelectedId,
+}: {
+  kind: "dpgf" | "lot" | "poste" | "metre";
+  detail: DpgfDetail | null;
+  chantiers: RecordValue[];
+  targetLot: string;
+  targetPoste: string;
+  working: boolean;
+  close: () => void;
+  submit: (
+    path: string,
+    body: Record<string, unknown>,
+    after?: (result: any) => void,
+  ) => void;
+  setSelectedId: (id: string) => void;
+}) {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
+  function send(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const value = (name: string) => String(form.get(name) ?? "");
+    const number = (name: string) => Number(value(name));
+    if (kind === "dpgf")
+      return submit(
+        "/dpgf",
+        {
+          chantierId: value("chantierId"),
+          nom: value("nom"),
+          coefficientFraisGeneraux: number("coefficientFraisGeneraux"),
+          coefficientMarge: number("coefficientMarge"),
+        },
+        (result) => setSelectedId(result.id),
+      );
+    if (kind === "lot")
+      return submit(`/dpgf/${detail?.id}/lots`, {
+        code: value("code"),
+        designation: value("designation"),
+        ordre: number("ordre"),
+      });
+    if (kind === "poste")
+      return submit(`/dpgf/lots/${value("lotId")}/postes`, {
+        code: value("code"),
+        designation: value("designation"),
+        unite: value("unite"),
+        quantite: number("quantite"),
+        debourseUnitaire: number("debourseUnitaire"),
+        coefficientVente: number("coefficientVente"),
+        type: value("type"),
+        isSelected: true,
+      });
+    const variables = Object.fromEntries(
+      value("variables")
+        .split(";")
+        .filter(Boolean)
+        .map((entry) => {
+          const [key, raw] = entry.split("=");
+          return [key.trim(), Number(raw)];
+        }),
+    );
+    return submit(`/dpgf/postes/${value("posteId")}/metres`, {
+      libelle: value("libelle"),
+      formule: value("formule") || undefined,
+      variables,
+      quantite: value("quantite") ? number("quantite") : undefined,
+      coefficient: number("coefficient"),
+    });
   }
-  const titles = { dpgf: "Nouvelle DPGF", lot: "Ajouter un lot", poste: "Ajouter un poste", metre: "Ajouter un métré" };
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><form className="modal-card" onSubmit={send}><div className="modal-head"><div><p className="eyebrow">DPGF & MÉTRÉS</p><h3>{titles[kind]}</h3></div><button type="button" onClick={close}>×</button></div>
-    {kind === "dpgf" && <><label>Chantier<select name="chantierId" required defaultValue=""><option value="" disabled>Choisir un chantier…</option>{chantiers.map((chantier) => <option value={String(chantier.id)} key={String(chantier.id)}>{String(chantier.reference)} · {String(chantier.objet)}</option>)}</select></label><label>Nom du chiffrage<input name="nom" required placeholder="Rénovation maison de maître" /></label><div className="form-grid"><label>Coefficient frais généraux<input name="coefficientFraisGeneraux" type="number" min="1" step="0.01" defaultValue="1.12" required /></label><label>Coefficient de marge<input name="coefficientMarge" type="number" min="1" step="0.01" defaultValue="1.18" required /></label></div></>}
-    {kind === "lot" && <><div className="form-grid"><label>Code<input name="code" required placeholder="01" /></label><label>Ordre<input name="ordre" type="number" min="0" defaultValue={detail?.lots.length ?? 0} required /></label></div><label>Désignation<input name="designation" required placeholder="Maçonnerie ancienne" /></label></>}
-    {kind === "poste" && <><label>Lot<select name="lotId" required defaultValue={targetLot}>{detail?.lots.map((lot) => <option value={lot.id} key={lot.id}>{lot.code} · {lot.designation}</option>)}</select></label><div className="form-grid"><label>Code<input name="code" required placeholder="01.01" /></label><label>Unité<select name="unite" defaultValue="m²"><option>m²</option><option>ml</option><option>m³</option><option>u</option><option>h</option><option>forfait</option></select></label></div><label>Désignation<input name="designation" required placeholder="Rejointoiement pierre à la chaux" /></label><div className="form-grid three"><label>Quantité initiale<input name="quantite" type="number" min="0" step="0.001" defaultValue="0" /></label><label>Déboursé unitaire<input name="debourseUnitaire" type="number" min="0" step="0.01" required /></label><label>Coefficient vente<input name="coefficientVente" type="number" min="1" step="0.01" defaultValue="1.25" required /></label></div><label>Nature<select name="type" defaultValue="BASE"><option value="BASE">Base</option><option value="OPTION">Option</option><option value="VARIANTE">Variante</option></select></label></>}
-    {kind === "metre" && <><label>Poste<select name="posteId" required defaultValue={targetPoste}>{detail?.lots.flatMap((lot) => lot.postes).map((poste) => <option value={poste.id} key={poste.id}>{poste.code} · {poste.designation}</option>)}</select></label><label>Libellé du relevé<input name="libelle" required placeholder="Façade cour" /></label><div className="form-grid"><label>Formule<input name="formule" placeholder="(L*H)-OUVERTURES" /></label><label>Variables<input name="variables" placeholder="L=12.4;H=6.2;OUVERTURES=8" /></label></div><div className="form-grid"><label>Ou quantité directe<input name="quantite" type="number" min="0" step="0.001" /></label><label>Coefficient<input name="coefficient" type="number" min="0" step="0.001" defaultValue="1" required /></label></div><p className="form-hint">Utilisez +, −, ×, / et des parenthèses. Les variables sont séparées par des points-virgules.</p></>}
-    <div className="modal-actions"><button className="secondary compact" type="button" onClick={close}>Annuler</button><button className="primary compact" disabled={working || (kind === "dpgf" && !chantiers.length)}>{working ? "Enregistrement…" : "Enregistrer"}</button></div>{kind === "dpgf" && !chantiers.length && <p className="form-error">Créez d’abord un chantier pour rattacher cette DPGF.</p>}</form></div>;
+  const titles = {
+    dpgf: "Nouvelle DPGF",
+    lot: "Ajouter un lot",
+    poste: "Ajouter un poste",
+    metre: "Ajouter un métré",
+  };
+  return (
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
+    >
+      <form className="modal-card" onSubmit={send}>
+        <div className="modal-head">
+          <div>
+            <p className="eyebrow">DPGF & MÉTRÉS</p>
+            <h3>{titles[kind]}</h3>
+          </div>
+          <button type="button" onClick={close}>
+            ×
+          </button>
+        </div>
+        {kind === "dpgf" && (
+          <>
+            <label>
+              Chantier
+              <select name="chantierId" required defaultValue="">
+                <option value="" disabled>
+                  Choisir un chantier…
+                </option>
+                {chantiers.map((chantier) => (
+                  <option value={String(chantier.id)} key={String(chantier.id)}>
+                    {String(chantier.reference)} · {String(chantier.objet)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Nom du chiffrage
+              <input
+                name="nom"
+                required
+                placeholder="Rénovation maison de maître"
+              />
+            </label>
+            <div className="form-grid">
+              <label>
+                Coefficient frais généraux
+                <input
+                  name="coefficientFraisGeneraux"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  defaultValue="1.12"
+                  required
+                />
+              </label>
+              <label>
+                Coefficient de marge
+                <input
+                  name="coefficientMarge"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  defaultValue="1.18"
+                  required
+                />
+              </label>
+            </div>
+          </>
+        )}
+        {kind === "lot" && (
+          <>
+            <div className="form-grid">
+              <label>
+                Code
+                <input name="code" required placeholder="01" />
+              </label>
+              <label>
+                Ordre
+                <input
+                  name="ordre"
+                  type="number"
+                  min="0"
+                  defaultValue={detail?.lots.length ?? 0}
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              Désignation
+              <input
+                name="designation"
+                required
+                placeholder="Maçonnerie ancienne"
+              />
+            </label>
+          </>
+        )}
+        {kind === "poste" && (
+          <>
+            <label>
+              Lot
+              <select name="lotId" required defaultValue={targetLot}>
+                {detail?.lots.map((lot) => (
+                  <option value={lot.id} key={lot.id}>
+                    {lot.code} · {lot.designation}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="form-grid">
+              <label>
+                Code
+                <input name="code" required placeholder="01.01" />
+              </label>
+              <label>
+                Unité
+                <select name="unite" defaultValue="m²">
+                  <option>m²</option>
+                  <option>ml</option>
+                  <option>m³</option>
+                  <option>u</option>
+                  <option>h</option>
+                  <option>forfait</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Désignation
+              <input
+                name="designation"
+                required
+                placeholder="Rejointoiement pierre à la chaux"
+              />
+            </label>
+            <div className="form-grid three">
+              <label>
+                Quantité initiale
+                <input
+                  name="quantite"
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  defaultValue="0"
+                />
+              </label>
+              <label>
+                Déboursé unitaire
+                <input
+                  name="debourseUnitaire"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </label>
+              <label>
+                Coefficient vente
+                <input
+                  name="coefficientVente"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  defaultValue="1.25"
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              Nature
+              <select name="type" defaultValue="BASE">
+                <option value="BASE">Base</option>
+                <option value="OPTION">Option</option>
+                <option value="VARIANTE">Variante</option>
+              </select>
+            </label>
+          </>
+        )}
+        {kind === "metre" && (
+          <>
+            <label>
+              Poste
+              <select name="posteId" required defaultValue={targetPoste}>
+                {detail?.lots
+                  .flatMap((lot) => lot.postes)
+                  .map((poste) => (
+                    <option value={poste.id} key={poste.id}>
+                      {poste.code} · {poste.designation}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label>
+              Libellé du relevé
+              <input name="libelle" required placeholder="Façade cour" />
+            </label>
+            <div className="form-grid">
+              <label>
+                Formule
+                <input name="formule" placeholder="(L*H)-OUVERTURES" />
+              </label>
+              <label>
+                Variables
+                <input
+                  name="variables"
+                  placeholder="L=12.4;H=6.2;OUVERTURES=8"
+                />
+              </label>
+            </div>
+            <div className="form-grid">
+              <label>
+                Ou quantité directe
+                <input name="quantite" type="number" min="0" step="0.001" />
+              </label>
+              <label>
+                Coefficient
+                <input
+                  name="coefficient"
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  defaultValue="1"
+                  required
+                />
+              </label>
+            </div>
+            <p className="form-hint">
+              Utilisez +, −, ×, / et des parenthèses. Les variables sont
+              séparées par des points-virgules.
+            </p>
+          </>
+        )}
+        <div className="modal-actions">
+          <button className="secondary compact" type="button" onClick={close}>
+            Annuler
+          </button>
+          <button
+            className="primary compact"
+            disabled={working || (kind === "dpgf" && !chantiers.length)}
+          >
+            {working ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
+        {kind === "dpgf" && !chantiers.length && (
+          <p className="form-error">
+            Créez d’abord un chantier pour rattacher cette DPGF.
+          </p>
+        )}
+      </form>
+    </div>
+  );
 }
 
-function Kpi({ label: text, value, note, accent = "plain" }: { label: string; value: string | number; note: string; accent?: string }) { return <article className={`kpi ${accent}`}><p>{text}</p><strong>{value}</strong><small>{note}</small></article>; }
-function Status({ value }: { value: unknown }) { const text = String(value ?? "INCONNU"); return <span className={`status status-${text.toLowerCase()}`}>{label(text)}</span>; }
-function PanelTitle({ title, action, onClick }: { title: string; action?: string; onClick?: () => void }) { return <div className="panel-title"><h3>{title}</h3>{action && <button onClick={onClick}>{action} →</button>}</div>; }
-function Todo({ tone, title, text }: { tone: string; title: string; text: string }) { return <div className="todo"><span className={tone}>!</span><div><strong>{title}</strong><small>{text}</small></div><b>›</b></div>; }
+function Kpi({
+  label: text,
+  value,
+  note,
+  accent = "plain",
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+  accent?: string;
+}) {
+  return (
+    <article className={`kpi ${accent}`}>
+      <p>{text}</p>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </article>
+  );
+}
+function Status({ value }: { value: unknown }) {
+  const text = String(value ?? "INCONNU");
+  return (
+    <span className={`status status-${text.toLowerCase()}`}>{label(text)}</span>
+  );
+}
+function PanelTitle({
+  title,
+  action,
+  onClick,
+}: {
+  title: string;
+  action?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div className="panel-title">
+      <h3>{title}</h3>
+      {action && <button onClick={onClick}>{action} →</button>}
+    </div>
+  );
+}
+function Todo({
+  tone,
+  title,
+  text,
+}: {
+  tone: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="todo">
+      <span className={tone}>!</span>
+      <div>
+        <strong>{title}</strong>
+        <small>{text}</small>
+      </div>
+      <b>›</b>
+    </div>
+  );
+}

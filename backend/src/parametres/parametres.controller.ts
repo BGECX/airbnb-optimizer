@@ -1,74 +1,109 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { ParametresService } from './parametres.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
-import { CreateAssuranceDto, CreateBanqueDto, CreateTvaDto, UpdateEntrepriseDto, UpdateNumerotationDto, VerifyVatDto } from './dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import { ParametresService } from "./parametres.service";
+import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../common/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "@prisma/client";
+import {
+  CreateAssuranceDto,
+  CreateBanqueDto,
+  CreateTvaDto,
+  GenerateLogoDto,
+  UpdateEntrepriseDto,
+  UpdateNumerotationDto,
+  VerifyVatDto,
+} from "./dto";
+import { LogoGeneratorService } from "./logo-generator.service";
 
-@ApiTags('Paramètres')
-@Controller('parametres')
+@ApiTags("Paramètres")
+@Controller("parametres")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ParametresController {
-  constructor(private parametresService: ParametresService) {}
+  constructor(
+    private parametresService: ParametresService,
+    private logoGenerator: LogoGeneratorService,
+  ) {}
 
-  @Get('entreprise')
+  @Get("logo/ia/status")
+  @Roles(UserRole.ADMIN)
+  getLogoGeneratorStatus() {
+    return this.logoGenerator.status();
+  }
+
+  @Post("logo/ia/generer")
+  @Roles(UserRole.ADMIN)
+  generateLogo(@Body() data: GenerateLogoDto) {
+    return this.logoGenerator.generate(data);
+  }
+
+  @Get("entreprise")
   getEntreprise() {
     return this.parametresService.getEntreprise();
   }
 
-  @Patch('entreprise')
+  @Patch("entreprise")
   @Roles(UserRole.ADMIN)
   updateEntreprise(@Body() data: UpdateEntrepriseDto) {
     return this.parametresService.updateEntreprise(data);
   }
 
-  @Get('numerotations')
+  @Get("numerotations")
   getNumerotations() {
     return this.parametresService.getNumerotations();
   }
 
-  @Patch('numerotations/:type')
+  @Patch("numerotations/:type")
   @Roles(UserRole.ADMIN)
-  updateNumerotation(@Param('type') type: string, @Body() data: UpdateNumerotationDto) {
+  updateNumerotation(
+    @Param("type") type: string,
+    @Body() data: UpdateNumerotationDto,
+  ) {
     return this.parametresService.updateNumerotation(type, data);
   }
 
-  @Get('tva')
+  @Get("tva")
   getTVAs() {
     return this.parametresService.getTVAs();
   }
 
-  @Post('tva/verifier')
+  @Post("tva/verifier")
   verifyTVA(@Body() data: VerifyVatDto) {
     return this.parametresService.verifyTVA(data.numero);
   }
 
-  @Post('tva')
+  @Post("tva")
   @Roles(UserRole.ADMIN, UserRole.COMPTABLE)
   createTVA(@Body() data: CreateTvaDto) {
     return this.parametresService.createTVA(data);
   }
 
-  @Get('banques')
+  @Get("banques")
   getBanques() {
     return this.parametresService.getBanques();
   }
 
-  @Post('banques')
+  @Post("banques")
   @Roles(UserRole.ADMIN, UserRole.COMPTABLE)
   createBanque(@Body() data: CreateBanqueDto) {
     return this.parametresService.createBanque(data);
   }
 
-  @Get('assurances')
+  @Get("assurances")
   getAssurances() {
     return this.parametresService.getAssurances();
   }
 
-  @Post('assurances')
+  @Post("assurances")
   @Roles(UserRole.ADMIN)
   createAssurance(@Body() data: CreateAssuranceDto) {
     return this.parametresService.createAssurance(data);
