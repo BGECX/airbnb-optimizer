@@ -13,6 +13,8 @@ Variables minimales : `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `POSTGRES_PASSW
 
 Pour activer « Mot de passe oublié », définir `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` et `PUBLIC_APP_URL`. Exemple OVH : `SMTP_HOST=smtp.mail.ovh.net`, `SMTP_PORT=587`, `PUBLIC_APP_URL=https://www.getkritia.com`. Le mot de passe SMTP reste exclusivement dans le gestionnaire de secrets de l’hébergeur.
 
+Pour désigner explicitement le propriétaire initial de l’instance, définir `BOOTSTRAP_ADMIN_EMAIL` avec son adresse exacte. Lors de sa prochaine connexion réussie, ce compte seul reçoit le rôle `ADMIN`. Ne jamais utiliser une adresse générique ou partagée.
+
 ## Mise en production
 
 1. Exécuter `scripts/release-check.sh` contre une base isolée se terminant par `_test`.

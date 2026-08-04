@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 import { RegisterDto, LoginDto } from './dto';
 import { PasswordResetMailService } from './password-reset-mail.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -35,11 +36,16 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, metadata?: TokenMetadata) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email.trim().toLowerCase() } });
+    let user = await this.prisma.user.findUnique({ where: { email: dto.email.trim().toLowerCase() } });
     if (!user || !user.isActive) throw new UnauthorizedException('Identifiants invalides');
 
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
+
+    const bootstrapAdminEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+    if (bootstrapAdminEmail && user.email === bootstrapAdminEmail && user.role !== UserRole.ADMIN) {
+      user = await this.prisma.user.update({ where: { id: user.id }, data: { role: UserRole.ADMIN } });
+    }
 
     await this.prisma.user.update({
       where: { id: user.id },
