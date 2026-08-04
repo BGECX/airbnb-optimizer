@@ -263,18 +263,28 @@ function AddressFields({ request }: { request: ApiRequest }) {
   const [value, setValue] = useState({ adresse: "", codePostal: "", ville: "" });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const skipAddressLookup = useRef(false);
-  useAddressSelectionBeforeBlur(suggestions, (item) => {
-    skipAddressLookup.current = true;
-    setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville });
-    setSuggestions([]);
-  });
   useEffect(() => {
     if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
     if (value.adresse.trim().length < 3) return;
     const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).catch(() => publicAddressSearch(value.adresse)).then(setSuggestions).catch(() => setSuggestions([])), 350);
     return () => window.clearTimeout(timer);
   }, [value.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <><label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>Adresse<input name="adresse" autoComplete="off" value={value.adresse} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} onChange={(event) => setValue((current) => ({ ...current, adresse: event.target.value }))} />{value.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { skipAddressLookup.current = true; setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville }); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid"><label>Code postal<input name="codePostal" value={value.codePostal} onChange={(event) => setValue((current) => ({ ...current, codePostal: event.target.value }))} /></label><label>Ville<input name="ville" value={value.ville} onChange={(event) => setValue((current) => ({ ...current, ville: event.target.value }))} /></label></div></>;
+  const selectSuggestion = (item: AddressSuggestion) => {
+    skipAddressLookup.current = true;
+    setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville });
+    setSuggestions([]);
+  };
+  return <>
+    <label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>
+      Adresse
+      <input name="adresse" autoComplete="off" value={value.adresse} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} onChange={(event) => setValue((current) => ({ ...current, adresse: event.target.value }))} />
+      {value.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onMouseDown={(event) => { event.preventDefault(); selectSuggestion(item); }} onTouchStart={() => selectSuggestion(item)} onClick={() => selectSuggestion(item)}>{item.label}</button>)}</span>}
+    </label>
+    <div className="form-grid">
+      <label>Code postal<input name="codePostal" value={value.codePostal} onChange={(event) => setValue((current) => ({ ...current, codePostal: event.target.value }))} /></label>
+      <label>Ville<input name="ville" value={value.ville} onChange={(event) => setValue((current) => ({ ...current, ville: event.target.value }))} /></label>
+    </div>
+  </>;
 }
 
 function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCreated: (client: RecordValue) => void }) {
