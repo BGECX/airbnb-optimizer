@@ -209,12 +209,43 @@ type CrudSection = Exclude<Section, "dashboard" | "dpgf">;
 
 type AddressSuggestion = { label: string; adresse: string; codePostal: string; ville: string };
 
+async function publicAddressSearch(query: string): Promise<AddressSuggestion[]> {
+  const url = new URL("https://data.geopf.fr/geocodage/completion");
+  url.searchParams.set("text", query);
+  url.searchParams.set("maximumResponses", "6");
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Le service national des adresses est indisponible.");
+  const payload = await response.json();
+  return (payload.results ?? []).map((item: RecordValue) => ({
+    label: String(item.fulltext ?? ""),
+    adresse: String(item.fulltext ?? "").split(",")[0],
+    codePostal: String(item.zipcode ?? ""),
+    ville: String(item.city ?? ""),
+  }));
+}
+
+async function publicCompanySearch(siret: string) {
+  const response = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${encodeURIComponent(siret)}&per_page=1`);
+  if (!response.ok) throw new Error("Le registre public des entreprises est indisponible.");
+  const payload = await response.json();
+  const company = payload.results?.[0];
+  if (!company) throw new Error("Aucune entreprise trouvée pour ce SIRET.");
+  const establishment = (company.matching_etablissements ?? []).find((item: RecordValue) => item.siret === siret) ?? company.siege ?? {};
+  return {
+    nom: company.nom_raison_sociale ?? company.nom_complet ?? "",
+    siret,
+    adresse: establishment.adresse ?? establishment.geo_adresse ?? "",
+    codePostal: establishment.code_postal ?? "",
+    ville: establishment.libelle_commune ?? "",
+  };
+}
+
 function AddressFields({ request }: { request: ApiRequest }) {
   const [value, setValue] = useState({ adresse: "", codePostal: "", ville: "" });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   useEffect(() => {
     if (value.adresse.trim().length < 3) return;
-    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).then(setSuggestions).catch(() => setSuggestions([])), 350);
+    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).catch(() => publicAddressSearch(value.adresse)).then(setSuggestions).catch(() => setSuggestions([])), 350);
     return () => window.clearTimeout(timer);
   }, [value.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
   return <><label className="suggestion-field">Adresse<input name="adresse" autoComplete="off" value={value.adresse} onChange={(event) => setValue((current) => ({ ...current, adresse: event.target.value }))} />{value.adresse.trim().length >= 3 && suggestions.length > 0 && <span className="suggestion-list">{suggestions.map((item) => <button type="button" key={item.label} onClick={() => { setValue({ adresse: item.adresse, codePostal: item.codePostal, ville: item.ville }); setSuggestions([]); }}>{item.label}</button>)}</span>}</label><div className="form-grid"><label>Code postal<input name="codePostal" value={value.codePostal} onChange={(event) => setValue((current) => ({ ...current, codePostal: event.target.value }))} /></label><label>Ville<input name="ville" value={value.ville} onChange={(event) => setValue((current) => ({ ...current, ville: event.target.value }))} /></label></div></>;
@@ -227,15 +258,25 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
   const [message, setMessage] = useState("");
   useEffect(() => {
     if (client.adresse.trim().length < 3) return;
-    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).then(setSuggestions).catch(() => setSuggestions([])), 350);
+    const timer = window.setTimeout(async () => {
+      setMessage("Recherche de l’adresse…");
+      try {
+        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).catch(() => publicAddressSearch(client.adresse));
+        setSuggestions(results);
+        setMessage(results.length ? "Sélectionnez l’adresse proposée." : "Aucune adresse trouvée.");
+      } catch (reason) {
+        setSuggestions([]);
+        setMessage(reason instanceof Error ? reason.message : "Recherche d’adresse impossible");
+      }
+    }, 350);
     return () => window.clearTimeout(timer);
   }, [client.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
   const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
   async function lookupSiret() {
     if (!/^\d{14}$/.test(client.siret)) { setMessage("Le SIRET doit contenir 14 chiffres."); return; }
-    setWorking(true); setMessage("");
+    setWorking(true); setMessage("Recherche de l’entreprise…");
     try {
-      const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`);
+      const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`).catch(async () => ({ existing: false, company: await publicCompanySearch(client.siret) }));
       if (result.existing) { onCreated(result.client); setMessage("Ce client existait déjà : il a été sélectionné."); return; }
       setClient((current) => ({ ...current, type: "ENTREPRISE", ...result.company }));
       setMessage("Entreprise retrouvée. Vérifiez les informations avant création.");
@@ -264,7 +305,17 @@ function ClientFormFields({ request }: { request: ApiRequest }) {
   const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
   useEffect(() => {
     if (client.adresse.trim().length < 3) return;
-    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).then(setSuggestions).catch(() => setSuggestions([])), 350);
+    const timer = window.setTimeout(async () => {
+      setMessage("Recherche de l’adresse…");
+      try {
+        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(client.adresse)}`).catch(() => publicAddressSearch(client.adresse));
+        setSuggestions(results);
+        setMessage(results.length ? "Sélectionnez l’adresse proposée." : "Aucune adresse trouvée.");
+      } catch (reason) {
+        setSuggestions([]);
+        setMessage(reason instanceof Error ? reason.message : "Recherche d’adresse impossible");
+      }
+    }, 350);
     return () => window.clearTimeout(timer);
   }, [client.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -272,7 +323,7 @@ function ClientFormFields({ request }: { request: ApiRequest }) {
     const timer = window.setTimeout(async () => {
       setMessage("Recherche de l’entreprise…");
       try {
-        const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`);
+        const result = await request(`/clients/recherche/entreprises?siret=${client.siret}`).catch(async () => ({ existing: false, company: await publicCompanySearch(client.siret) }));
         if (result.existing) { setMessage(`Ce SIRET appartient déjà au client ${String(result.client.nom)}.`); return; }
         setClient((current) => ({ ...current, ...result.company, type: "ENTREPRISE" }));
         setMessage("Entreprise retrouvée et fiche préremplie.");
