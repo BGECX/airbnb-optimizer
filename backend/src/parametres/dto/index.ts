@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDateString, IsEmail, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsNumber, IsOptional, IsString, Matches, Max, Min, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateEntrepriseDto {
@@ -17,6 +17,13 @@ export class UpdateEntrepriseDto {
   @ApiPropertyOptional() @IsOptional() @IsString() couleurPrimary?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() couleurSecondary?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() cgv?: string;
+}
+
+export class VerifyVatDto {
+  @ApiProperty({ example: 'FR40303265045' })
+  @IsString()
+  @Matches(/^[A-Z]{2}[A-Z0-9]{2,14}$/, { message: 'Le numéro de TVA doit commencer par le code pays et contenir 4 à 16 caractères' })
+  numero: string;
 }
 
 export class UpdateNumerotationDto {

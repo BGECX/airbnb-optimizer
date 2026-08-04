@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { CreateAssuranceDto, CreateBanqueDto, CreateTvaDto, UpdateEntrepriseDto, UpdateNumerotationDto } from './dto';
+import { CreateAssuranceDto, CreateBanqueDto, CreateTvaDto, UpdateEntrepriseDto, UpdateNumerotationDto, VerifyVatDto } from './dto';
 
 @ApiTags('Paramètres')
 @Controller('parametres')
@@ -39,6 +39,11 @@ export class ParametresController {
   @Get('tva')
   getTVAs() {
     return this.parametresService.getTVAs();
+  }
+
+  @Post('tva/verifier')
+  verifyTVA(@Body() data: VerifyVatDto) {
+    return this.parametresService.verifyTVA(data.numero);
   }
 
   @Post('tva')
