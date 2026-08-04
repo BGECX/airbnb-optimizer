@@ -29,6 +29,7 @@ import { RedisModule } from './redis/redis.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RequestObservabilityInterceptor } from './observability/request-observability.interceptor';
 import { ApporteursModule } from './apporteurs/apporteurs.module';
+import { BoutiqueModule } from './boutique/boutique.module';
 
 function validateEnvironment(config: Record<string, unknown>) {
   const secret = String(config.JWT_SECRET || '');
@@ -62,6 +63,7 @@ function validateEnvironment(config: Record<string, unknown>) {
     UsersModule,
     ClientsModule,
     ApporteursModule,
+    BoutiqueModule,
     DevisModule,
     FacturesModule,
     ChantiersModule,

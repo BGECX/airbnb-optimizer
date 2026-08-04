@@ -1,5 +1,7 @@
 # KRITIA API
 
+La conception de la boutique publicitaire et du modèle de crédits pour les logos IA est décrite dans [`docs/BOUTIQUE-LOGOS-IA.md`](docs/BOUTIQUE-LOGOS-IA.md).
+
 Backend NestJS + Prisma + PostgreSQL pour l'application de gestion BTP KRITIA.
 
 ## Stack technique
