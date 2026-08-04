@@ -1865,6 +1865,15 @@ function LogoAiStudio({
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [brief, setBrief] = useState({
+    raisonSociale: String(company.raisonSociale ?? ""),
+    activite: "",
+    style: "moderne",
+    slogan: "",
+    couleurPrincipale: String(company.couleurPrimary ?? "#2563eb"),
+    couleurSecondaire: String(company.couleurSecondary ?? "#f59e0b"),
+    symboles: "",
+  });
 
   useEffect(() => {
     if (!open || demo || configured !== null) return;
@@ -1873,26 +1882,26 @@ function LogoAiStudio({
       .catch(() => setConfigured(false));
   }, [configured, demo, open, request]);
 
-  async function generate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function generate() {
     if (demo) {
       setError("La création IA est désactivée dans le mode démonstration.");
       return;
     }
-    const form = new FormData(event.currentTarget);
+    if (brief.raisonSociale.trim().length < 2 || brief.activite.trim().length < 3) {
+      setError("Indiquez le nom de l’entreprise et décrivez son activité.");
+      return;
+    }
     setWorking(true);
     setError("");
     try {
       const result = await request("/parametres/logo/ia/generer", {
         method: "POST",
         body: JSON.stringify({
-          raisonSociale: form.get("raisonSociale"),
-          activite: form.get("activite"),
-          style: form.get("style"),
-          slogan: form.get("slogan") || undefined,
-          couleurPrincipale: form.get("couleurPrincipale"),
-          couleurSecondaire: form.get("couleurSecondaire"),
-          symboles: form.get("symboles") || undefined,
+          ...brief,
+          raisonSociale: brief.raisonSociale.trim(),
+          activite: brief.activite.trim(),
+          slogan: brief.slogan.trim() || undefined,
+          symboles: brief.symboles.trim() || undefined,
         }),
       });
       if (!result.image) throw new Error("Aucune proposition reçue.");
@@ -1932,21 +1941,20 @@ function LogoAiStudio({
               Le service IA doit être activé sur le serveur avec une clé OpenAI.
             </div>
           )}
-          <form onSubmit={generate}>
+          <div className="ai-logo-form">
             <label>
               Nom exact de l’entreprise
               <input
-                name="raisonSociale"
-                required
+                value={brief.raisonSociale}
+                onChange={(event) => setBrief((current) => ({ ...current, raisonSociale: event.target.value }))}
                 minLength={2}
-                defaultValue={String(company.raisonSociale ?? "")}
               />
             </label>
             <label>
               Activité et spécialités
               <textarea
-                name="activite"
-                required
+                value={brief.activite}
+                onChange={(event) => setBrief((current) => ({ ...current, activite: event.target.value }))}
                 minLength={3}
                 rows={3}
                 placeholder="Rénovation du bâti ancien, pierre, chaux…"
@@ -1955,7 +1963,7 @@ function LogoAiStudio({
             <div className="ai-logo-grid">
               <label>
                 Style
-                <select name="style" defaultValue="moderne">
+                <select value={brief.style} onChange={(event) => setBrief((current) => ({ ...current, style: event.target.value }))}>
                   <option value="moderne">Moderne</option>
                   <option value="patrimoine">Patrimoine</option>
                   <option value="minimaliste">Minimaliste</option>
@@ -1966,7 +1974,8 @@ function LogoAiStudio({
               <label>
                 Slogan facultatif
                 <input
-                  name="slogan"
+                  value={brief.slogan}
+                  onChange={(event) => setBrief((current) => ({ ...current, slogan: event.target.value }))}
                   maxLength={100}
                   placeholder="Bâtir, rénover, transmettre"
                 />
@@ -1974,24 +1983,25 @@ function LogoAiStudio({
               <label>
                 Couleur principale
                 <input
-                  name="couleurPrincipale"
                   type="color"
-                  defaultValue={String(company.couleurPrimary ?? "#2563eb")}
+                  value={brief.couleurPrincipale}
+                  onChange={(event) => setBrief((current) => ({ ...current, couleurPrincipale: event.target.value }))}
                 />
               </label>
               <label>
                 Couleur secondaire
                 <input
-                  name="couleurSecondaire"
                   type="color"
-                  defaultValue={String(company.couleurSecondary ?? "#f59e0b")}
+                  value={brief.couleurSecondaire}
+                  onChange={(event) => setBrief((current) => ({ ...current, couleurSecondaire: event.target.value }))}
                 />
               </label>
             </div>
             <label>
               Symboles ou idées facultatives
               <input
-                name="symboles"
+                value={brief.symboles}
+                onChange={(event) => setBrief((current) => ({ ...current, symboles: event.target.value }))}
                 maxLength={160}
                 placeholder="Monogramme, pierre, maison ancienne…"
               />
@@ -2002,15 +2012,17 @@ function LogoAiStudio({
                 votre compte IA.
               </small>
               <button
+                type="button"
                 className="primary compact"
                 disabled={working || configured === false}
+                onClick={() => void generate()}
               >
                 {working
                   ? "Création en cours… (jusqu’à 2 min)"
                   : "✦ Générer une proposition"}
               </button>
             </div>
-          </form>
+          </div>
           {error && <div className="form-error">{error}</div>}
           {images.length > 0 && (
             <div className="ai-logo-results">

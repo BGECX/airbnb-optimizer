@@ -1616,7 +1616,7 @@ tbody tr:hover {
   border-top: 1px solid #d7e4f6;
   background: #fff;
 }
-.ai-logo-workspace form {
+.ai-logo-workspace .ai-logo-form {
   display: grid;
   gap: 12px;
 }
