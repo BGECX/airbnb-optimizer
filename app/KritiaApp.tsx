@@ -244,10 +244,30 @@ async function publicCompanySearch(siret: string) {
   };
 }
 
+function useAddressSelectionBeforeBlur(suggestions: AddressSuggestion[], select: (item: AddressSuggestion) => void) {
+  useEffect(() => {
+    const selectBeforeBlur = (event: PointerEvent) => {
+      const target = event.target instanceof Element ? event.target.closest(".suggestion-list button") : null;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const item = suggestions.find((suggestion) => suggestion.label === target.textContent?.trim());
+      if (!item) return;
+      event.preventDefault();
+      select(item);
+    };
+    document.addEventListener("pointerdown", selectBeforeBlur, true);
+    return () => document.removeEventListener("pointerdown", selectBeforeBlur, true);
+  }, [suggestions]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 function AddressFields({ request }: { request: ApiRequest }) {
   const [value, setValue] = useState({ adresse: "", codePostal: "", ville: "" });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const skipAddressLookup = useRef(false);
+  useAddressSelectionBeforeBlur(suggestions, (item) => {
+    skipAddressLookup.current = true;
+    setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville });
+    setSuggestions([]);
+  });
   useEffect(() => {
     if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
     if (value.adresse.trim().length < 3) return;
@@ -263,20 +283,11 @@ function InlineClientCreator({ request, onCreated }: { request: ApiRequest; onCr
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   const skipAddressLookup = useRef(false);
-  useEffect(() => {
-    const selectBeforeBlur = (event: PointerEvent) => {
-      const target = event.target instanceof Element ? event.target.closest(".inline-creator .suggestion-list button") : null;
-      if (!(target instanceof HTMLButtonElement)) return;
-      const item = suggestions.find((suggestion) => suggestion.label === target.textContent?.trim());
-      if (!item) return;
-      event.preventDefault();
-      skipAddressLookup.current = true;
-      setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
-      setSuggestions([]);
-    };
-    document.addEventListener("pointerdown", selectBeforeBlur, true);
-    return () => document.removeEventListener("pointerdown", selectBeforeBlur, true);
-  }, [suggestions]);
+  useAddressSelectionBeforeBlur(suggestions, (item) => {
+    skipAddressLookup.current = true;
+    setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
+    setSuggestions([]);
+  });
   useEffect(() => {
     if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
     if (client.adresse.trim().length < 3) return;
@@ -326,6 +337,11 @@ function ClientFormFields({ request }: { request: ApiRequest }) {
   const [message, setMessage] = useState("");
   const skipAddressLookup = useRef(false);
   const update = (key: string, value: string) => setClient((current) => ({ ...current, [key]: value }));
+  useAddressSelectionBeforeBlur(suggestions, (item) => {
+    skipAddressLookup.current = true;
+    setClient((current) => ({ ...current, adresse: item.label, codePostal: item.codePostal, ville: item.ville }));
+    setSuggestions([]);
+  });
   useEffect(() => {
     if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
     if (client.adresse.trim().length < 3) return;
