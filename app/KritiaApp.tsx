@@ -263,17 +263,23 @@ function AddressFields({ request }: { request: ApiRequest }) {
   const [value, setValue] = useState({ adresse: "", codePostal: "", ville: "" });
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const skipAddressLookup = useRef(false);
-  useEffect(() => {
-    if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
-    if (value.adresse.trim().length < 3) return;
-    const timer = window.setTimeout(() => request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).catch(() => publicAddressSearch(value.adresse)).then(setSuggestions).catch(() => setSuggestions([])), 350);
-    return () => window.clearTimeout(timer);
-  }, [value.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectSuggestion = (item: AddressSuggestion) => {
     skipAddressLookup.current = true;
     setValue({ adresse: item.label, codePostal: item.codePostal, ville: item.ville });
     setSuggestions([]);
   };
+  useEffect(() => {
+    if (skipAddressLookup.current) { skipAddressLookup.current = false; return; }
+    if (value.adresse.trim().length < 3) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await request(`/clients/recherche/adresses?q=${encodeURIComponent(value.adresse)}`).catch(() => publicAddressSearch(value.adresse));
+        if (results.length === 1 && value.adresse.trim().length >= 8) { selectSuggestion(results[0]); return; }
+        setSuggestions(results);
+      } catch { setSuggestions([]); }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [value.adresse]); // eslint-disable-line react-hooks/exhaustive-deps
   return <>
     <label className="suggestion-field" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSuggestions([]); }}>
       Adresse
