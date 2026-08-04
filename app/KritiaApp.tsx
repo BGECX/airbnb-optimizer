@@ -81,6 +81,10 @@ export default function KritiaApp() {
     if (session) void loadAll();
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (session && section !== "dashboard") void loadAll();
+  }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function api(path: string, options: RequestInit = {}) {
     const response = await fetch(`${apiUrl.replace(/\/$/, "")}${path}`, {
       ...options,
