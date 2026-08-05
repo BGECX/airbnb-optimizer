@@ -1033,6 +1033,7 @@ function CompanySettings({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [vectorReference, setVectorReference] = useState<string>();
+  const [vectorReferenceVersion, setVectorReferenceVersion] = useState(0);
   useEffect(() => {
     if (demo) return;
     let active = true;
@@ -1611,6 +1612,7 @@ function CompanySettings({
                     </label>
                   </div>
                   <LogoAiStudio
+                    key={`logo-ai-${vectorReferenceVersion}`}
                     demo={demo}
                     request={request}
                     company={company}
@@ -1628,8 +1630,13 @@ function CompanySettings({
                         return;
                       }
                       setVectorReference(svgDataUrl);
+                      setVectorReferenceVersion((version) => version + 1);
                       setMessage(
-                        "Logo vectoriel transmis à l’atelier IA comme référence. Le SVG original reste disponible au téléchargement.",
+                        "Logo transmis à l’atelier IA. Complétez l’activité puis cliquez sur Générer une proposition.",
+                      );
+                      window.setTimeout(
+                        () => document.querySelector(".ai-logo-studio")?.scrollIntoView({ behavior: "smooth", block: "center" }),
+                        80,
                       );
                     }}
                   />
