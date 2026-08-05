@@ -1616,6 +1616,31 @@ tbody tr:hover {
   border-top: 1px solid #d7e4f6;
   background: #fff;
 }
+.ai-logo-reference {
+  margin-bottom: 14px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #93c5fd;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #eff6ff, #f8fbff);
+}
+.ai-logo-reference img {
+  width: 150px;
+  height: 94px;
+  object-fit: contain;
+  border: 1px solid #d7e4f6;
+  border-radius: 8px;
+  background: #fff;
+}
+.ai-logo-reference div {
+  display: grid;
+  gap: 5px;
+}
+.ai-logo-reference strong { color: #12345b; }
+.ai-logo-reference span { color: #53647a; font-size: 11px; line-height: 1.5; }
 .ai-logo-workspace .ai-logo-form {
   display: grid;
   gap: 12px;

@@ -1968,7 +1968,11 @@ function LogoAiStudio({
       setError("La création IA est désactivée dans le mode démonstration.");
       return;
     }
-    if (brief.raisonSociale.trim().length < 2 || brief.activite.trim().length < 3) {
+    const effectiveName = brief.raisonSociale.trim() || String(company.raisonSociale ?? "").trim() || (referenceSvgDataUrl ? "Mon entreprise" : "");
+    const effectiveActivity = brief.activite.trim() || (referenceSvgDataUrl
+      ? "Identité visuelle professionnelle pour une entreprise du bâtiment"
+      : "");
+    if (effectiveName.length < 2 || effectiveActivity.length < 3) {
       setError("Indiquez le nom de l’entreprise et décrivez son activité.");
       return;
     }
@@ -1982,8 +1986,8 @@ function LogoAiStudio({
         method: "POST",
         body: JSON.stringify({
           ...brief,
-          raisonSociale: brief.raisonSociale.trim(),
-          activite: brief.activite.trim(),
+          raisonSociale: effectiveName,
+          activite: effectiveActivity,
           slogan: brief.slogan.trim() || undefined,
           symboles: brief.symboles.trim() || undefined,
           referenceImageDataUrl,
@@ -2042,9 +2046,14 @@ function LogoAiStudio({
       {open && (
         <div className="ai-logo-workspace">
           {referenceSvgDataUrl && (
-            <div className="form-success">
-              Le logo vectoriel est chargé comme référence. L’IA conservera son
-              identité générale tout en proposant une version améliorée.
+            <div className="ai-logo-reference">
+              <img src={referenceSvgDataUrl} alt="Logo vectoriel chargé depuis le studio" />
+              <div>
+                <strong>Logo du studio prêt à être amélioré</strong>
+                <span>
+                  Le nom et les formes sont déjà transmis à l’IA. Les réglages ci-dessous sont facultatifs.
+                </span>
+              </div>
             </div>
           )}
           {configured === false && !demo && (
@@ -2070,7 +2079,7 @@ function LogoAiStudio({
                 onChange={(event) => setBrief((current) => ({ ...current, activite: event.target.value }))}
                 minLength={3}
                 rows={3}
-                placeholder="Rénovation du bâti ancien, pierre, chaux…"
+                placeholder={referenceSvgDataUrl ? "Facultatif pour une amélioration" : "Rénovation du bâti ancien, pierre, chaux…"}
               />
             </label>
             <div className="ai-logo-grid">
@@ -2133,7 +2142,9 @@ function LogoAiStudio({
               >
                 {working
                   ? "Création en cours… (jusqu’à 2 min)"
-                  : "✦ Générer une proposition"}
+                  : referenceSvgDataUrl
+                    ? "✦ Améliorer ce logo avec l’IA"
+                    : "✦ Générer une proposition"}
               </button>
             </div>
             {credits === 0 && (
