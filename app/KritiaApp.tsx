@@ -1885,6 +1885,7 @@ function LogoAiStudio({
   );
   const [working, setWorking] = useState(false);
   const [credits, setCredits] = useState<number | null>(demo ? 0 : null);
+  const [creditError, setCreditError] = useState("");
   const [error, setError] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [brief, setBrief] = useState({
@@ -1902,17 +1903,34 @@ function LogoAiStudio({
   }, [referenceSvgDataUrl]);
 
   useEffect(() => {
-    if (!open || demo || configured !== null) return;
-    Promise.all([
-      request("/parametres/logo/ia/status"),
-      request("/parametres/logo/credits"),
-    ])
-      .then(([status, account]) => {
-        setConfigured(Boolean(status.configured));
-        setCredits(Number(account.balance ?? 0));
+    if (!open || demo) return;
+    let active = true;
+    setConfigured(null);
+    setCreditError("");
+    request("/parametres/logo/ia/status")
+      .then((status) => {
+        if (active) setConfigured(Boolean(status.configured));
       })
-      .catch(() => setConfigured(false));
-  }, [configured, demo, open, request]);
+      .catch(() => {
+        if (active) setConfigured(false);
+      });
+    request("/parametres/logo/credits")
+      .then((account) => {
+        if (active) setCredits(Number(account.balance ?? 0));
+      })
+      .catch((reason) => {
+        if (!active) return;
+        setCredits(null);
+        setCreditError(
+          reason instanceof Error
+            ? `Solde des crédits indisponible : ${reason.message}`
+            : "Solde des crédits momentanément indisponible.",
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, [demo, open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function generate() {
     if (demo) {
@@ -1996,6 +2014,7 @@ function LogoAiStudio({
               Le service IA doit être activé sur le serveur avec une clé OpenAI.
             </div>
           )}
+          {creditError && <div className="form-error">{creditError}</div>}
           <div className="ai-logo-form">
             <label>
               Nom exact de l’entreprise
