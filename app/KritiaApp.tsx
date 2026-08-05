@@ -207,7 +207,12 @@ export default function KritiaApp() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const savedUrl = window.localStorage.getItem("kritia-api-url");
-      if (savedUrl) setApiUrl(savedUrl);
+      const isLocalDevelopment = ["localhost", "127.0.0.1"].includes(
+        window.location.hostname,
+      );
+      if (savedUrl && isLocalDevelopment) setApiUrl(savedUrl);
+      if (savedUrl && !isLocalDevelopment)
+        window.localStorage.removeItem("kritia-api-url");
       const raw = window.sessionStorage.getItem("kritia-session");
       if (raw)
         try {
@@ -1885,6 +1890,7 @@ function LogoAiStudio({
   );
   const [working, setWorking] = useState(false);
   const [credits, setCredits] = useState<number | null>(demo ? 0 : null);
+  const [statusError, setStatusError] = useState("");
   const [creditError, setCreditError] = useState("");
   const [error, setError] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -1906,13 +1912,20 @@ function LogoAiStudio({
     if (!open || demo) return;
     let active = true;
     setConfigured(null);
+    setStatusError("");
     setCreditError("");
     request("/parametres/logo/ia/status")
       .then((status) => {
         if (active) setConfigured(Boolean(status.configured));
       })
-      .catch(() => {
-        if (active) setConfigured(false);
+      .catch((reason) => {
+        if (!active) return;
+        setConfigured(null);
+        setStatusError(
+          reason instanceof Error
+            ? `État du service IA indisponible : ${reason.message}`
+            : "Impossible de vérifier l’état du service IA.",
+        );
       });
     request("/parametres/logo/credits")
       .then((account) => {
@@ -2014,6 +2027,7 @@ function LogoAiStudio({
               Le service IA doit être activé sur le serveur avec une clé OpenAI.
             </div>
           )}
+          {statusError && <div className="form-error">{statusError}</div>}
           {creditError && <div className="form-error">{creditError}</div>}
           <div className="ai-logo-form">
             <label>
