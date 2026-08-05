@@ -236,16 +236,26 @@ export default function KritiaApp() {
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function api(path: string, options: RequestInit = {}) {
-    const response = await fetch(`${apiUrl.replace(/\/$/, "")}${path}`, {
+    const url = `${apiUrl.replace(/\/$/, "")}${path}`;
+    const requestOptions: RequestInit = {
       ...options,
       headers: {
-        "content-type": "application/json",
+        ...(options.body ? { "content-type": "application/json" } : {}),
         ...(session?.accessToken
           ? { authorization: `Bearer ${session.accessToken}` }
           : {}),
         ...options.headers,
       },
-    });
+    };
+    let response: Response;
+    try {
+      response = await fetch(url, requestOptions);
+    } catch (reason) {
+      const method = String(options.method ?? "GET").toUpperCase();
+      if (method !== "GET") throw reason;
+      await new Promise((resolve) => window.setTimeout(resolve, 900));
+      response = await fetch(url, requestOptions);
+    }
     const body = await response.json().catch(() => ({}));
     if (response.status === 401 && session) {
       window.sessionStorage.removeItem("kritia-session");
