@@ -1611,14 +1611,6 @@ function CompanySettings({
                       />
                     </label>
                   </div>
-                  <LogoAiStudio
-                    key={`logo-ai-${vectorReferenceVersion}`}
-                    demo={demo}
-                    request={request}
-                    company={company}
-                    referenceSvgDataUrl={vectorReference}
-                    onSelect={(image) => void selectGeneratedLogo(image)}
-                  />
                   <VectorLogoStudio
                     onSendToAi={(svgDataUrl) => {
                       setMessage("");
@@ -1632,13 +1624,21 @@ function CompanySettings({
                       setVectorReference(svgDataUrl);
                       setVectorReferenceVersion((version) => version + 1);
                       setMessage(
-                        "Logo transmis à l’atelier IA. Complétez l’activité puis cliquez sur Générer une proposition.",
+                        "Logo chargé dans l’atelier IA situé juste sous le studio.",
                       );
                       window.setTimeout(
                         () => document.querySelector(".ai-logo-studio")?.scrollIntoView({ behavior: "smooth", block: "center" }),
                         80,
                       );
                     }}
+                  />
+                  <LogoAiStudio
+                    key={`logo-ai-${vectorReferenceVersion}`}
+                    demo={demo}
+                    request={request}
+                    company={company}
+                    referenceSvgDataUrl={vectorReference}
+                    onSelect={(image) => void selectGeneratedLogo(image)}
                   />
                 </div>
               </section>

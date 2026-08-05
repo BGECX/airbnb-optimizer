@@ -45,10 +45,8 @@ const encodeSvg = (svg: string) => `data:image/svg+xml;base64,${window.btoa(unes
 
 function initialLayers(): Layer[] {
   return [
-    { id: uid(), name: "Accent", type: "rect", x: 300, y: 337, width: 190, height: 12, rotation: 0, fill: "#f59e0b", opacity: 1, visible: true, locked: false },
-    { id: uid(), name: "Symbole", type: "path", x: 95, y: 145, width: 165, height: 165, rotation: 0, fill: "#12345b", opacity: 1, visible: true, locked: false, path: icons[1].path },
-    { id: uid(), name: "Nom de l’entreprise", type: "text", x: 300, y: 190, width: 420, height: 92, rotation: 0, fill: "#12345b", opacity: 1, visible: true, locked: false, text: "VOTRE ENTREPRISE", fontFamily: "Arial", fontSize: 54, fontWeight: 800, letterSpacing: 1 },
-    { id: uid(), name: "Signature", type: "text", x: 302, y: 285, width: 390, height: 48, rotation: 0, fill: "#52657a", opacity: 1, visible: true, locked: false, text: "Votre savoir-faire, notre exigence", fontFamily: "Arial", fontSize: 22, fontWeight: 400, letterSpacing: .4 },
+    { id: uid(), name: "Symbole", type: "path", x: 115, y: 165, width: 145, height: 145, rotation: 0, fill: "#2563eb", opacity: 1, visible: true, locked: false, path: icons[2].path },
+    { id: uid(), name: "Nom de l’entreprise", type: "text", x: 300, y: 205, width: 420, height: 82, rotation: 0, fill: "#0f172a", opacity: 1, visible: true, locked: false, text: "VOTRE ENTREPRISE", fontFamily: "Arial", fontSize: 52, fontWeight: 800, letterSpacing: 1 },
   ];
 }
 
@@ -69,13 +67,13 @@ function makeSvg(layers: Layer[], background: string) {
 
 export default function VectorLogoStudio({ onSendToAi }: Props) {
   const [layers, setLayers] = useState<Layer[]>(initialLayers);
-  const [selectedId, setSelectedId] = useState<string | null>(layers[2]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(layers[1]?.id ?? null);
   const [background, setBackground] = useState("#ffffff");
   const [past, setPast] = useState<Layer[][]>([]);
   const [future, setFuture] = useState<Layer[][]>([]);
   const [error, setError] = useState("");
   const [versions, setVersions] = useState<Version[]>([]);
-  const drag = useRef<{ id: string; startX: number; startY: number; x: number; y: number; before: Layer[] } | null>(null);
+  const interaction = useRef<{ mode: "move" | "resize"; id: string; startX: number; startY: number; x: number; y: number; width: number; height: number; before: Layer[] } | null>(null);
   const canvasRef = useRef<SVGSVGElement>(null);
   const selected = layers.find((layer) => layer.id === selectedId) ?? null;
   const svg = useMemo(() => makeSvg(layers, background), [layers, background]);
@@ -128,17 +126,26 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     event.stopPropagation(); setSelectedId(layer.id);
     if (layer.locked) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, before: layers };
+    interaction.current = { mode: "move", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
+  };
+  const resizeDown = (event: PointerEvent<SVGCircleElement>, layer: Layer) => {
+    event.stopPropagation();
+    if (layer.locked) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    interaction.current = { mode: "resize", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
   };
   const pointerMove = (event: PointerEvent<SVGSVGElement>) => {
-    if (!drag.current || !canvasRef.current) return;
+    if (!interaction.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect(), scaleX = WIDTH / rect.width, scaleY = HEIGHT / rect.height;
-    const { id, startX, startY, x, y } = drag.current;
-    setLayers((current) => current.map((layer) => layer.id === id ? { ...layer, x: Math.round(x + (event.clientX - startX) * scaleX), y: Math.round(y + (event.clientY - startY) * scaleY) } : layer));
+    const { mode, id, startX, startY, x, y, width, height } = interaction.current;
+    const dx = (event.clientX - startX) * scaleX, dy = (event.clientY - startY) * scaleY;
+    setLayers((current) => current.map((layer) => layer.id !== id ? layer : mode === "move"
+      ? { ...layer, x: Math.round(x + dx), y: Math.round(y + dy) }
+      : { ...layer, width: Math.max(12, Math.round(width + dx)), height: Math.max(12, Math.round(height + dy)) }));
   };
   const pointerUp = () => {
-    if (!drag.current) return;
-    setPast((items) => [...items.slice(-29), drag.current!.before]); setFuture([]); drag.current = null;
+    if (!interaction.current) return;
+    setPast((items) => [...items.slice(-29), interaction.current!.before]); setFuture([]); interaction.current = null;
   };
   const moveLayer = (direction: -1 | 1) => selectedId && commit((current) => {
     const index = current.findIndex((layer) => layer.id === selectedId), next = Math.max(0, Math.min(current.length - 1, index + direction));
@@ -171,11 +178,24 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
   const downloadPng = () => {
     const image = new Image(); image.onload = () => { const canvas = document.createElement("canvas"); canvas.width = WIDTH * 2; canvas.height = HEIGHT * 2; const context = canvas.getContext("2d"); if (!context) return; context.scale(2, 2); context.drawImage(image, 0, 0, WIDTH, HEIGHT); const link = document.createElement("a"); link.href = canvas.toDataURL("image/png"); link.download = "logo-kritia-studio.png"; link.click(); }; image.src = encodeSvg(svg);
   };
-  const exportPdf = () => {
-    const popup = window.open("", "_blank", "width=1000,height=720");
-    if (!popup) { setError("Autorisez les fenêtres surgissantes pour exporter le PDF."); return; }
-    popup.document.write(`<!doctype html><html><head><title>Logo KRITIA Studio</title><style>@page{size:A4 landscape;margin:15mm}body{margin:0;display:grid;place-items:center;height:180mm}svg{max-width:100%;max-height:100%}</style></head><body>${svg}<script>window.onload=()=>setTimeout(()=>window.print(),150)</script></body></html>`);
-    popup.document.close();
+  const exportPdf = async () => {
+    setError("");
+    try {
+      const [{ jsPDF }] = await Promise.all([import("jspdf")]);
+      const image = new Image();
+      image.src = encodeSvg(svg);
+      await image.decode();
+      const canvas = document.createElement("canvas"); canvas.width = WIDTH * 2; canvas.height = HEIGHT * 2;
+      const context = canvas.getContext("2d"); if (!context) throw new Error();
+      context.scale(2, 2); context.drawImage(image, 0, 0, WIDTH, HEIGHT);
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth(), pageHeight = pdf.internal.pageSize.getHeight();
+      const targetWidth = pageWidth - 30, targetHeight = targetWidth * HEIGHT / WIDTH;
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 15, (pageHeight - targetHeight) / 2, targetWidth, targetHeight);
+      pdf.save("logo-kritia-studio.pdf");
+    } catch {
+      setError("L’export PDF n’a pas pu être préparé. Les exports SVG et PNG restent disponibles.");
+    }
   };
   const importSvg = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; setError(""); if (!file) return;
@@ -184,7 +204,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
   };
 
   return <section className={styles.studio}>
-    <div className={styles.head}><div><h3>Studio vectoriel</h3><p>Composez un logo précis à partir d’objets indépendants et exportez-le sans perte de qualité.</p></div><span className={styles.badge}>SVG professionnel</span></div>
+    <div className={styles.head}><div><span className={styles.eyebrow}>KRITIA DESIGN LAB</span><h3>Studio vectoriel</h3><p>Créez, déplacez et redimensionnez chaque élément directement sur la toile.</p></div><span className={styles.badge}>VECTOR · 800 × 500</span></div>
     <div className={styles.toolbar}>
       <button type="button" onClick={() => addLayer("text")}>T Texte</button><button type="button" onClick={() => addLayer("rect")}>▭ Rectangle</button><button type="button" onClick={() => addLayer("circle")}>● Ellipse</button>
       <div className={styles.symbolMenu}>{icons.map((icon) => <button type="button" key={icon.label} title={icon.label} onClick={() => addLayer("path", { name: icon.label, path: icon.path })}>◇ {icon.label}</button>)}</div>
@@ -192,7 +212,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
       <span className={styles.spacer}/><button type="button" disabled={!past.length} onClick={undo}>↶ Annuler</button><button type="button" disabled={!future.length} onClick={redo}>↷ Rétablir</button>
     </div>
     <div className={styles.workspace}>
-      <aside className={styles.layers}><strong>Calques</strong>{[...layers].reverse().map((layer) => <button type="button" key={layer.id} className={layer.id === selectedId ? styles.activeLayer : ""} onClick={() => setSelectedId(layer.id)}><span>{layer.visible ? "◉" : "○"}</span><span>{layer.name}</span><small>{layer.locked ? "🔒" : ""}</small></button>)}<div className={styles.layerActions}><button type="button" onClick={() => moveLayer(1)}>↑</button><button type="button" onClick={() => moveLayer(-1)}>↓</button><button type="button" onClick={duplicate}>Dupliquer</button><button type="button" onClick={() => { if (selectedId) commit((current) => current.filter((layer) => layer.id !== selectedId)); setSelectedId(null); }}>Supprimer</button></div></aside>
+      <aside className={styles.layers}><strong>Calques <small>{layers.length}</small></strong>{[...layers].reverse().map((layer) => <div key={layer.id} className={`${styles.layerRow} ${layer.id === selectedId ? styles.activeLayer : ""}`}><button type="button" className={styles.visibility} title={layer.visible ? "Masquer" : "Afficher"} onClick={() => commit((current) => current.map((item) => item.id === layer.id ? { ...item, visible: !item.visible } : item))}>{layer.visible ? "◉" : "○"}</button><button type="button" className={styles.layerName} onClick={() => setSelectedId(layer.id)}>{layer.name}</button><span>{layer.locked ? "⌑" : ""}</span></div>)}<div className={styles.layerActions}><button type="button" onClick={() => moveLayer(1)}>Monter</button><button type="button" onClick={() => moveLayer(-1)}>Descendre</button><button type="button" onClick={duplicate}>Dupliquer</button><button type="button" className={styles.danger} disabled={!selectedId} onClick={() => { if (selectedId) commit((current) => current.filter((layer) => layer.id !== selectedId)); setSelectedId(null); }}>Supprimer</button></div></aside>
       <main className={styles.canvasWrap}>
         <div className={styles.canvasTools}><label>Fond <input type="color" value={background === "transparent" ? "#ffffff" : background} onChange={(event) => setBackground(event.target.value)}/></label><button type="button" onClick={() => setBackground(background === "transparent" ? "#ffffff" : "transparent")}>{background === "transparent" ? "Fond blanc" : "Fond transparent"}</button><span>800 × 500</span></div>
         <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onPointerDown={() => setSelectedId(null)}>
@@ -201,7 +221,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
             {layer.type === "text" && <text x="0" y={layer.fontSize ?? 40} fill={layer.fill} fontFamily={layer.fontFamily} fontSize={layer.fontSize} fontWeight={layer.fontWeight} letterSpacing={layer.letterSpacing}>{layer.text}</text>}
             {layer.type === "rect" && <rect width={layer.width} height={layer.height} rx={Math.min(12, layer.height / 2)} fill={layer.fill}/>} {layer.type === "circle" && <ellipse cx={layer.width / 2} cy={layer.height / 2} rx={layer.width / 2} ry={layer.height / 2} fill={layer.fill}/>} {layer.type === "path" && <path d={layer.path} fill={layer.fill} transform={`scale(${layer.width / 100} ${layer.height / 100})`}/>} {layer.type === "image" && <image href={layer.href} width={layer.width} height={layer.height} preserveAspectRatio="xMidYMid meet"/>}
           </g>) }
-          {selected && selected.visible && <g pointerEvents="none" transform={`translate(${selected.x} ${selected.y}) rotate(${selected.rotation} ${selected.width / 2} ${selected.height / 2})`}><rect width={selected.width} height={selected.height} fill="none" stroke="#2563eb" strokeWidth="2" strokeDasharray="7 5"/><circle cx={selected.width} cy={selected.height} r="7" fill="#fff" stroke="#2563eb" strokeWidth="3"/></g>}
+          {selected && selected.visible && <g transform={`translate(${selected.x} ${selected.y}) rotate(${selected.rotation} ${selected.width / 2} ${selected.height / 2})`}><rect pointerEvents="none" width={selected.width} height={selected.height} fill="none" stroke="#38bdf8" strokeWidth="2"/><circle className={styles.resizeHandle} onPointerDown={(event) => resizeDown(event, selected)} cx={selected.width} cy={selected.height} r="9" fill="#07111f" stroke="#38bdf8" strokeWidth="4"/></g>}
         </svg>
       </main>
       <aside className={styles.properties}><strong>Propriétés</strong>{selected ? <>
@@ -213,6 +233,6 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     </div>
     <div className={styles.designShelf}><div><strong>Variantes couleur</strong><div className={styles.palettes}>{[["#12345b","#f59e0b"],["#0f3d3e","#ef8354"],["#252422","#eb5e28"],["#1f2937","#10b981"],["#4c1d95","#f472b6"]].map(([primary, accent]) => <button type="button" key={primary} title="Appliquer cette palette" onClick={() => createPaletteVariant(primary, accent)}><i style={{ background: primary }}/><i style={{ background: accent }}/></button>)}</div></div><div className={styles.versionHistory}><strong>Historique des versions</strong><button type="button" onClick={() => saveVersion()}>＋ Enregistrer l’état</button>{versions.length ? <select defaultValue="" onChange={(event) => { const version = versions.find((item) => item.id === event.target.value); if (version) restoreVersion(version); event.target.value = ""; }}><option value="" disabled>Restaurer une version…</option>{versions.map((version) => <option key={version.id} value={version.id}>{version.name} · {version.createdAt}</option>)}</select> : <small>Aucune version enregistrée</small>}</div></div>
     {error && <p className={styles.error}>{error}</p>}
-    <div className={styles.footer}><label className={styles.upload}>Importer un SVG<input type="file" accept=".svg,image/svg+xml" onChange={importSvg}/></label><button type="button" onClick={downloadSvg}>Télécharger SVG</button><button type="button" onClick={exportPdf}>Exporter PDF</button><button type="button" onClick={downloadPng}>Télécharger PNG HD</button>{onSendToAi && <button type="button" className={styles.aiButton} onClick={() => onSendToAi(encodeSvg(svg))}>✦ Améliorer avec l’IA</button>}</div>
+    <div className={styles.footer}><label className={styles.upload}>Importer SVG<input type="file" accept=".svg,image/svg+xml" onChange={importSvg}/></label><button type="button" onClick={downloadSvg}>↓ SVG</button><button type="button" onClick={() => void exportPdf()}>↓ PDF</button><button type="button" onClick={downloadPng}>↓ PNG HD</button>{onSendToAi && <button type="button" className={styles.aiButton} onClick={() => onSendToAi(encodeSvg(svg))}>✦ Ouvrir dans l’atelier IA</button>}</div>
   </section>;
 }

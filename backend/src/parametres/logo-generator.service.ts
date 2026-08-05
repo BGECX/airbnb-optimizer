@@ -113,7 +113,7 @@ export class LogoGeneratorService {
         form.append("prompt", prompt);
         form.append("size", "1024x1024");
         form.append("quality", "low");
-        form.append("background", "transparent");
+        form.append("background", "opaque");
         form.append("output_format", "webp");
         form.append("output_compression", "65");
         form.append("image", new Blob([reference.bytes], { type: reference.mime }), "logo-reference.png");
@@ -134,7 +134,10 @@ export class LogoGeneratorService {
             // Une prévisualisation légère évite les coupures du proxy pendant
             // le transfert. L'utilisateur peut ensuite retenir la piste.
             quality: "low",
-            background: "transparent",
+            // GPT Image 2 refuse actuellement les arrière-plans transparents.
+            // Un fond opaque évite que toute génération échoue avant de produire
+            // une proposition exploitable.
+            background: "opaque",
             output_format: "webp",
             output_compression: 65,
             n: 1,
