@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import VectorLogoStudio from "./VectorLogoStudio";
 
 type RecordValue = Record<string, unknown>;
 type Section =
@@ -1027,6 +1028,7 @@ function CompanySettings({
   const [vatVerified, setVatVerified] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [vectorReference, setVectorReference] = useState<string>();
   useEffect(() => {
     if (demo) return;
     let active = true;
@@ -1608,7 +1610,28 @@ function CompanySettings({
                     demo={demo}
                     request={request}
                     company={company}
+                    referenceImageDataUrl={vectorReference}
                     onSelect={(image) => void selectGeneratedLogo(image)}
+                  />
+                  <VectorLogoStudio
+                    onSendToAi={(svgDataUrl) => {
+                      setMessage("");
+                      setError("");
+                      void rasterizeSvgDataUrl(svgDataUrl)
+                        .then((reference) => {
+                          setVectorReference(reference);
+                          setMessage(
+                            "Logo vectoriel transmis à l’atelier IA comme référence. Le SVG original reste disponible au téléchargement.",
+                          );
+                        })
+                        .catch((reason) =>
+                          setError(
+                            reason instanceof Error
+                              ? reason.message
+                              : "Le SVG ne peut pas être préparé pour l’IA.",
+                          ),
+                        );
+                    }}
                   />
                 </div>
               </section>
@@ -1852,11 +1875,13 @@ function LogoAiStudio({
   demo,
   request,
   company,
+  referenceImageDataUrl,
   onSelect,
 }: {
   demo: boolean;
   request: ApiRequest;
   company: RecordValue;
+  referenceImageDataUrl?: string;
   onSelect: (image: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -1875,6 +1900,10 @@ function LogoAiStudio({
     couleurSecondaire: String(company.couleurSecondary ?? "#f59e0b"),
     symboles: "",
   });
+
+  useEffect(() => {
+    if (referenceImageDataUrl) setOpen(true);
+  }, [referenceImageDataUrl]);
 
   useEffect(() => {
     if (!open || demo || configured !== null) return;
@@ -1909,6 +1938,7 @@ function LogoAiStudio({
           activite: brief.activite.trim(),
           slogan: brief.slogan.trim() || undefined,
           symboles: brief.symboles.trim() || undefined,
+          referenceImageDataUrl,
         }),
       });
       const generationId = String(queued.generationId ?? "");
@@ -1959,6 +1989,12 @@ function LogoAiStudio({
       </div>
       {open && (
         <div className="ai-logo-workspace">
+          {referenceImageDataUrl && (
+            <div className="form-success">
+              Le logo vectoriel est chargé comme référence. L’IA conservera son
+              identité générale tout en proposant une version améliorée.
+            </div>
+          )}
           {configured === false && !demo && (
             <div className="form-error">
               Le service IA doit être activé sur le serveur avec une clé OpenAI.
@@ -2112,6 +2148,40 @@ function resizeLogo(file: File): Promise<string> {
       image.src = String(reader.result);
     };
     reader.readAsDataURL(file);
+  });
+}
+
+function rasterizeSvgDataUrl(svgDataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!svgDataUrl.startsWith("data:image/svg+xml")) {
+      reject(new Error("Le fichier transmis n’est pas un SVG valide."));
+      return;
+    }
+    const image = new Image();
+    image.onerror = () =>
+      reject(new Error("Impossible de convertir ce SVG pour l’atelier IA."));
+    image.onload = () => {
+      const width = Math.max(1, image.naturalWidth || 1024);
+      const height = Math.max(1, image.naturalHeight || 1024);
+      const scale = Math.min(1, 1024 / width, 1024 / height);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        reject(new Error("Conversion vectorielle indisponible."));
+        return;
+      }
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const output = canvas.toDataURL("image/webp", 0.86);
+      if (output.length > 2_400_000) {
+        reject(new Error("Le SVG est trop complexe pour être transmis à l’IA."));
+        return;
+      }
+      resolve(output);
+    };
+    image.src = svgDataUrl;
   });
 }
 

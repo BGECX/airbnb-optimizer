@@ -88,6 +88,15 @@ export class GenerateLogoDto {
   @IsString()
   @MaxLength(160)
   symboles?: string;
+
+  @ApiPropertyOptional({ description: "Aperçu PNG ou WebP du logo vectoriel à améliorer" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2_500_000)
+  @Matches(/^data:image\/(png|webp);base64,/i, {
+    message: "L’image de référence doit être au format PNG ou WebP",
+  })
+  referenceImageDataUrl?: string;
 }
 
 export class UpdateNumerotationDto {

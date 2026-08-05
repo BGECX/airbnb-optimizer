@@ -53,4 +53,25 @@ describe("LogoGeneratorService", () => {
     });
     expect(credits.complete).toHaveBeenCalledWith("user-1", "generation-1");
   });
+
+  it("uses the image edit endpoint when a vector preview is supplied", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ b64_json: "ZWRpdGVk" }] }),
+    } as Response);
+
+    await service().generate("user-1", {
+      raisonSociale: "KRITIA",
+      activite: "Rénovation",
+      style: "moderne",
+      referenceImageDataUrl: "data:image/webp;base64,aW1hZ2U=",
+    });
+
+    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe("https://api.openai.com/v1/images/edits");
+    expect(options.body).toBeInstanceOf(FormData);
+    expect((options.body as FormData).get("image")).toBeInstanceOf(Blob);
+    expect((options.body as FormData).get("model")).toBe("gpt-image-2");
+  });
 });

@@ -101,16 +101,31 @@ export class LogoGeneratorService {
     const timeout = setTimeout(() => controller.abort(), 120_000);
     try {
       reservation = await this.credits.reserve(userId, prompt);
+      const reference = this.referenceImage(data.referenceImageDataUrl);
+      const endpoint = reference
+        ? "https://api.openai.com/v1/images/edits"
+        : "https://api.openai.com/v1/images/generations";
+      const form = reference ? new FormData() : undefined;
+      if (form && reference) {
+        form.append("model", "gpt-image-2");
+        form.append("prompt", prompt);
+        form.append("size", "1024x1024");
+        form.append("quality", "low");
+        form.append("background", "transparent");
+        form.append("output_format", "webp");
+        form.append("output_compression", "65");
+        form.append("image", new Blob([reference.bytes], { type: reference.mime }), "logo-reference.png");
+      }
       const response = await fetch(
-        "https://api.openai.com/v1/images/generations",
+        endpoint,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
+            ...(form ? {} : { "Content-Type": "application/json" }),
           },
           signal: controller.signal,
-          body: JSON.stringify({
+          body: form ?? JSON.stringify({
             model: "gpt-image-2",
             prompt,
             size: "1024x1024",
@@ -213,7 +228,9 @@ export class LogoGeneratorService {
       data.symboles?.trim() ||
       "un symbole abstrait lié au bâtiment, sans outil de chantier cliché";
     return [
-      "Crée un logo d’entreprise original, professionnel et directement exploitable, sur fond transparent.",
+      data.referenceImageDataUrl
+        ? "Améliore le logo fourni en conservant son identité reconnaissable, sa structure générale et le nom de l’entreprise, sur fond transparent."
+        : "Crée un logo d’entreprise original, professionnel et directement exploitable, sur fond transparent.",
       `Nom exact à écrire, sans faute et une seule fois : « ${data.raisonSociale.trim()} ».`,
       `Activité : ${data.activite.trim()}. Style : ${data.style}.`,
       `Palette dominante : ${data.couleurPrincipale || "#2563EB"} et ${data.couleurSecondaire || "#F59E0B"}.`,
@@ -221,5 +238,17 @@ export class LogoGeneratorService {
       "Composition simple et mémorisable, lisible en petit format, formes nettes de type vectoriel, sans photographie, sans maquette, sans carte de visite, sans filigrane.",
       "Ne copie aucune marque existante. Évite les détails fragiles et garde une zone de respiration autour du logo.",
     ].join(" ");
+  }
+
+  private referenceImage(value?: string) {
+    if (!value) return undefined;
+    const match = /^data:image\/(png|webp);base64,([A-Za-z0-9+/=]+)$/i.exec(value);
+    if (!match) {
+      throw new HttpException("Image de référence invalide.", HttpStatus.BAD_REQUEST);
+    }
+    return {
+      mime: `image/${match[1].toLowerCase()}`,
+      bytes: Uint8Array.from(Buffer.from(match[2], "base64")),
+    };
   }
 }

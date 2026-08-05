@@ -1,0 +1,42 @@
+"use client";
+
+import { ChangeEvent, useState } from "react";
+import styles from "./VectorLogoStudio.module.css";
+
+type SymbolKind="roof"|"building"|"beam"|"hexagon"|"arch"|"spark";
+type LayoutKind="horizontal"|"stacked"|"monogram";
+type Options={name:string;primary:string;accent:string;symbol:SymbolKind;font:string;layout:LayoutKind;variant:number};
+type Props={onSendToAi?:(svgDataUrl:string)=>void};
+const symbolList:[SymbolKind,string][]=[["roof","Toit"],["building","Bâtiment"],["beam","Poutre"],["hexagon","Hexagone"],["arch","Arche"],["spark","Éclat"]];
+const fonts=["Arial","Georgia","Trebuchet MS","Verdana","Courier New"];
+const layouts:[LayoutKind,string][]=[["horizontal","Horizontal"],["stacked","Empilé"],["monogram","Monogramme"]];
+const palettes=[["#173f32","#dca84b"],["#17324d","#ef7c3b"],["#2d3047","#5bc0be"],["#4c2b36","#d98e04"]];
+const hash=(value:string)=>{let n=2166136261;for(let i=0;i<value.length;i+=1)n=Math.imul(n^value.charCodeAt(i),16777619);return n>>>0};
+const escapeXml=(value:string)=>value.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+const initials=(value:string)=>value.trim().split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join("").toUpperCase()||"K";
+function shape(kind:SymbolKind,p:string,a:string,v:number){
+  if(kind==="roof")return `<path d="M22 82 80 30l58 52v48h-24V91L80 60 46 91v39H22Z" fill="${p}"/><path d="m42 84 38-34 38 34" fill="none" stroke="${a}" stroke-width="10"/>`;
+  if(kind==="building")return `<path d="M32 28h70v104H32z" fill="${p}"/><path d="M102 55h28v77h-28z" fill="${a}"/><path d="M49 48h16v16H49zm0 30h16v16H49zm32-30h16v16H81zm0 30h16v16H81z" fill="white"/>`;
+  if(kind==="beam")return `<path d="M22 40h116v25H22zm18 55h80v25H40z" fill="${p}"/><path d="M50 65h18v30H50zm42 0h18v30H92z" fill="${a}"/>`;
+  if(kind==="hexagon")return `<path d="m80 18 54 31v62l-54 31-54-31V49Z" fill="${p}"/><path d="m80 43 32 19v36l-32 19-32-19V62Z" fill="none" stroke="${a}" stroke-width="10"/>`;
+  if(kind==="arch")return `<path d="M25 132V78a55 55 0 0 1 110 0v54h-27V80a28 28 0 0 0-56 0v52Z" fill="${p}"/><path d="M69 132V85a11 11 0 0 1 22 0v47Z" fill="${a}"/>`;
+  return `<g transform="rotate(${v*4} 80 80)"><path d="m80 13 15 47 48-13-38 34 35 35-47-17-13 48-13-48-47 17 35-35-38-34 48 13Z" fill="${p}"/><circle cx="80" cy="80" r="19" fill="${a}"/></g>`;
+}
+function makeSvg(o:Options){const name=escapeXml(o.name.trim()||"Votre entreprise"),icon=shape(o.symbol,o.primary,o.accent,o.variant),track=1+(o.variant%3)*.7;
+  if(o.layout==="stacked")return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360"><rect width="520" height="360" fill="white"/><g transform="translate(180 25)">${icon}</g><text x="260" y="255" text-anchor="middle" fill="${o.primary}" font-family="${o.font}" font-size="46" font-weight="700" letter-spacing="${track}">${name}</text><rect x="210" y="280" width="100" height="7" rx="3.5" fill="${o.accent}"/></svg>`;
+  if(o.layout==="monogram")return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300"><rect width="520" height="300" fill="white"/><g transform="translate(35 70)">${icon}</g><text x="115" y="168" text-anchor="middle" fill="white" font-family="${o.font}" font-size="44" font-weight="800">${initials(o.name)}</text><text x="218" y="135" fill="${o.primary}" font-family="${o.font}" font-size="38" font-weight="700">${name}</text><rect x="220" y="160" width="210" height="7" rx="3.5" fill="${o.accent}"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260"><rect width="640" height="260" fill="white"/><g transform="translate(35 50)">${icon}</g><text x="225" y="137" fill="${o.primary}" font-family="${o.font}" font-size="44" font-weight="700" letter-spacing="${track}">${name}</text><rect x="227" y="158" width="${80+o.variant*25}" height="8" rx="4" fill="${o.accent}"/></svg>`}
+const dataUrl=(svg:string)=>`data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(svg)))}`;
+export default function VectorLogoStudio({onSendToAi}:Props){
+  const[name,setName]=useState("Atelier Bâtir"),[primary,setPrimary]=useState("#173f32"),[accent,setAccent]=useState("#dca84b"),[symbol,setSymbol]=useState<SymbolKind>("roof"),[font,setFont]=useState(fonts[0]),[layout,setLayout]=useState<LayoutKind>("horizontal"),[variant,setVariant]=useState(0),[imported,setImported]=useState(""),[error,setError]=useState("");
+  const seed=hash(name.toLowerCase()),options={name,primary,accent,symbol,font,layout,variant},svg=makeSvg(options);
+  const choose=(i:number)=>{const colors=palettes[(seed+i)%palettes.length];setVariant(i);setPrimary(colors[0]);setAccent(colors[1]);setSymbol(symbolList[(seed+i*3)%symbolList.length][0]);setImported("")};
+  const download=()=>{const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"})),a=document.createElement("a");a.href=url;a.download=`${name.trim().replace(/[^a-z0-9]+/gi,"-")||"logo"}.svg`;a.click();URL.revokeObjectURL(url)};
+  const importSvg=(event:ChangeEvent<HTMLInputElement>)=>{const file=event.target.files?.[0];setError("");if(!file)return;if(file.size>1024*1024){setError("Le SVG ne doit pas dépasser 1 Mo.");return}if(file.type!=="image/svg+xml"&&!file.name.toLowerCase().endsWith(".svg")){setError("Sélectionnez un fichier SVG valide.");return}const reader=new FileReader();reader.onload=()=>{const text=String(reader.result||"");const unsafe=/<(?:script|foreignObject|iframe|object|embed)[\s>]/i.test(text)||/\son\w+\s*=/i.test(text)||/(?:href|xlink:href)\s*=\s*["']?\s*javascript:/i.test(text);if(!/^\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/i.test(text)||unsafe){setError("Ce fichier SVG est invalide ou contient des éléments non autorisés.");return}setImported(dataUrl(text))};reader.onerror=()=>setError("Lecture du SVG impossible.");reader.readAsText(file)};
+  const aiData=()=>onSendToAi?.(imported||dataUrl(svg));
+  return <section className={styles.studio}><div className={styles.head}><div><h3>Générateur vectoriel interne</h3><p>Variantes instantanées, personnalisables et sans limite.</p></div><span className={styles.badge}>Gratuit · Illimité</span></div><div className={styles.workspace}><div className={styles.controls}>
+    <label className={styles.field}>Nom<input className={styles.input} value={name} maxLength={32} onChange={e=>{setName(e.target.value);setImported("")}}/></label><div className={styles.colors}><label className={styles.color}><input type="color" value={primary} onChange={e=>{setPrimary(e.target.value);setImported("")}}/>Principale</label><label className={styles.color}><input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setImported("")}}/>Accent</label></div>
+    <div className={styles.choices}>{symbolList.map(([id,label])=><button type="button" key={id} className={`${styles.choice} ${symbol===id?styles.active:""}`} onClick={()=>{setSymbol(id);setImported("")}}>{label}</button>)}</div><label className={styles.field}>Typographie<select className={styles.select} value={font} onChange={e=>{setFont(e.target.value);setImported("")}}>{fonts.map(x=><option key={x}>{x}</option>)}</select></label><div className={styles.choices}>{layouts.map(([id,label])=><button type="button" key={id} className={`${styles.choice} ${layout===id?styles.active:""}`} onClick={()=>{setLayout(id);setImported("")}}>{label}</button>)}</div>
+  </div><div className={styles.canvas}><div className={styles.preview}>{imported?<img src={imported} alt="Aperçu du SVG importé"/>:<div dangerouslySetInnerHTML={{__html:svg}}/>}</div>{/* eslint-disable-line @next/next/no-img-element */}{error&&<p className={styles.error}>{error}</p>}<div className={styles.actions}><label className={`${styles.upload} ${styles.secondary}`}>Importer SVG<input type="file" accept=".svg,image/svg+xml" onChange={importSvg}/></label><button type="button" className={`${styles.button} ${styles.secondary}`} onClick={download}>Télécharger SVG</button>{onSendToAi&&<button type="button" className={styles.button} onClick={aiData}>Améliorer avec l’IA</button>}</div></div></div>
+  <div className={styles.variants}>{[0,1,2,3].map(i=>{const colors=palettes[(seed+i)%palettes.length],o={...options,primary:colors[0],accent:colors[1],symbol:symbolList[(seed+i*3)%symbolList.length][0],variant:i};return <button type="button" aria-label={`Choisir la variante ${i+1}`} key={`${seed}-${i}`} className={`${styles.variant} ${variant===i&&!imported?styles.active:""}`} onClick={()=>choose(i)} dangerouslySetInnerHTML={{__html:makeSvg(o)}}/>})}</div></section>
+}
