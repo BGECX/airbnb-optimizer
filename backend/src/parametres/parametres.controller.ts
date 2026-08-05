@@ -43,23 +43,23 @@ export class ParametresController {
   }
 
   @Post("logo/ia/generer")
-  generateLogo(@CurrentUser("userId") userId: string, @Body() data: GenerateLogoDto) {
+  generateLogo(@CurrentUser("sub") userId: string, @Body() data: GenerateLogoDto) {
     return this.logoGenerator.enqueue(userId, data);
   }
 
   @Get("logo/ia/generations/:id")
   getLogoGeneration(
-    @CurrentUser("userId") userId: string,
+    @CurrentUser("sub") userId: string,
     @Param("id") id: string,
   ) {
     return this.logoGenerator.getJob(userId, id);
   }
 
   @Get("logo/credits")
-  getLogoCredits(@CurrentUser("userId") userId: string) { return this.logoCredits.balance(userId); }
+  getLogoCredits(@CurrentUser("sub") userId: string) { return this.logoCredits.balance(userId); }
 
   @Get("logo/credits/historique")
-  getLogoCreditHistory(@CurrentUser("userId") userId: string) { return this.logoCredits.history(userId); }
+  getLogoCreditHistory(@CurrentUser("sub") userId: string) { return this.logoCredits.history(userId); }
 
   @Get("entreprise")
   getEntreprise() {
