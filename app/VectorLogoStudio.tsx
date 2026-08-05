@@ -123,15 +123,13 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     commit((current) => [...current, layer]); setSelectedId(layer.id);
   };
   const pointerDown = (event: PointerEvent<SVGGElement>, layer: Layer) => {
-    event.stopPropagation(); setSelectedId(layer.id);
+    event.preventDefault(); event.stopPropagation(); setSelectedId(layer.id);
     if (layer.locked) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
     interaction.current = { mode: "move", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
   };
   const resizeDown = (event: PointerEvent<SVGCircleElement>, layer: Layer) => {
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     if (layer.locked) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
     interaction.current = { mode: "resize", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
   };
   const pointerMove = (event: PointerEvent<SVGSVGElement>) => {
@@ -213,9 +211,9 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     </div>
     <div className={styles.workspace}>
       <aside className={styles.layers}><strong>Calques <small>{layers.length}</small></strong>{[...layers].reverse().map((layer) => <div key={layer.id} className={`${styles.layerRow} ${layer.id === selectedId ? styles.activeLayer : ""}`}><button type="button" className={styles.visibility} title={layer.visible ? "Masquer" : "Afficher"} onClick={() => commit((current) => current.map((item) => item.id === layer.id ? { ...item, visible: !item.visible } : item))}>{layer.visible ? "◉" : "○"}</button><button type="button" className={styles.layerName} onClick={() => setSelectedId(layer.id)}>{layer.name}</button><span>{layer.locked ? "⌑" : ""}</span></div>)}<div className={styles.layerActions}><button type="button" onClick={() => moveLayer(1)}>Monter</button><button type="button" onClick={() => moveLayer(-1)}>Descendre</button><button type="button" onClick={duplicate}>Dupliquer</button><button type="button" className={styles.danger} disabled={!selectedId} onClick={() => { if (selectedId) commit((current) => current.filter((layer) => layer.id !== selectedId)); setSelectedId(null); }}>Supprimer</button></div></aside>
-      <main className={styles.canvasWrap}>
+      <div className={styles.canvasWrap}>
         <div className={styles.canvasTools}><label>Fond <input type="color" value={background === "transparent" ? "#ffffff" : background} onChange={(event) => setBackground(event.target.value)}/></label><button type="button" onClick={() => setBackground(background === "transparent" ? "#ffffff" : "transparent")}>{background === "transparent" ? "Fond blanc" : "Fond transparent"}</button><span>800 × 500</span></div>
-        <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onPointerDown={() => setSelectedId(null)}>
+        <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={pointerUp} onPointerCancel={pointerUp} onPointerDown={(event) => { event.preventDefault(); setSelectedId(null); }}>
           {background !== "transparent" && <rect width={WIDTH} height={HEIGHT} fill={background}/>}<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#dbe3ea" strokeWidth=".6"/></pattern></defs>{background === "transparent" && <rect width={WIDTH} height={HEIGHT} fill="url(#grid)"/>}
           {layers.map((layer) => layer.visible && <g key={layer.id} onPointerDown={(event) => pointerDown(event, layer)} transform={`translate(${layer.x} ${layer.y}) rotate(${layer.rotation} ${layer.width / 2} ${layer.height / 2})`} opacity={layer.opacity} className={styles.artwork}>
             {layer.type === "text" && <text x="0" y={layer.fontSize ?? 40} fill={layer.fill} fontFamily={layer.fontFamily} fontSize={layer.fontSize} fontWeight={layer.fontWeight} letterSpacing={layer.letterSpacing}>{layer.text}</text>}
@@ -223,7 +221,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
           </g>) }
           {selected && selected.visible && <g transform={`translate(${selected.x} ${selected.y}) rotate(${selected.rotation} ${selected.width / 2} ${selected.height / 2})`}><rect pointerEvents="none" width={selected.width} height={selected.height} fill="none" stroke="#38bdf8" strokeWidth="2"/><circle className={styles.resizeHandle} onPointerDown={(event) => resizeDown(event, selected)} cx={selected.width} cy={selected.height} r="9" fill="#07111f" stroke="#38bdf8" strokeWidth="4"/></g>}
         </svg>
-      </main>
+      </div>
       <aside className={styles.properties}><strong>Propriétés</strong>{selected ? <>
         <label>Nom du calque<input value={selected.name} onChange={(event) => patchSelected({ name: event.target.value })}/></label>{selected.type === "text" && <><label>Texte<textarea value={selected.text} onChange={(event) => patchSelected({ text: event.target.value })}/></label><label>Police<select value={selected.fontFamily} onChange={(event) => patchSelected({ fontFamily: event.target.value })}>{fonts.map((font) => <option key={font}>{font}</option>)}</select></label><div className={styles.two}><label>Taille<input type="number" min="8" max="180" value={selected.fontSize} onChange={(event) => patchSelected({ fontSize: Number(event.target.value) })}/></label><label>Graisse<select value={selected.fontWeight} onChange={(event) => patchSelected({ fontWeight: Number(event.target.value) })}><option value="400">Normal</option><option value="600">Semi-gras</option><option value="700">Gras</option><option value="800">Extra-gras</option></select></label></div></>}
         <div className={styles.two}><label>X<input type="number" value={selected.x} onChange={(event) => patchSelected({ x: Number(event.target.value) })}/></label><label>Y<input type="number" value={selected.y} onChange={(event) => patchSelected({ y: Number(event.target.value) })}/></label><label>Largeur<input type="number" min="1" value={selected.width} onChange={(event) => patchSelected({ width: Number(event.target.value) })}/></label><label>Hauteur<input type="number" min="1" value={selected.height} onChange={(event) => patchSelected({ height: Number(event.target.value) })}/></label></div>
