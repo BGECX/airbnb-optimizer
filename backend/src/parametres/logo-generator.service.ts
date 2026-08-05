@@ -227,7 +227,7 @@ export class LogoGeneratorService {
 
   buildPrompt(data: GenerateLogoDto) {
     const slogan = data.slogan?.trim()
-      ? `Slogan à intégrer lisiblement : « ${data.slogan.trim()} ».`
+      ? `Réserver une zone visuelle sobre sous le logo pour le slogan « ${data.slogan.trim()} », sans écrire ce slogan dans l’image : KRITIA l’ajoutera ensuite avec une typographie exacte.`
       : "Ne pas ajouter de slogan.";
     const symbols =
       data.symboles?.trim() ||

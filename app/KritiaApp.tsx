@@ -1207,7 +1207,7 @@ function CompanySettings({
       );
     }
   }
-  async function selectGeneratedLogo(dataUrl: string) {
+  async function selectGeneratedLogo(dataUrl: string, slogan?: string) {
     setMessage("");
     setError("");
     try {
@@ -1215,6 +1215,7 @@ function CompanySettings({
       const blob = await response.blob();
       const optimized = await resizeLogo(
         new File([blob], "logo-kritia.png", { type: blob.type || "image/png" }),
+        slogan,
       );
       change("logoUrl", optimized);
       setMessage(
@@ -1648,7 +1649,7 @@ function CompanySettings({
                     request={request}
                     company={company}
                     referenceSvgDataUrl={vectorReference}
-                    onSelect={(image) => void selectGeneratedLogo(image)}
+                    onSelect={(image, slogan) => void selectGeneratedLogo(image, slogan)}
                   />
                 </div>
               </section>
@@ -1899,7 +1900,7 @@ function LogoAiStudio({
   request: ApiRequest;
   company: RecordValue;
   referenceSvgDataUrl?: string;
-  onSelect: (image: string) => void;
+  onSelect: (image: string, slogan?: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(
@@ -1974,6 +1975,9 @@ function LogoAiStudio({
     setWorking(true);
     setError("");
     try {
+      const referenceImageDataUrl = referenceSvgDataUrl
+        ? await rasterizeSvgReference(referenceSvgDataUrl)
+        : undefined;
       const queued = await request("/parametres/logo/ia/generer", {
         method: "POST",
         body: JSON.stringify({
@@ -1982,6 +1986,7 @@ function LogoAiStudio({
           activite: brief.activite.trim(),
           slogan: brief.slogan.trim() || undefined,
           symboles: brief.symboles.trim() || undefined,
+          referenceImageDataUrl,
           referenceSvgDataUrl,
         }),
       });
@@ -2001,7 +2006,10 @@ function LogoAiStudio({
       }
       if (!result) throw new Error("La création prend trop de temps. Vous pourrez réessayer dans quelques instants.");
       if (!result.image) throw new Error("Aucune proposition reçue.");
-      setImages((current) => [String(result.image), ...current].slice(0, 3));
+      const preparedImage = brief.slogan.trim()
+        ? await prepareGeneratedLogo(String(result.image), brief.slogan.trim())
+        : String(result.image);
+      setImages((current) => [preparedImage, ...current].slice(0, 3));
       setCredits(Number(result.remainingCredits ?? 0));
       setConfigured(true);
     } catch (reason) {
@@ -2160,7 +2168,28 @@ function LogoAiStudio({
   );
 }
 
-function resizeLogo(file: File): Promise<string> {
+async function rasterizeSvgReference(svgDataUrl: string): Promise<string> {
+  const image = new Image();
+  image.src = svgDataUrl;
+  await image.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 640;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Conversion du logo vectoriel indisponible.");
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/webp", 0.82);
+}
+
+async function prepareGeneratedLogo(dataUrl: string, slogan: string): Promise<string> {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return resizeLogo(new File([blob], "logo-ia.webp", { type: blob.type || "image/webp" }), slogan);
+}
+
+function resizeLogo(file: File, slogan = ""): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Impossible de lire ce fichier."));
@@ -2168,27 +2197,45 @@ function resizeLogo(file: File): Promise<string> {
       const image = new Image();
       image.onerror = () => reject(new Error("Le fichier image est invalide."));
       image.onload = () => {
-        const scale = Math.min(1, 700 / image.width, 350 / image.height);
+        const sloganHeight = slogan.trim() ? 72 : 0;
+        let scale = Math.min(1, 760 / image.width, (420 - sloganHeight) / image.height);
         const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.width * scale));
-        canvas.height = Math.max(1, Math.round(image.height * scale));
-        const context = canvas.getContext("2d");
-        if (!context)
-          return reject(new Error("Traitement du logo indisponible."));
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const render = () => {
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale) + sloganHeight);
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("Traitement du logo indisponible.");
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height - sloganHeight);
+          if (sloganHeight) {
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, canvas.height - sloganHeight, canvas.width, sloganHeight);
+            context.fillStyle = "#0f172a";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            let fontSize = Math.min(28, Math.max(14, canvas.width / 22));
+            context.font = `600 ${fontSize}px Arial, sans-serif`;
+            while (context.measureText(slogan).width > canvas.width - 30 && fontSize > 11) {
+              fontSize -= 1;
+              context.font = `600 ${fontSize}px Arial, sans-serif`;
+            }
+            context.fillText(slogan, canvas.width / 2, canvas.height - sloganHeight / 2, canvas.width - 30);
+          }
+          return context;
+        };
+        try { render(); } catch (reason) { return reject(reason); }
         let quality = 0.86;
         let output = canvas.toDataURL("image/webp", quality);
-        while (output.length > 70000 && quality > 0.35) {
+        while (output.length > 72000 && quality > 0.35) {
           quality -= 0.1;
           output = canvas.toDataURL("image/webp", quality);
         }
-        if (output.length > 90000)
-          return reject(
-            new Error(
-              "Le logo reste trop volumineux après optimisation. Choisissez une image plus simple.",
-            ),
-          );
+        while (output.length > 72000 && canvas.width > 180) {
+          scale *= 0.82;
+          try { render(); } catch (reason) { return reject(reason); }
+          output = canvas.toDataURL("image/webp", 0.58);
+        }
+        if (output.length > 85000) return reject(new Error("Le logo n’a pas pu être compressé pour l’enregistrement."));
         resolve(output);
       };
       image.src = String(reader.result);
