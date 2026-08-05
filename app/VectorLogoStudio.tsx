@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./VectorLogoStudio.module.css";
 
 type LayerType = "text" | "rect" | "circle" | "path" | "image";
@@ -74,6 +74,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
   const [error, setError] = useState("");
   const [versions, setVersions] = useState<Version[]>([]);
   const interaction = useRef<{ mode: "move" | "resize"; id: string; startX: number; startY: number; x: number; y: number; width: number; height: number; before: Layer[] } | null>(null);
+  const dragFrame = useRef<number | null>(null);
   const canvasRef = useRef<SVGSVGElement>(null);
   const selected = layers.find((layer) => layer.id === selectedId) ?? null;
   const svg = useMemo(() => makeSvg(layers, background), [layers, background]);
@@ -122,27 +123,35 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     const layer: Layer = { id: uid(), name: type === "text" ? "Nouveau texte" : type === "circle" ? "Forme ronde" : type === "path" ? "Symbole" : "Forme", type, x: 280, y: 205, width: type === "text" ? 300 : 110, height: type === "text" ? 70 : 110, rotation: 0, fill: "#12345b", opacity: 1, visible: true, locked: false, text: "NOUVEAU TEXTE", fontFamily: "Arial", fontSize: 42, fontWeight: 700, letterSpacing: 0, ...extra };
     commit((current) => [...current, layer]); setSelectedId(layer.id);
   };
-  const pointerDown = (event: PointerEvent<SVGGElement>, layer: Layer) => {
+  const pointerDown = (event: MouseEvent<SVGGElement>, layer: Layer) => {
     event.preventDefault(); event.stopPropagation(); setSelectedId(layer.id);
     if (layer.locked) return;
     interaction.current = { mode: "move", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
   };
-  const resizeDown = (event: PointerEvent<SVGCircleElement>, layer: Layer) => {
+  const resizeDown = (event: MouseEvent<SVGCircleElement>, layer: Layer) => {
     event.preventDefault(); event.stopPropagation();
     if (layer.locked) return;
     interaction.current = { mode: "resize", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
   };
-  const pointerMove = (event: PointerEvent<SVGSVGElement>) => {
+  const applyMovement = (clientX: number, clientY: number) => {
     if (!interaction.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect(), scaleX = WIDTH / rect.width, scaleY = HEIGHT / rect.height;
     const { mode, id, startX, startY, x, y, width, height } = interaction.current;
-    const dx = (event.clientX - startX) * scaleX, dy = (event.clientY - startY) * scaleY;
+    const dx = (clientX - startX) * scaleX, dy = (clientY - startY) * scaleY;
     setLayers((current) => current.map((layer) => layer.id !== id ? layer : mode === "move"
       ? { ...layer, x: Math.round(x + dx), y: Math.round(y + dy) }
       : { ...layer, width: Math.max(12, Math.round(width + dx)), height: Math.max(12, Math.round(height + dy)) }));
   };
-  const pointerUp = () => {
+  const pointerMove = (event: MouseEvent<SVGSVGElement>) => {
     if (!interaction.current) return;
+    const clientX = event.clientX, clientY = event.clientY;
+    if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = requestAnimationFrame(() => { dragFrame.current = null; applyMovement(clientX, clientY); });
+  };
+  const pointerUp = (event?: MouseEvent<SVGSVGElement>) => {
+    if (!interaction.current) return;
+    if (dragFrame.current !== null) { cancelAnimationFrame(dragFrame.current); dragFrame.current = null; }
+    if (event) applyMovement(event.clientX, event.clientY);
     setPast((items) => [...items.slice(-29), interaction.current!.before]); setFuture([]); interaction.current = null;
   };
   const moveLayer = (direction: -1 | 1) => selectedId && commit((current) => {
@@ -213,13 +222,13 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
       <aside className={styles.layers}><strong>Calques <small>{layers.length}</small></strong>{[...layers].reverse().map((layer) => <div key={layer.id} className={`${styles.layerRow} ${layer.id === selectedId ? styles.activeLayer : ""}`}><button type="button" className={styles.visibility} title={layer.visible ? "Masquer" : "Afficher"} onClick={() => commit((current) => current.map((item) => item.id === layer.id ? { ...item, visible: !item.visible } : item))}>{layer.visible ? "◉" : "○"}</button><button type="button" className={styles.layerName} onClick={() => setSelectedId(layer.id)}>{layer.name}</button><span>{layer.locked ? "⌑" : ""}</span></div>)}<div className={styles.layerActions}><button type="button" onClick={() => moveLayer(1)}>Monter</button><button type="button" onClick={() => moveLayer(-1)}>Descendre</button><button type="button" onClick={duplicate}>Dupliquer</button><button type="button" className={styles.danger} disabled={!selectedId} onClick={() => { if (selectedId) commit((current) => current.filter((layer) => layer.id !== selectedId)); setSelectedId(null); }}>Supprimer</button></div></aside>
       <div className={styles.canvasWrap}>
         <div className={styles.canvasTools}><label>Fond <input type="color" value={background === "transparent" ? "#ffffff" : background} onChange={(event) => setBackground(event.target.value)}/></label><button type="button" onClick={() => setBackground(background === "transparent" ? "#ffffff" : "transparent")}>{background === "transparent" ? "Fond blanc" : "Fond transparent"}</button><span>800 × 500</span></div>
-        <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={pointerUp} onPointerCancel={pointerUp} onPointerDown={(event) => { event.preventDefault(); setSelectedId(null); }}>
+        <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onMouseMove={pointerMove} onMouseUp={pointerUp} onMouseLeave={pointerUp} onMouseDown={(event) => { event.preventDefault(); setSelectedId(null); }}>
           {background !== "transparent" && <rect width={WIDTH} height={HEIGHT} fill={background}/>}<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#dbe3ea" strokeWidth=".6"/></pattern></defs>{background === "transparent" && <rect width={WIDTH} height={HEIGHT} fill="url(#grid)"/>}
-          {layers.map((layer) => layer.visible && <g key={layer.id} onPointerDown={(event) => pointerDown(event, layer)} transform={`translate(${layer.x} ${layer.y}) rotate(${layer.rotation} ${layer.width / 2} ${layer.height / 2})`} opacity={layer.opacity} className={styles.artwork}>
+          {layers.map((layer) => layer.visible && <g key={layer.id} onMouseDown={(event) => pointerDown(event, layer)} transform={`translate(${layer.x} ${layer.y}) rotate(${layer.rotation} ${layer.width / 2} ${layer.height / 2})`} opacity={layer.opacity} className={styles.artwork}>
             {layer.type === "text" && <text x="0" y={layer.fontSize ?? 40} fill={layer.fill} fontFamily={layer.fontFamily} fontSize={layer.fontSize} fontWeight={layer.fontWeight} letterSpacing={layer.letterSpacing}>{layer.text}</text>}
             {layer.type === "rect" && <rect width={layer.width} height={layer.height} rx={Math.min(12, layer.height / 2)} fill={layer.fill}/>} {layer.type === "circle" && <ellipse cx={layer.width / 2} cy={layer.height / 2} rx={layer.width / 2} ry={layer.height / 2} fill={layer.fill}/>} {layer.type === "path" && <path d={layer.path} fill={layer.fill} transform={`scale(${layer.width / 100} ${layer.height / 100})`}/>} {layer.type === "image" && <image href={layer.href} width={layer.width} height={layer.height} preserveAspectRatio="xMidYMid meet"/>}
           </g>) }
-          {selected && selected.visible && <g transform={`translate(${selected.x} ${selected.y}) rotate(${selected.rotation} ${selected.width / 2} ${selected.height / 2})`}><rect pointerEvents="none" width={selected.width} height={selected.height} fill="none" stroke="#38bdf8" strokeWidth="2"/><circle className={styles.resizeHandle} onPointerDown={(event) => resizeDown(event, selected)} cx={selected.width} cy={selected.height} r="9" fill="#07111f" stroke="#38bdf8" strokeWidth="4"/></g>}
+          {selected && selected.visible && <g transform={`translate(${selected.x} ${selected.y}) rotate(${selected.rotation} ${selected.width / 2} ${selected.height / 2})`}><rect pointerEvents="none" width={selected.width} height={selected.height} fill="none" stroke="#38bdf8" strokeWidth="2"/><circle className={styles.resizeHandle} onMouseDown={(event) => resizeDown(event, selected)} cx={selected.width} cy={selected.height} r="9" fill="#07111f" stroke="#38bdf8" strokeWidth="4"/></g>}
         </svg>
       </div>
       <aside className={styles.properties}><strong>Propriétés</strong>{selected ? <>
