@@ -73,7 +73,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
   const [future, setFuture] = useState<Layer[][]>([]);
   const [error, setError] = useState("");
   const [versions, setVersions] = useState<Version[]>([]);
-  const interaction = useRef<{ mode: "move" | "resize"; id: string; startX: number; startY: number; x: number; y: number; width: number; height: number; before: Layer[] } | null>(null);
+  const interaction = useRef<{ mode: "move" | "resize"; id: string; startX: number; startY: number; x: number; y: number; width: number; height: number; nextX: number; nextY: number; nextWidth: number; nextHeight: number; rotation: number; before: Layer[] } | null>(null);
   const dragFrame = useRef<number | null>(null);
   const canvasRef = useRef<SVGSVGElement>(null);
   const selected = layers.find((layer) => layer.id === selectedId) ?? null;
@@ -126,21 +126,25 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
   const pointerDown = (event: MouseEvent<SVGGElement>, layer: Layer) => {
     event.preventDefault(); event.stopPropagation(); setSelectedId(layer.id);
     if (layer.locked) return;
-    interaction.current = { mode: "move", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
+    interaction.current = { mode: "move", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, nextX: layer.x, nextY: layer.y, nextWidth: layer.width, nextHeight: layer.height, rotation: layer.rotation, before: layers };
   };
   const resizeDown = (event: MouseEvent<SVGCircleElement>, layer: Layer) => {
     event.preventDefault(); event.stopPropagation();
     if (layer.locked) return;
-    interaction.current = { mode: "resize", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, before: layers };
+    interaction.current = { mode: "resize", id: layer.id, startX: event.clientX, startY: event.clientY, x: layer.x, y: layer.y, width: layer.width, height: layer.height, nextX: layer.x, nextY: layer.y, nextWidth: layer.width, nextHeight: layer.height, rotation: layer.rotation, before: layers };
   };
   const applyMovement = (clientX: number, clientY: number) => {
     if (!interaction.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect(), scaleX = WIDTH / rect.width, scaleY = HEIGHT / rect.height;
-    const { mode, id, startX, startY, x, y, width, height } = interaction.current;
+    const currentInteraction = interaction.current;
+    const { mode, id, startX, startY, x, y, width, height, rotation } = currentInteraction;
     const dx = (clientX - startX) * scaleX, dy = (clientY - startY) * scaleY;
-    setLayers((current) => current.map((layer) => layer.id !== id ? layer : mode === "move"
-      ? { ...layer, x: Math.round(x + dx), y: Math.round(y + dy) }
-      : { ...layer, width: Math.max(12, Math.round(width + dx)), height: Math.max(12, Math.round(height + dy)) }));
+    currentInteraction.nextX = mode === "move" ? Math.round(x + dx) : x;
+    currentInteraction.nextY = mode === "move" ? Math.round(y + dy) : y;
+    currentInteraction.nextWidth = mode === "resize" ? Math.max(12, Math.round(width + dx)) : width;
+    currentInteraction.nextHeight = mode === "resize" ? Math.max(12, Math.round(height + dy)) : height;
+    const artwork = canvasRef.current.querySelector<SVGGElement>(`[data-layer-id="${id}"]`);
+    if (artwork) artwork.setAttribute("transform", `translate(${currentInteraction.nextX} ${currentInteraction.nextY}) rotate(${rotation} ${currentInteraction.nextWidth / 2} ${currentInteraction.nextHeight / 2})`);
   };
   const pointerMove = (event: MouseEvent<SVGSVGElement>) => {
     if (!interaction.current) return;
@@ -152,7 +156,11 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
     if (!interaction.current) return;
     if (dragFrame.current !== null) { cancelAnimationFrame(dragFrame.current); dragFrame.current = null; }
     if (event) applyMovement(event.clientX, event.clientY);
-    setPast((items) => [...items.slice(-29), interaction.current!.before]); setFuture([]); interaction.current = null;
+    const completed = interaction.current;
+    setPast((items) => [...items.slice(-29), completed.before]);
+    setFuture([]);
+    setLayers((current) => current.map((layer) => layer.id === completed.id ? { ...layer, x: completed.nextX, y: completed.nextY, width: completed.nextWidth, height: completed.nextHeight } : layer));
+    interaction.current = null;
   };
   const moveLayer = (direction: -1 | 1) => selectedId && commit((current) => {
     const index = current.findIndex((layer) => layer.id === selectedId), next = Math.max(0, Math.min(current.length - 1, index + direction));
@@ -224,7 +232,7 @@ export default function VectorLogoStudio({ onSendToAi }: Props) {
         <div className={styles.canvasTools}><label>Fond <input type="color" value={background === "transparent" ? "#ffffff" : background} onChange={(event) => setBackground(event.target.value)}/></label><button type="button" onClick={() => setBackground(background === "transparent" ? "#ffffff" : "transparent")}>{background === "transparent" ? "Fond blanc" : "Fond transparent"}</button><span>800 × 500</span></div>
         <svg ref={canvasRef} className={styles.canvas} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} onMouseMove={pointerMove} onMouseUp={pointerUp} onMouseLeave={pointerUp} onMouseDown={(event) => { event.preventDefault(); setSelectedId(null); }}>
           {background !== "transparent" && <rect width={WIDTH} height={HEIGHT} fill={background}/>}<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#dbe3ea" strokeWidth=".6"/></pattern></defs>{background === "transparent" && <rect width={WIDTH} height={HEIGHT} fill="url(#grid)"/>}
-          {layers.map((layer) => layer.visible && <g key={layer.id} onMouseDown={(event) => pointerDown(event, layer)} transform={`translate(${layer.x} ${layer.y}) rotate(${layer.rotation} ${layer.width / 2} ${layer.height / 2})`} opacity={layer.opacity} className={styles.artwork}>
+          {layers.map((layer) => layer.visible && <g key={layer.id} data-layer-id={layer.id} onMouseDown={(event) => pointerDown(event, layer)} transform={`translate(${layer.x} ${layer.y}) rotate(${layer.rotation} ${layer.width / 2} ${layer.height / 2})`} opacity={layer.opacity} className={styles.artwork}>
             {layer.type === "text" && <text x="0" y={layer.fontSize ?? 40} fill={layer.fill} fontFamily={layer.fontFamily} fontSize={layer.fontSize} fontWeight={layer.fontWeight} letterSpacing={layer.letterSpacing}>{layer.text}</text>}
             {layer.type === "rect" && <rect width={layer.width} height={layer.height} rx={Math.min(12, layer.height / 2)} fill={layer.fill}/>} {layer.type === "circle" && <ellipse cx={layer.width / 2} cy={layer.height / 2} rx={layer.width / 2} ry={layer.height / 2} fill={layer.fill}/>} {layer.type === "path" && <path d={layer.path} fill={layer.fill} transform={`scale(${layer.width / 100} ${layer.height / 100})`}/>} {layer.type === "image" && <image href={layer.href} width={layer.width} height={layer.height} preserveAspectRatio="xMidYMid meet"/>}
           </g>) }
