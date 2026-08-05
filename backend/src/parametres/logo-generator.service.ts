@@ -26,8 +26,10 @@ export class LogoGeneratorService {
   constructor(private credits: LogoCreditsService) {}
 
   status() {
+    const apiKey = process.env.OPENAI_API_KEY?.trim() ?? "";
     return {
-      configured: Boolean(process.env.OPENAI_API_KEY),
+      configured: Boolean(apiKey),
+      keyFormatValid: apiKey.startsWith("sk-"),
       model: "gpt-image-2",
     };
   }
@@ -80,7 +82,7 @@ export class LogoGeneratorService {
   }
 
   async generate(userId: string, data: GenerateLogoDto) {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY?.trim();
     if (!apiKey) {
       throw new ServiceUnavailableException(
         "Le générateur IA n’est pas encore configuré. Ajoutez OPENAI_API_KEY dans l’environnement du serveur.",

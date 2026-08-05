@@ -19,6 +19,7 @@ describe("LogoGeneratorService", () => {
     delete process.env.OPENAI_API_KEY;
     expect(service().status()).toEqual({
       configured: false,
+      keyFormatValid: false,
       model: "gpt-image-2",
     });
   });
