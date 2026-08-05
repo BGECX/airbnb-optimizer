@@ -44,7 +44,15 @@ export class ParametresController {
 
   @Post("logo/ia/generer")
   generateLogo(@CurrentUser("userId") userId: string, @Body() data: GenerateLogoDto) {
-    return this.logoGenerator.generate(userId, data);
+    return this.logoGenerator.enqueue(userId, data);
+  }
+
+  @Get("logo/ia/generations/:id")
+  getLogoGeneration(
+    @CurrentUser("userId") userId: string,
+    @Param("id") id: string,
+  ) {
+    return this.logoGenerator.getJob(userId, id);
   }
 
   @Get("logo/credits")

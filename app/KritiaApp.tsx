@@ -1901,7 +1901,7 @@ function LogoAiStudio({
     setWorking(true);
     setError("");
     try {
-      const result = await request("/parametres/logo/ia/generer", {
+      const queued = await request("/parametres/logo/ia/generer", {
         method: "POST",
         body: JSON.stringify({
           ...brief,
@@ -1911,6 +1911,21 @@ function LogoAiStudio({
           symboles: brief.symboles.trim() || undefined,
         }),
       });
+      const generationId = String(queued.generationId ?? "");
+      if (!generationId) throw new Error("La génération n’a pas pu démarrer.");
+      let result: RecordValue | null = null;
+      for (let attempt = 0; attempt < 75; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        const state = await request(`/parametres/logo/ia/generations/${generationId}`);
+        if (state.status === "FAILED") {
+          throw new Error(String(state.error ?? "Création impossible"));
+        }
+        if (state.status === "COMPLETED") {
+          result = state;
+          break;
+        }
+      }
+      if (!result) throw new Error("La création prend trop de temps. Vous pourrez réessayer dans quelques instants.");
       if (!result.image) throw new Error("Aucune proposition reçue.");
       setImages((current) => [String(result.image), ...current].slice(0, 3));
       setCredits(Number(result.remainingCredits ?? 0));

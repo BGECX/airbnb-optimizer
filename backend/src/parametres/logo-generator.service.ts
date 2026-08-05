@@ -10,11 +10,19 @@ import { LogoCreditsService } from "./logo-credits.service";
 import { randomUUID } from "crypto";
 
 type OpenAIImageResponse = { data?: Array<{ b64_json?: string }> };
+type LogoJob = {
+  userId: string;
+  status: "PROCESSING" | "COMPLETED" | "FAILED";
+  createdAt: number;
+  result?: Record<string, unknown>;
+  error?: string;
+};
 
 @Injectable()
 export class LogoGeneratorService {
   private readonly logger = new Logger(LogoGeneratorService.name);
   private lastGenerationAt = 0;
+  private readonly jobs = new Map<string, LogoJob>();
   constructor(private credits: LogoCreditsService) {}
 
   status() {
@@ -22,6 +30,53 @@ export class LogoGeneratorService {
       configured: Boolean(process.env.OPENAI_API_KEY),
       model: "gpt-image-2",
     };
+  }
+
+  enqueue(userId: string, data: GenerateLogoDto) {
+    const jobId = randomUUID();
+    this.jobs.set(jobId, { userId, status: "PROCESSING", createdAt: Date.now() });
+    setTimeout(() => {
+      void this.generate(userId, data)
+        .then((result) => {
+          this.jobs.set(jobId, {
+            userId,
+            status: "COMPLETED",
+            createdAt: Date.now(),
+            result,
+          });
+        })
+        .catch((error: unknown) => {
+          const payload = error instanceof HttpException ? error.getResponse() : undefined;
+          const message = typeof payload === "string"
+            ? payload
+            : typeof payload === "object" && payload !== null && "message" in payload
+              ? String(payload.message)
+              : error instanceof Error ? error.message : "Création impossible";
+          this.jobs.set(jobId, {
+            userId,
+            status: "FAILED",
+            createdAt: Date.now(),
+            error: message,
+          });
+        });
+    }, 0);
+    this.pruneJobs();
+    return { generationId: jobId, status: "PROCESSING" as const };
+  }
+
+  getJob(userId: string, jobId: string) {
+    const job = this.jobs.get(jobId);
+    if (!job || job.userId !== userId) {
+      throw new HttpException("Génération inconnue ou expirée.", HttpStatus.NOT_FOUND);
+    }
+    return { generationId: jobId, status: job.status, ...job.result, error: job.error };
+  }
+
+  private pruneJobs() {
+    const expiresBefore = Date.now() - 15 * 60_000;
+    for (const [id, job] of this.jobs) {
+      if (job.createdAt < expiresBefore) this.jobs.delete(id);
+    }
   }
 
   async generate(userId: string, data: GenerateLogoDto) {
