@@ -22,8 +22,10 @@ COPY --from=production-deps /app/dist ./dist
 COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=production-deps /app/package*.json ./
 COPY --from=production-deps /app/prisma ./prisma
-RUN mkdir -p /app/uploads && chown -R node:node /app
+COPY docker-entrypoint.sh /usr/local/bin/kritia-entrypoint
+RUN chmod +x /usr/local/bin/kritia-entrypoint && mkdir -p /app/uploads && chown -R node:node /app
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD wget -qO- http://127.0.0.1:3000/api/health/ready >/dev/null || exit 1
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+ENTRYPOINT ["/usr/local/bin/kritia-entrypoint"]
+CMD ["node", "dist/src/main"]
