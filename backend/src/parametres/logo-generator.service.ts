@@ -228,7 +228,7 @@ export class LogoGeneratorService {
       data.symboles?.trim() ||
       "un symbole abstrait lié au bâtiment, sans outil de chantier cliché";
     return [
-      data.referenceImageDataUrl
+      data.referenceImageDataUrl || data.referenceSvgDataUrl
         ? "Améliore le logo fourni en conservant son identité reconnaissable, sa structure générale et le nom de l’entreprise, sur fond transparent."
         : "Crée un logo d’entreprise original, professionnel et directement exploitable, sur fond transparent.",
       `Nom exact à écrire, sans faute et une seule fois : « ${data.raisonSociale.trim()} ».`,
@@ -237,7 +237,23 @@ export class LogoGeneratorService {
       `Pistes symboliques souhaitées : ${symbols}. ${slogan}`,
       "Composition simple et mémorisable, lisible en petit format, formes nettes de type vectoriel, sans photographie, sans maquette, sans carte de visite, sans filigrane.",
       "Ne copie aucune marque existante. Évite les détails fragiles et garde une zone de respiration autour du logo.",
+      this.svgReferenceInstruction(data.referenceSvgDataUrl),
     ].join(" ");
+  }
+
+  private svgReferenceInstruction(value?: string) {
+    if (!value) return "";
+    const match = /^data:image\/svg\+xml;base64,([A-Za-z0-9+/=]+)$/i.exec(value);
+    if (!match) {
+      throw new HttpException("Référence SVG invalide.", HttpStatus.BAD_REQUEST);
+    }
+    const svg = Buffer.from(match[1], "base64").toString("utf8");
+    const unsafe = /<(?:script|foreignObject|iframe|object|embed)[\s>]/i.test(svg) ||
+      /\son\w+\s*=/i.test(svg) || /javascript:/i.test(svg);
+    if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/i.test(svg) || unsafe) {
+      throw new HttpException("Référence SVG non autorisée.", HttpStatus.BAD_REQUEST);
+    }
+    return `Prends ce dessin SVG comme référence précise de formes, proportions et composition, puis améliore-le sans le copier servilement : ${svg.slice(0, 45_000)}`;
   }
 
   private referenceImage(value?: string) {

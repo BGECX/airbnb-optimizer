@@ -74,4 +74,28 @@ describe("LogoGeneratorService", () => {
     expect((options.body as FormData).get("image")).toBeInstanceOf(Blob);
     expect((options.body as FormData).get("model")).toBe("gpt-image-2");
   });
+
+  it("uses a lightweight SVG reference without uploading an image", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ b64_json: "dmVjdG9y" }] }),
+    } as Response);
+    const svg = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="10"/></svg>',
+    ).toString("base64");
+
+    await service().generate("user-1", {
+      raisonSociale: "KRITIA",
+      activite: "Rénovation",
+      style: "moderne",
+      referenceSvgDataUrl: `data:image/svg+xml;base64,${svg}`,
+    });
+
+    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe("https://api.openai.com/v1/images/generations");
+    const payload = JSON.parse(options.body);
+    expect(payload.prompt).toContain("Prends ce dessin SVG comme référence");
+    expect(payload.prompt).toContain("<circle");
+  });
 });

@@ -97,6 +97,15 @@ export class GenerateLogoDto {
     message: "L’image de référence doit être au format PNG ou WebP",
   })
   referenceImageDataUrl?: string;
+
+  @ApiPropertyOptional({ description: "Fichier SVG vectoriel à améliorer" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150_000)
+  @Matches(/^data:image\/svg\+xml;base64,/i, {
+    message: "La référence vectorielle doit être un fichier SVG valide",
+  })
+  referenceSvgDataUrl?: string;
 }
 
 export class UpdateNumerotationDto {
