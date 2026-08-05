@@ -551,7 +551,6 @@ function Login({
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [resetCompleted, setResetCompleted] = useState(false);
   const [working, setWorking] = useState(false);
-  const [credits, setCredits] = useState<number | null>(demo ? 0 : null);
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
   async function forgot(event: FormEvent<HTMLFormElement>) {
@@ -1885,6 +1884,7 @@ function LogoAiStudio({
     demo ? false : null,
   );
   const [working, setWorking] = useState(false);
+  const [credits, setCredits] = useState<number | null>(demo ? 0 : null);
   const [error, setError] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [brief, setBrief] = useState({
