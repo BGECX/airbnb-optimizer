@@ -18,6 +18,9 @@ type Session = {
     lastName?: string;
     email?: string;
     role?: string;
+    subscriptionStatus?: string;
+    trialStartedAt?: string;
+    trialEndsAt?: string;
   };
 };
 type ApiRequest = (path: string, options?: RequestInit) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -201,6 +204,7 @@ export default function KritiaApp() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsStartView, setSettingsStartView] = useState<"overview" | "shop">("overview");
   const [resetToken, setResetToken] = useState("");
 
   useEffect(() => {
@@ -228,6 +232,18 @@ export default function KritiaApp() {
 
   useEffect(() => {
     if (session) void loadAll();
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!session || session.user.trialEndsAt) return;
+    api("/auth/me")
+      .then((user) => {
+        if (!user.trialEndsAt) return;
+        const next = { ...session, user: { ...session.user, ...user } } as Session;
+        window.sessionStorage.setItem("kritia-session", JSON.stringify(next));
+        setSession(next);
+      })
+      .catch(() => undefined);
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -514,9 +530,17 @@ export default function KritiaApp() {
           )}
           {busy && <div className="loading-line" />}
           {settingsOpen ? (
-            <SettingsPage user={currentUser} demo={demo} request={api} />
+            <SettingsPage user={currentUser} demo={demo} request={api} initialView={settingsStartView} />
           ) : section === "dashboard" ? (
-            <Dashboard data={data} navigate={setSection} />
+            <Dashboard
+              data={data}
+              navigate={setSection}
+              trialEndsAt={session?.user.trialEndsAt}
+              openShop={() => {
+                setSettingsStartView("shop");
+                setSettingsOpen(true);
+              }}
+            />
           ) : section === "dpgf" ? (
             <DpgfWorkspace
               rows={data.dpgf}
@@ -567,6 +591,7 @@ function Login({
   const [working, setWorking] = useState(false);
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
+  const [publicShopOpen, setPublicShopOpen] = useState(false);
   async function forgot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -628,6 +653,17 @@ function Login({
       : resetting
         ? reset
         : login;
+  if (publicShopOpen) {
+    return (
+      <PublicAdvertisingShop
+        close={() => setPublicShopOpen(false)}
+        startTrial={() => {
+          setPublicShopOpen(false);
+          setMode("register");
+        }}
+      />
+    );
+  }
   return (
     <main className="login-page">
       <section className="login-story">
@@ -656,6 +692,14 @@ function Login({
               <strong>100%</strong>orienté rénovation
             </span>
           </div>
+          <div className="public-shop-callout">
+            <div>
+              <small>NOUVEAU SERVICE</small>
+              <strong>Communication pour artisans du BTP</strong>
+              <span>Cartes, flyers, signalétique et vêtements personnalisés à partir de votre identité KRITIA.</span>
+            </div>
+            <button type="button" onClick={() => setPublicShopOpen(true)}>Découvrir la boutique →</button>
+          </div>
         </div>
         <p className="story-quote">
           « La précision du métré. La clarté du pilotage. »
@@ -683,7 +727,7 @@ function Login({
           </h2>
           <p className="muted">
             {creating
-              ? "Créez votre accès personnel à KRITIA btp."
+              ? "30 jours d’accès complet, sans carte bancaire. Vous choisirez votre formule ensuite."
               : forgotten
                 ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes."
                 : resetting
@@ -820,9 +864,50 @@ function Login({
             </>
           )}
           <small className="secure-note">
-            Les liens de réinitialisation sont temporaires et à usage unique.
+            {creating ? "Essai complet de 30 jours · aucune carte bancaire demandée" : "Les liens de réinitialisation sont temporaires et à usage unique."}
           </small>
         </form>
+      </section>
+    </main>
+  );
+}
+
+function PublicAdvertisingShop({ close, startTrial }: { close: () => void; startTrial: () => void }) {
+  return (
+    <main className="public-shop-page">
+      <header>
+        <button type="button" className="public-shop-brand" onClick={close} aria-label="Retour à KRITIA">
+          <span>K</span><strong>KRITIA<small>btp</small></strong>
+        </button>
+        <div>
+          <button type="button" className="secondary compact" onClick={close}>Se connecter</button>
+          <button type="button" className="primary compact" onClick={startTrial}>Essayer KRITIA 30 jours</button>
+        </div>
+      </header>
+      <section className="public-shop-hero">
+        <p className="eyebrow">BOUTIQUE · COMMUNICATION BTP</p>
+        <h1>Votre savoir-faire mérite<br />une image professionnelle.</h1>
+        <p>Importez votre logo ou créez-le avec KRITIA. Vos coordonnées remplissent ensuite automatiquement les supports disponibles chez nos imprimeurs connectés.</p>
+        <div className="public-shop-steps">
+          <span><b>01</b>Identité préremplie</span>
+          <span><b>02</b>Aperçu et BAT</span>
+          <span><b>03</b>Impression suivie</span>
+        </div>
+      </section>
+      <section className="public-shop-products" aria-label="Produits publicitaires">
+        {demoAdvertisingProducts.map((product, index) => (
+          <article key={product.code}>
+            <i>{product.family === "TEXTILE" ? "♙" : product.family === "SIGNAGE" ? "▰" : "▤"}</i>
+            <small>{index < 2 ? "IMPRIMÉS" : product.family === "TEXTILE" ? "TEXTILE" : "CHANTIER & VÉHICULE"}</small>
+            <strong>{product.name}</strong>
+            <p>Logo, couleurs et coordonnées intégrés depuis votre fiche entreprise.</p>
+            <button type="button" onClick={startTrial}>Personnaliser bientôt →</button>
+          </article>
+        ))}
+      </section>
+      <section className="public-shop-conversion">
+        <div><small>ESSAI COMPLET</small><strong>Tout KRITIA pendant 30 jours</strong><span>Devis, chantiers, DPGF, bibliothèque, identité et boutique — sans carte bancaire.</span></div>
+        <button type="button" className="primary" onClick={startTrial}>Créer mon compte gratuit <span>→</span></button>
       </section>
     </main>
   );
@@ -832,12 +917,14 @@ function SettingsPage({
   user,
   demo,
   request,
+  initialView = "overview",
 }: {
   user: RecordValue;
   demo: boolean;
   request: ApiRequest;
+  initialView?: "overview" | "shop";
 }) {
-  const [view, setView] = useState<"overview" | "company" | "shop">("overview");
+  const [view, setView] = useState<"overview" | "company" | "shop">(initialView);
   const groups = [
     {
       title: "Mon compte",
@@ -2358,9 +2445,13 @@ function resizeLogo(file: File, slogan = ""): Promise<string> {
 function Dashboard({
   data,
   navigate,
+  trialEndsAt,
+  openShop,
 }: {
   data: typeof demoData;
   navigate: (section: Section) => void;
+  trialEndsAt?: string;
+  openShop: () => void;
 }) {
   const pipeline = data.devis.reduce(
     (sum, item) => sum + Number(item.totalTtc ?? 0),
@@ -2374,8 +2465,17 @@ function Dashboard({
     (sum, item) => sum + Number(item.montantPaye ?? 0),
     0,
   );
+  const trialDays = trialEndsAt
+    ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60_000)))
+    : null;
   return (
     <>
+      {trialDays !== null && (
+        <section className="trial-banner">
+          <div><small>ESSAI KRITIA · ACCÈS COMPLET</small><strong>{trialDays} jour{trialDays > 1 ? "s" : ""} restant{trialDays > 1 ? "s" : ""}</strong><span>Toutes les fonctions sont disponibles. Les formules seront proposées avant la fin de l’essai.</span></div>
+          <button type="button" className="secondary compact" onClick={openShop}>Découvrir la boutique</button>
+        </section>
+      )}
       <section className="hero-row">
         <div>
           <p className="eyebrow">SYNTHÈSE DE L’ACTIVITÉ</p>
@@ -2411,6 +2511,10 @@ function Dashboard({
           note="À suivre cette semaine"
           accent="dark"
         />
+      </section>
+      <section className="dashboard-shop-card">
+        <div className="dashboard-shop-visual"><span>KRITIA</span><i>Votre identité sur tous vos supports</i></div>
+        <div><p className="eyebrow">COMMUNICATION PROFESSIONNELLE</p><h3>Votre logo travaille aussi sur le terrain.</h3><p>Préparez vos cartes, flyers, vêtements et supports de chantier depuis les informations déjà enregistrées dans KRITIA.</p><button type="button" className="primary compact" onClick={openShop}>Ouvrir la boutique</button></div>
       </section>
       <section className="dashboard-grid">
         <div className="panel wide">

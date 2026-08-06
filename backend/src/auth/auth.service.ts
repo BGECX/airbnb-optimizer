@@ -21,14 +21,19 @@ export class AuthService {
     if (existing) throw new ConflictException('Email déjà utilisé');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const trialStartedAt = new Date();
+    const trialEndsAt = new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60_000);
     const user = await this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
+        subscriptionStatus: 'TRIAL',
+        trialStartedAt,
+        trialEndsAt,
       },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
     });
 
     const tokens = await this.issueTokens(user.id, user.email, user.role, metadata);
@@ -47,6 +52,18 @@ export class AuthService {
       user = await this.prisma.user.update({ where: { id: user.id }, data: { role: UserRole.ADMIN } });
     }
 
+    if (!user.trialEndsAt) {
+      const trialStartedAt = new Date();
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          subscriptionStatus: 'TRIAL',
+          trialStartedAt,
+          trialEndsAt: new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60_000),
+        },
+      });
+    }
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
@@ -60,6 +77,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        subscriptionStatus: user.subscriptionStatus,
+        trialStartedAt: user.trialStartedAt,
+        trialEndsAt: user.trialEndsAt,
       },
       ...tokens,
     };
@@ -68,7 +88,7 @@ export class AuthService {
   async me(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
     });
   }
 
