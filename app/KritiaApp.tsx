@@ -957,14 +957,14 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
       <section className="suite-constellation" aria-label="Applications KRITIA One">
         <div className="suite-orbit" aria-hidden="true" />
         <div className="suite-hub">
-          <div className="suite-wordmark" aria-label="KRITIA ONE"><strong aria-hidden="true">KRITI<span className="kritia-a"><i /></span></strong><small>ONE</small></div>
+          <KritiaExactWordmark suffix="ONE" />
         </div>
         {modules.map((module) => {
           return (
             <div key={module.id} className={`suite-satellite satellite-${module.id}`}>
               <span className="satellite-link" aria-hidden="true" />
               <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={module.action} aria-label={`Ouvrir KRITIA ${module.name}`}>
-                <div className="module-wordmark" aria-hidden="true">KRITI<span className="kritia-a"><i /></span><small>{module.name}</small></div>
+                <KritiaExactWordmark suffix={module.name} compact />
                 <em>{module.status}</em>
               </button>
             </div>
@@ -973,6 +973,16 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
       </section>
       <footer><span>KRITIA ONE</span><p>Un seul écosystème. Tous vos métiers.</p></footer>
     </main>
+  );
+}
+
+function KritiaExactWordmark({ suffix, compact = false }: { suffix: string; compact?: boolean }) {
+  return (
+    <span className={`kritia-exact${compact ? " compact" : ""}`} aria-label={`KRITIA ${suffix}`}>
+      <span className="kritia-source-crop" aria-hidden="true"><img src="/og.png" alt="" /></span>
+      <i aria-hidden="true" />
+      <small>{suffix}</small>
+    </span>
   );
 }
 
