@@ -934,6 +934,7 @@ function Login({
 }
 
 function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: () => void }) {
+  const [activeModule, setActiveModule] = useState<string | null>(null);
   const modules = [
     { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", action: openBtp },
     { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation" },
@@ -944,6 +945,16 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation" },
     { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation" },
   ];
+  const neuralPaths: Record<string, string> = {
+    btp: "M590 325 C470 290 330 190 157 129",
+    immo: "M590 325 C555 245 625 165 590 77",
+    juridique: "M590 325 C720 280 850 185 1023 129",
+    publicite: "M590 325 C745 350 900 315 1070 356",
+    diag: "M590 325 C720 410 850 500 1011 554",
+    courtage: "M590 325 C625 410 555 490 590 573",
+    expertise: "M590 325 C465 410 330 505 169 554",
+    horodatage: "M590 325 C430 350 280 315 110 356",
+  };
   return (
     <main className="suite-landing">
       <header>
@@ -955,14 +966,22 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
         <h1>Un seul écosystème.<br />Tous vos métiers.</h1>
       </section>
       <section className="suite-constellation" aria-label="Applications KRITIA One">
-        <div className="suite-orbit" aria-hidden="true" />
+        <svg className="neural-network" viewBox="0 0 1180 650" aria-hidden="true">
+          <g className="neural-branches">
+            {Object.entries(neuralPaths).map(([id, path]) => <path key={id} d={path} className={activeModule === id ? "active" : ""} />)}
+          </g>
+          {activeModule && (
+            <circle className="neural-pulse" r="5">
+              <animateMotion dur=".85s" repeatCount="indefinite" path={neuralPaths[activeModule]} />
+            </circle>
+          )}
+        </svg>
         <div className="suite-hub">
           <KritiaExactWordmark suffix="ONE" />
         </div>
         {modules.map((module) => {
           return (
-            <div key={module.id} className={`suite-satellite satellite-${module.id}`}>
-              <span className="satellite-link" aria-hidden="true" />
+            <div key={module.id} className={`suite-satellite satellite-${module.id}`} onMouseEnter={() => setActiveModule(module.id)} onMouseLeave={() => setActiveModule(null)} onFocus={() => setActiveModule(module.id)} onBlur={() => setActiveModule(null)}>
               <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={module.action} aria-label={`Ouvrir KRITIA ${module.name}`}>
                 <KritiaExactWordmark suffix={module.name} compact />
                 <em>{module.status}</em>
@@ -979,7 +998,7 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
 function KritiaExactWordmark({ suffix, compact = false }: { suffix: string; compact?: boolean }) {
   return (
     <span className={`kritia-exact${compact ? " compact" : ""}`} aria-label={`KRITIA ${suffix}`}>
-      <span className="kritia-source-crop" aria-hidden="true"><img src="/og.png" alt="" /></span>
+      <img className="kritia-wordmark-image" src="/kritia-wordmark.png" alt="" aria-hidden="true" />
       <i aria-hidden="true" />
       <small>{suffix}</small>
     </span>

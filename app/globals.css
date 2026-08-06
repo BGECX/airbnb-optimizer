@@ -2284,18 +2284,22 @@ tbody tr:hover {
 .suite-intro-compact { padding-bottom: 10px; }
 .suite-intro > p { color: #74a9ee; font-size: 8px; font-weight: 900; letter-spacing: .2em; }
 .kritia-exact { position:relative; width:242px; display:grid; justify-items:center; gap:14px; }
-.kritia-source-crop { position:relative; width:242px; aspect-ratio:642/180; display:block; overflow:hidden; mix-blend-mode:screen; }
-.kritia-source-crop img { position:absolute; left:-12.46%; top:-133.33%; width:280.37%; max-width:none; height:auto; filter:brightness(1.2) contrast(1.08); }
+.kritia-wordmark-image { width:242px; height:auto; display:block; object-fit:contain; filter:drop-shadow(0 0 8px rgba(221,235,255,.22)); }
 .kritia-exact > i { position:absolute; z-index:3; right:-1px; top:57px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:13px solid var(--module-color,#f97316); filter:drop-shadow(0 0 6px color-mix(in srgb,var(--module-color,#f97316) 75%,transparent)); }
 .kritia-exact small { color:#8db7ee; font-size:14px; font-weight:800; letter-spacing:.25em; line-height:1; text-transform:uppercase; }
 .kritia-exact.compact { width:145px; gap:9px; }
-.kritia-exact.compact .kritia-source-crop { width:145px; }
+.kritia-exact.compact .kritia-wordmark-image { width:145px; }
 .kritia-exact.compact > i { right:0; top:34px; border-left-width:4px; border-right-width:4px; border-bottom-width:8px; }
 .kritia-exact.compact small { color:var(--module-color); font-size:9px; letter-spacing:.12em; }
 .suite-intro h1 { margin: 22px 0 8px; font: 400 clamp(32px,4vw,54px)/1.04 Georgia,serif; letter-spacing: -.035em; }
 .suite-intro-copy { max-width: 680px; color: #9fb7d3; font-size: 12px; line-height: 1.65; }
-.suite-constellation { position: relative; width: min(1180px,calc(100% - 40px)); height: 650px; margin: 0 auto; }
-.suite-orbit { position: absolute; inset: 74px 155px 80px; border: 1px solid rgba(114,169,238,.17); border-radius: 50%; box-shadow: inset 0 0 70px rgba(37,99,235,.06),0 0 70px rgba(37,99,235,.04); }
+.suite-constellation { position: relative; width: min(1180px,calc(100% - 40px)); height: 650px; margin: 0 auto; isolation:isolate; }
+.suite-constellation:before { content:""; position:absolute; z-index:0; inset:34px 70px; border-radius:50%; opacity:.38; background:radial-gradient(circle at 50% 50%,rgba(72,148,255,.22),transparent 32%),repeating-radial-gradient(circle at 50% 50%,transparent 0 54px,rgba(90,155,235,.08) 55px 56px); filter:blur(.2px); pointer-events:none; }
+.neural-network { position:absolute; z-index:1; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.neural-branches path { fill:none; stroke:rgba(83,150,235,.24); stroke-width:1.35; stroke-linecap:round; stroke-dasharray:2 7; transition:stroke .25s ease,stroke-width .25s ease,filter .25s ease; }
+.neural-branches path.active { stroke:var(--module-color,#67a8ff); stroke-width:2.2; filter:drop-shadow(0 0 5px #5aa4ff); animation:neural-signal .55s linear infinite; }
+.neural-pulse { fill:#fff; stroke:#8bc5ff; stroke-width:3; filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 13px #4f9cff); }
+@keyframes neural-signal { to { stroke-dashoffset:-18; } }
 .suite-hub { --module-color:#f97316; position: absolute; z-index: 3; left: 50%; top: 50%; width: 330px; height: 330px; padding: 35px; display: grid; place-content: center; justify-items: center; text-align: center; border: 1px solid rgba(186,218,255,.48); border-radius: 50%; background:
   radial-gradient(circle at 30% 22%,rgba(255,255,255,.78) 0 2%,rgba(173,211,255,.24) 3% 11%,transparent 26%),
   radial-gradient(circle at 18% 55%,rgba(32,201,195,.3),transparent 22%),
@@ -2310,7 +2314,6 @@ tbody tr:hover {
 .suite-hub .kritia-exact small { text-shadow:0 0 14px rgba(96,165,250,.9); }
 @keyframes suite-hub-glow { 50% { box-shadow:0 34px 72px rgba(0,0,0,.54),0 0 100px rgba(52,130,241,.53),inset -32px -40px 60px rgba(0,6,22,.66),inset 28px 25px 54px rgba(151,201,255,.27); } }
 .suite-satellite { position: absolute; z-index: 4; width: 220px; }
-.suite-satellite .satellite-link { position: absolute; z-index: -1; top: 50%; left: 50%; width: 205px; height: 1px; background: linear-gradient(90deg,var(--module-color),rgba(88,147,222,.16)); transform-origin: left center; }
 .satellite-btp { --module-color:#f97316; left: 4%; top: 8%; }
 .satellite-immo { --module-color:#34c98f; left: 50%; top: 0; transform: translateX(-50%); }
 .satellite-juridique { --module-color:#a878f0; right: 4%; top: 8%; }
@@ -2319,14 +2322,6 @@ tbody tr:hover {
 .satellite-courtage { --module-color:#e6b94f; left: 50%; bottom: 0; transform: translateX(-50%); }
 .satellite-expertise { --module-color:#ef5f78; left: 5%; bottom: 3%; }
 .satellite-horodatage { --module-color:#60a5fa; left: 0; top: 43%; }
-.satellite-btp .satellite-link { transform: rotate(25deg); }
-.satellite-immo .satellite-link { transform: rotate(90deg); }
-.satellite-juridique .satellite-link { transform: rotate(155deg); }
-.satellite-publicite .satellite-link { transform: rotate(180deg); }
-.satellite-diag .satellite-link { transform: rotate(207deg); }
-.satellite-courtage .satellite-link { transform: rotate(270deg); }
-.satellite-expertise .satellite-link { transform: rotate(335deg); }
-.satellite-horodatage .satellite-link { transform: rotate(0deg); }
 .suite-module { --module-color: inherit; position:relative; width: 100%; min-height: 154px; padding: 25px 20px; display: grid; place-items: center; text-align: center; border: 0; color: #fff; background:
   radial-gradient(circle at 31% 22%,rgba(255,255,255,.24),transparent 18%),
   linear-gradient(145deg,color-mix(in srgb,var(--module-color) 17%,#183f77),#071a38 73%);
@@ -2348,10 +2343,9 @@ tbody tr:hover {
 .suite-landing > footer p { margin: 7px 0 0; }
 @media (max-width: 900px) {
   .suite-constellation { height: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
-  .suite-orbit { display: none; }
+  .neural-network,.suite-constellation:before { display: none; }
   .suite-hub { position: relative; grid-column: 1/-1; left: auto; top: auto; width: 280px; height: 280px; margin: 20px auto 35px; transform: none; }
   .suite-satellite { position: relative; inset: auto; width: auto; transform: none; }
-  .suite-satellite .satellite-link { display: none; }
 }
 @media (max-width: 560px) {
   .suite-landing > header { min-height: 62px; }
