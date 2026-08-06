@@ -955,6 +955,18 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     expertise: "M590 325 C465 410 330 505 169 554",
     horodatage: "M590 325 C430 350 280 315 110 356",
   };
+  const neuralFilaments = [
+    "M40 92 C170 35 210 205 350 142 S520 36 590 325",
+    "M5 510 C150 575 250 402 378 485 S535 420 590 325",
+    "M1140 75 C1010 20 938 210 825 142 S672 88 590 325",
+    "M1170 520 C1030 595 920 430 805 505 S655 430 590 325",
+    "M155 20 C230 115 350 60 420 188 S515 245 590 325",
+    "M1020 625 C920 540 830 620 760 502 S650 395 590 325",
+    "M70 300 C215 235 302 345 410 294 S520 285 590 325",
+    "M1110 306 C960 245 875 360 770 296 S650 286 590 325",
+    "M300 640 C340 520 470 565 485 450 S535 360 590 325",
+    "M845 10 C815 130 700 104 688 205 S635 286 590 325",
+  ];
   return (
     <main className="suite-landing">
       <header>
@@ -967,8 +979,27 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
       </section>
       <section className="suite-constellation" aria-label="Applications KRITIA One">
         <svg className="neural-network" viewBox="0 0 1180 650" aria-hidden="true">
+          <defs>
+            <filter id="neuralGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <g className="neural-filaments">
+            {neuralFilaments.map((path, index) => <path key={index} d={path} />)}
+          </g>
           <g className="neural-branches">
-            {Object.entries(neuralPaths).map(([id, path]) => <path key={id} d={path} className={activeModule === id ? "active" : ""} />)}
+            {Object.entries(neuralPaths).map(([id, path]) => (
+              <g key={id} className={activeModule === id ? "active" : ""}>
+                <path d={path} className="branch-halo" />
+                <path d={path} className="branch-core" />
+              </g>
+            ))}
+          </g>
+          <g className="neural-nodes">
+            <circle cx="590" cy="325" r="13" />
+            <circle cx="410" cy="294" r="3" /><circle cx="770" cy="296" r="3" />
+            <circle cx="485" cy="450" r="2.5" /><circle cx="688" cy="205" r="2.5" />
           </g>
           {activeModule && (
             <circle className="neural-pulse" r="5">

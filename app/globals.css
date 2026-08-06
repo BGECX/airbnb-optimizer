@@ -2285,21 +2285,30 @@ tbody tr:hover {
 .suite-intro > p { color: #74a9ee; font-size: 8px; font-weight: 900; letter-spacing: .2em; }
 .kritia-exact { position:relative; width:242px; display:grid; justify-items:center; gap:14px; }
 .kritia-wordmark-image { width:242px; height:auto; display:block; object-fit:contain; filter:drop-shadow(0 0 8px rgba(221,235,255,.22)); }
-.kritia-exact > i { position:absolute; z-index:3; right:-1px; top:57px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:13px solid var(--module-color,#f97316); filter:drop-shadow(0 0 6px color-mix(in srgb,var(--module-color,#f97316) 75%,transparent)); }
+.kritia-exact > i { position:absolute; z-index:3; right:-1px; top:40px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:13px solid var(--module-color,#f97316); filter:drop-shadow(0 0 6px color-mix(in srgb,var(--module-color,#f97316) 75%,transparent)); }
 .kritia-exact small { color:#8db7ee; font-size:14px; font-weight:800; letter-spacing:.25em; line-height:1; text-transform:uppercase; }
 .kritia-exact.compact { width:145px; gap:9px; }
 .kritia-exact.compact .kritia-wordmark-image { width:145px; }
-.kritia-exact.compact > i { right:0; top:34px; border-left-width:4px; border-right-width:4px; border-bottom-width:8px; }
+.kritia-exact.compact > i { right:0; top:24px; border-left-width:4px; border-right-width:4px; border-bottom-width:8px; }
 .kritia-exact.compact small { color:var(--module-color); font-size:9px; letter-spacing:.12em; }
 .suite-intro h1 { margin: 22px 0 8px; font: 400 clamp(32px,4vw,54px)/1.04 Georgia,serif; letter-spacing: -.035em; }
 .suite-intro-copy { max-width: 680px; color: #9fb7d3; font-size: 12px; line-height: 1.65; }
 .suite-constellation { position: relative; width: min(1180px,calc(100% - 40px)); height: 650px; margin: 0 auto; isolation:isolate; }
-.suite-constellation:before { content:""; position:absolute; z-index:0; inset:34px 70px; border-radius:50%; opacity:.38; background:radial-gradient(circle at 50% 50%,rgba(72,148,255,.22),transparent 32%),repeating-radial-gradient(circle at 50% 50%,transparent 0 54px,rgba(90,155,235,.08) 55px 56px); filter:blur(.2px); pointer-events:none; }
+.suite-constellation:before { content:""; position:absolute; z-index:0; inset:0; opacity:.82; background:radial-gradient(circle at 50% 50%,rgba(53,135,255,.3),transparent 25%),radial-gradient(ellipse at 22% 34%,rgba(24,112,205,.14),transparent 24%),radial-gradient(ellipse at 80% 68%,rgba(20,166,214,.12),transparent 27%); filter:blur(8px); pointer-events:none; }
 .neural-network { position:absolute; z-index:1; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
-.neural-branches path { fill:none; stroke:rgba(83,150,235,.24); stroke-width:1.35; stroke-linecap:round; stroke-dasharray:2 7; transition:stroke .25s ease,stroke-width .25s ease,filter .25s ease; }
-.neural-branches path.active { stroke:var(--module-color,#67a8ff); stroke-width:2.2; filter:drop-shadow(0 0 5px #5aa4ff); animation:neural-signal .55s linear infinite; }
-.neural-pulse { fill:#fff; stroke:#8bc5ff; stroke-width:3; filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 13px #4f9cff); }
-@keyframes neural-signal { to { stroke-dashoffset:-18; } }
+.neural-filaments path { fill:none; stroke:rgba(54,151,239,.18); stroke-width:1.15; stroke-linecap:round; filter:drop-shadow(0 0 3px rgba(44,152,255,.42)); }
+.neural-filaments path:nth-child(3n+1) { stroke-width:2.2; stroke:rgba(61,164,244,.13); }
+.neural-filaments path:nth-child(2n) { stroke-dasharray:1 5; }
+.neural-branches path { fill:none; stroke-linecap:round; transition:stroke .25s ease,stroke-width .25s ease,filter .25s ease,opacity .25s ease; }
+.neural-branches .branch-halo { stroke:rgba(36,145,238,.14); stroke-width:9; filter:url(#neuralGlow); }
+.neural-branches .branch-core { stroke:rgba(101,189,255,.43); stroke-width:1.15; stroke-dasharray:1 5; }
+.neural-branches g.active .branch-halo { stroke:rgba(36,150,255,.46); stroke-width:13; }
+.neural-branches g.active .branch-core { stroke:#86d5ff; stroke-width:2.4; stroke-dasharray:7 5; filter:url(#neuralGlow); animation:neural-signal .48s linear infinite; }
+.neural-nodes circle { fill:#3ba6f5; stroke:#b8e7ff; stroke-width:1; opacity:.7; filter:url(#neuralGlow); }
+.neural-nodes circle:first-child { fill:rgba(91,191,255,.2); stroke:#76caff; stroke-width:2; animation:neural-node-breathe 2.2s ease-in-out infinite; }
+.neural-pulse { fill:#fff4e8; stroke:#ff7a1a; stroke-width:4; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 13px #ff5a00) drop-shadow(0 0 25px #ff7a1a); }
+@keyframes neural-signal { to { stroke-dashoffset:-24; } }
+@keyframes neural-node-breathe { 50% { r:18px; opacity:1; } }
 .suite-hub { --module-color:#f97316; position: absolute; z-index: 3; left: 50%; top: 50%; width: 330px; height: 330px; padding: 35px; display: grid; place-content: center; justify-items: center; text-align: center; border: 1px solid rgba(186,218,255,.48); border-radius: 50%; background:
   radial-gradient(circle at 30% 22%,rgba(255,255,255,.78) 0 2%,rgba(173,211,255,.24) 3% 11%,transparent 26%),
   radial-gradient(circle at 18% 55%,rgba(32,201,195,.3),transparent 22%),
