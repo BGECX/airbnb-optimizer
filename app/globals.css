@@ -2352,7 +2352,11 @@ tbody tr:hover {
 .module-courtage { --module-color: #e6b94f; }
 .module-expertise { --module-color: #ef5f78; }
 .module-horodatage { --module-color: #60a5fa; }
-.suite-module .kritia-exact { position:relative; z-index:2; }
+.module-identity { position:relative; z-index:2; width:100%; min-height:72px; display:grid; place-content:center; place-items:center; }
+.module-watermark { position:absolute; z-index:0; left:50%; top:50%; color:rgba(221,238,255,.105); font-size:42px; font-weight:900; letter-spacing:.06em; line-height:1; white-space:nowrap; transform:translate(-50%,-53%); text-shadow:0 0 18px rgba(110,190,255,.13); pointer-events:none; }
+.module-identity strong { position:relative; z-index:2; max-width:170px; color:#f5fbff; font-size:18px; font-weight:900; letter-spacing:.13em; line-height:1.08; text-transform:uppercase; text-shadow:0 2px 10px rgba(0,9,35,.8),0 0 14px color-mix(in srgb,var(--module-color) 45%,transparent); }
+.module-identity i { position:relative; z-index:2; width:0; height:0; margin-top:9px; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:11px solid var(--module-color); filter:drop-shadow(0 0 5px var(--module-color)); }
+.suite-module:hover .module-watermark,.suite-module:focus-visible .module-watermark { color:rgba(232,246,255,.16); }
 .suite-module em { color: var(--module-color); font-size: 7px; font-style: normal; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .suite-landing > footer { padding: 36px 24px 44px; text-align: center; color: #7790af; font-size: 9px; }
 .suite-landing > footer span { color: #aac1dd; font-weight: 900; letter-spacing: .14em; }
