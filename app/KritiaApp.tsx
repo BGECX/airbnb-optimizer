@@ -936,14 +936,14 @@ function Login({
 function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: () => void }) {
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const modules = [
-    { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", action: openBtp },
-    { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation" },
-    { id: "juridique", name: "Juridique", description: "Contrats, documents et assistance professionnelle.", status: "En préparation" },
-    { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", action: openShop },
-    { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation" },
-    { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation" },
-    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation" },
-    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation" },
+    { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", features: ["Devis", "Factures", "DPGF", "Métrés", "Planning", "Chantiers"], action: openBtp },
+    { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation", features: ["Prospects", "Mandats", "Visites", "Transactions", "Locations", "Documents"] },
+    { id: "juridique", name: "Juridique", description: "Contrats, documents et assistance professionnelle.", status: "En préparation", features: ["Contrats", "Modèles", "Assistant IA", "Litiges", "Signatures", "Veille"] },
+    { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", features: ["Logos", "Cartes", "Flyers", "Vêtements", "Signalétique", "Commandes"], action: openShop },
+    { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation", features: ["Missions", "Diagnostics", "DPE", "Rapports", "Planning", "Conformité"] },
+    { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation", features: ["Prospects", "Projets", "Artisans", "Consultations", "Suivi", "Commissions"] },
+    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation", features: ["Constats", "Désordres", "Photos", "Rapports", "Chiffrage", "Suivi"] },
+    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation", features: ["Preuves", "Photos", "Documents", "Signatures", "Archives", "Traçabilité"] },
   ];
   const neuralPaths: Record<string, string> = {
     btp: "M590 325 C470 290 330 190 157 129",
@@ -1038,6 +1038,9 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
                   <img className="module-watermark" src="/kritia-wordmark.svg" alt="" />
                   <strong>{module.name}</strong>
                 </span>
+                <ul className="module-features" aria-label={`Fonctions de KRITIA ${module.name}`}>
+                  {module.features.map((feature) => <li key={feature}>{feature}</li>)}
+                </ul>
                 <em>{module.status}</em>
               </button>
             </div>
