@@ -2582,10 +2582,11 @@ function Dashboard({
           accent="dark"
         />
       </section>
-      <section className="dashboard-shop-card">
-        <div className="dashboard-shop-visual"><span>KRITIA</span><i>Votre identité sur tous vos supports</i></div>
-        <div><p className="eyebrow">COMMUNICATION PROFESSIONNELLE</p><h3>Votre logo travaille aussi sur le terrain.</h3><p>Préparez vos cartes, flyers, vêtements et supports de chantier depuis les informations déjà enregistrées dans KRITIA.</p><button type="button" className="primary compact" onClick={openShop}>Ouvrir la boutique</button></div>
-      </section>
+      <button type="button" className="dashboard-shop-card" onClick={openShop} aria-label="Ouvrir la boutique de communication professionnelle">
+        <span>COMMUNICATION PROFESSIONNELLE</span>
+        <strong>Votre logo travaille aussi sur le terrain.</strong>
+        <p>Préparez vos cartes, flyers, vêtements et supports de chantier depuis les informations déjà enregistrées dans KRITIA.</p>
+      </button>
       <section className="dashboard-grid">
         <div className="panel wide">
           <PanelTitle
