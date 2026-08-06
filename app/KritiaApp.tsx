@@ -936,14 +936,14 @@ function Login({
 function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: () => void }) {
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const modules = [
-    { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", features: ["Devis", "Factures", "DPGF", "Métrés", "Planning", "Chantiers"], action: openBtp },
-    { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation", features: ["Prospects", "Mandats", "Visites", "Transactions", "Locations", "Documents"] },
-    { id: "juridique", name: "Juridique", description: "Contrats, documents et assistance professionnelle.", status: "En préparation", features: ["Contrats", "Modèles", "Assistant IA", "Litiges", "Signatures", "Veille"] },
-    { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", features: ["Logos", "Cartes", "Flyers", "Vêtements", "Signalétique", "Commandes"], action: openShop },
-    { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation", features: ["Missions", "Diagnostics", "DPE", "Rapports", "Planning", "Conformité"] },
-    { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation", features: ["Prospects", "Projets", "Artisans", "Consultations", "Suivi", "Commissions"] },
-    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation", features: ["Constats", "Désordres", "Photos", "Rapports", "Chiffrage", "Suivi"] },
-    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation", features: ["Preuves", "Photos", "Documents", "Signatures", "Archives", "Traçabilité"] },
+    { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", features: ["Devis", "Factures", "DPGF", "Métrés", "Planning", "Chantiers", "Rentabilité"], action: openBtp },
+    { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation", features: ["Prospects", "Mandats", "Visites", "Transactions", "Locations", "Documents", "Valorisation"] },
+    { id: "juridique", name: "Juridique", description: "Contrats, documents et assistance professionnelle.", status: "En préparation", features: ["Contrats", "Modèles", "Assistant IA", "Litiges", "Signatures", "Veille", "Conformité"] },
+    { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", features: ["Logos", "Cartes", "Flyers", "Vêtements", "Signalétique", "BAT", "Commandes"], action: openShop },
+    { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation", features: ["Missions", "Diagnostics", "DPE", "Rapports", "Planning", "Conformité", "Obligations"] },
+    { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation", features: ["Prospects", "Projets", "Artisans", "Consultations", "Appels d’offres", "Suivi", "Commissions"] },
+    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation", features: ["Constats", "Désordres", "Photos", "Rapports", "Chiffrage", "Préconisations", "Suivi"] },
+    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation", features: ["Preuves", "Photos", "Documents", "Signatures", "Archives", "Traçabilité", "Certification"] },
   ];
   const neuralPaths: Record<string, string> = {
     btp: "M590 325 C470 290 330 190 157 129",
