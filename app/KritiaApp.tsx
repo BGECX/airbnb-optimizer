@@ -944,24 +944,39 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation" },
     { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation" },
   ];
+  const [selectedModule, setSelectedModule] = useState("btp");
+  const selected = modules.find((module) => module.id === selectedModule) ?? modules[0];
   return (
     <main className="suite-landing">
       <header>
         <div className="suite-mini-brand">KRITIA <span>ONE</span></div>
         <button type="button" className="suite-login" onClick={openBtp}>Accéder à mon compte</button>
       </header>
-      <section className="suite-intro">
+      <section className="suite-intro suite-intro-compact">
         <p>UN ÉCOSYSTÈME · PLUSIEURS MÉTIERS · UN SEUL COMPTE</p>
-        <div className="suite-wordmark" aria-label="KRITIA One"><strong>KRITI<span>A</span></strong><small>ONE</small></div>
-        <h1>Les outils professionnels<br />réunis autour de votre activité.</h1>
-        <span className="suite-intro-copy">Choisissez votre univers. Chaque application partage la même exigence KRITIA, avec une identité propre à son métier.</span>
+        <h1>Un seul écosystème.<br />Tous vos métiers.</h1>
       </section>
-      <section className="suite-module-grid" aria-label="Applications KRITIA One">
+      <section className="suite-constellation" aria-label="Applications KRITIA One">
+        <div className="suite-orbit" aria-hidden="true" />
+        <div className="suite-hub">
+          <div className="suite-wordmark" aria-label="KRITIA One"><strong>KRITI<span>A</span></strong><small>ONE</small></div>
+          <p>{selected.description}</p>
+          <em className={`hub-status module-${selected.id}`}>{selected.status}</em>
+        </div>
         {modules.map((module) => {
-          const content = <><div className={`module-wordmark module-${module.id}`}>KRITI<span>A</span><small>{module.name}</small></div><p>{module.description}</p><em>{module.status}</em></>;
-          return module.action
-            ? <button type="button" key={module.id} className={`suite-module active module-${module.id}`} onClick={module.action}>{content}</button>
-            : <article key={module.id} className={`suite-module module-${module.id}`}>{content}</article>;
+          const activate = () => {
+            setSelectedModule(module.id);
+            module.action?.();
+          };
+          return (
+            <div key={module.id} className={`suite-satellite satellite-${module.id}`}>
+              <span className="satellite-link" aria-hidden="true" />
+              <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={activate} aria-label={`Ouvrir KRITIA ${module.name}`}>
+                <div className="module-wordmark">KRITI<span>A</span><small>{module.name}</small></div>
+                <em>{module.status}</em>
+              </button>
+            </div>
+          );
         })}
       </section>
       <footer><span>KRITIA ONE</span><p>Un seul écosystème. Tous vos métiers.</p></footer>
