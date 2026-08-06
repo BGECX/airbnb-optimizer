@@ -5,17 +5,61 @@ import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class LogoCreditsService {
+  private static readonly WELCOME_CREDITS = 3;
+  private static readonly PILOT_CREDITS = 10;
+
   constructor(private prisma: PrismaService) {}
 
   async balance(userId: string) {
-    const account = await this.prisma.logoCreditAccount.upsert({
-      where: { userId }, update: {}, create: { userId, balance: 3 },
-    });
-    const welcome = await this.prisma.logoCreditTransaction.findUnique({ where: { reference: `welcome:${userId}` } });
-    if (!welcome) {
-      await this.prisma.logoCreditTransaction.create({ data: { userId, amount: 3, type: LogoCreditTransactionType.WELCOME, reference: `welcome:${userId}`, description: "Crédits de bienvenue", balanceAfter: account.balance } }).catch(() => undefined);
-    }
-    return { balance: account.balance, includedOnSignup: 3 };
+    return this.prisma.$transaction(async (tx) => {
+      let account = await tx.logoCreditAccount.upsert({
+        where: { userId },
+        update: {},
+        create: { userId, balance: LogoCreditsService.WELCOME_CREDITS },
+      });
+
+      await tx.logoCreditTransaction.createMany({
+        data: [{
+          userId,
+          amount: LogoCreditsService.WELCOME_CREDITS,
+          type: LogoCreditTransactionType.WELCOME,
+          reference: `welcome:${userId}`,
+          description: "Crédits de bienvenue",
+          balanceAfter: account.balance,
+        }],
+        skipDuplicates: true,
+      });
+
+      const pilotReference = `pilot-bonus-2026:${userId}`;
+      const created = await tx.logoCreditTransaction.createMany({
+        data: [{
+          userId,
+          amount: LogoCreditsService.PILOT_CREDITS,
+          type: LogoCreditTransactionType.ADMIN_ADJUSTMENT,
+          reference: pilotReference,
+          description: "Bonus pilote KRITIA — essais du générateur de logo",
+          balanceAfter: account.balance,
+        }],
+        skipDuplicates: true,
+      });
+
+      if (created.count === 1) {
+        account = await tx.logoCreditAccount.update({
+          where: { userId },
+          data: { balance: { increment: LogoCreditsService.PILOT_CREDITS } },
+        });
+        await tx.logoCreditTransaction.update({
+          where: { reference: pilotReference },
+          data: { balanceAfter: account.balance },
+        });
+      }
+
+      return {
+        balance: account.balance,
+        includedOnSignup: LogoCreditsService.WELCOME_CREDITS,
+        pilotBonus: LogoCreditsService.PILOT_CREDITS,
+      };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async history(userId: string) {

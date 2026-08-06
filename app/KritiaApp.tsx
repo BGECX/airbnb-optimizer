@@ -2167,7 +2167,7 @@ function LogoAiStudio({
             </div>
             {credits === 0 && (
               <div className="form-error">
-                Vos crédits sont épuisés. L’achat sécurisé de packs sera proposé ici dès que le paiement Stripe sera activé.
+                Vos crédits pilote sont épuisés. Aucun paiement n’est demandé pour le moment ; les packs seront proposés uniquement après l’activation sécurisée de Stripe.
               </div>
             )}
           </div>
