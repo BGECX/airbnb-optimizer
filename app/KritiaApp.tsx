@@ -944,8 +944,6 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation" },
     { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation" },
   ];
-  const [selectedModule, setSelectedModule] = useState("btp");
-  const selected = modules.find((module) => module.id === selectedModule) ?? modules[0];
   return (
     <main className="suite-landing">
       <header>
@@ -959,20 +957,14 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
       <section className="suite-constellation" aria-label="Applications KRITIA One">
         <div className="suite-orbit" aria-hidden="true" />
         <div className="suite-hub">
-          <div className="suite-wordmark" aria-label="KRITIA One"><strong>KRITI<span>A</span></strong><small>ONE</small></div>
-          <p>{selected.description}</p>
-          <em className={`hub-status module-${selected.id}`}>{selected.status}</em>
+          <div className="suite-wordmark" aria-label="KRITIA ONE"><strong aria-hidden="true">KRITI<span className="kritia-a"><i /></span></strong><small>ONE</small></div>
         </div>
         {modules.map((module) => {
-          const activate = () => {
-            setSelectedModule(module.id);
-            module.action?.();
-          };
           return (
             <div key={module.id} className={`suite-satellite satellite-${module.id}`}>
               <span className="satellite-link" aria-hidden="true" />
-              <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={activate} aria-label={`Ouvrir KRITIA ${module.name}`}>
-                <div className="module-wordmark">KRITI<span>A</span><small>{module.name}</small></div>
+              <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={module.action} aria-label={`Ouvrir KRITIA ${module.name}`}>
+                <div className="module-wordmark" aria-hidden="true">KRITI<span className="kritia-a"><i /></span><small>{module.name}</small></div>
                 <em>{module.status}</em>
               </button>
             </div>
