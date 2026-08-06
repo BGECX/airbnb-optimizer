@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, Matches, IsIn, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -23,6 +23,10 @@ export class RegisterDto {
   @IsString()
   lastName: string;
 
+  @ApiProperty({ required: false, enum: ['BOUTIQUE', 'ERP_TRIAL'], default: 'ERP_TRIAL' })
+  @IsOptional()
+  @IsIn(['BOUTIQUE', 'ERP_TRIAL'])
+  accountType?: 'BOUTIQUE' | 'ERP_TRIAL';
 }
 
 export class LoginDto {

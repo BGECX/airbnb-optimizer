@@ -18,6 +18,7 @@ type Session = {
     lastName?: string;
     email?: string;
     role?: string;
+    accountType?: string;
     subscriptionStatus?: string;
     trialStartedAt?: string;
     trialEndsAt?: string;
@@ -231,14 +232,14 @@ export default function KritiaApp() {
   }, []);
 
   useEffect(() => {
-    if (session) void loadAll();
+    if (session && session.user.accountType !== "BOUTIQUE") void loadAll();
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!session || session.user.trialEndsAt) return;
+    if (!session || session.user.accountType) return;
     api("/auth/me")
       .then((user) => {
-        if (!user.trialEndsAt) return;
+        if (!user.accountType) return;
         const next = { ...session, user: { ...session.user, ...user } } as Session;
         window.sessionStorage.setItem("kritia-session", JSON.stringify(next));
         setSession(next);
@@ -247,7 +248,7 @@ export default function KritiaApp() {
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (session && section !== "dashboard") void loadAll();
+    if (session && session.user.accountType !== "BOUTIQUE" && section !== "dashboard") void loadAll();
   }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function api(path: string, options: RequestInit = {}) {
@@ -340,6 +341,7 @@ export default function KritiaApp() {
           password,
           firstName: form.get("firstName"),
           lastName: form.get("lastName"),
+          accountType: form.get("accountType") || "ERP_TRIAL",
         }),
       });
       const next = {
@@ -388,6 +390,22 @@ export default function KritiaApp() {
     setDemo(false);
     setSection("dashboard");
   }
+
+  async function startErpTrial() {
+    setBusy(true);
+    setError("");
+    try {
+      const user = await api("/auth/start-trial", { method: "POST" });
+      if (!session) return;
+      const next = { ...session, user: { ...session.user, ...user } } as Session;
+      window.sessionStorage.setItem("kritia-session", JSON.stringify(next));
+      setSession(next);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Activation impossible");
+    } finally {
+      setBusy(false);
+    }
+  }
   if (!session && !demo)
     return (
       <Login
@@ -398,6 +416,18 @@ export default function KritiaApp() {
         request={api}
         resetToken={resetToken}
         demo={() => setDemo(true)}
+        busy={busy}
+        error={error}
+      />
+    );
+
+  if (session?.user.accountType === "BOUTIQUE")
+    return (
+      <BoutiquePortal
+        user={session.user}
+        request={api}
+        logout={logout}
+        startTrial={startErpTrial}
         busy={busy}
         error={error}
       />
@@ -592,6 +622,7 @@ function Login({
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
   const [publicShopOpen, setPublicShopOpen] = useState(false);
+  const [registrationKind, setRegistrationKind] = useState<"ERP_TRIAL" | "BOUTIQUE">("ERP_TRIAL");
   async function forgot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -659,6 +690,12 @@ function Login({
         close={() => setPublicShopOpen(false)}
         startTrial={() => {
           setPublicShopOpen(false);
+          setRegistrationKind("ERP_TRIAL");
+          setMode("register");
+        }}
+        startBoutique={() => {
+          setPublicShopOpen(false);
+          setRegistrationKind("BOUTIQUE");
           setMode("register");
         }}
       />
@@ -718,7 +755,7 @@ function Login({
           </p>
           <h2>
             {creating
-              ? "Rejoindre KRITIA"
+              ? registrationKind === "BOUTIQUE" ? "Créer mon espace Boutique" : "Essayer KRITIA BTP"
               : forgotten
                 ? "Mot de passe oublié"
                 : resetting
@@ -727,7 +764,9 @@ function Login({
           </h2>
           <p className="muted">
             {creating
-              ? "30 jours d’accès complet, sans carte bancaire. Vous choisirez votre formule ensuite."
+              ? registrationKind === "BOUTIQUE"
+                ? "Commandez vos supports publicitaires sans souscrire à l’ERP. Vous pourrez essayer KRITIA BTP plus tard si vous le souhaitez."
+                : "30 jours d’accès complet, sans carte bancaire. Vous choisirez votre formule ensuite."
               : forgotten
                 ? "Saisissez votre e-mail pour recevoir un lien valable 30 minutes."
                 : resetting
@@ -739,6 +778,8 @@ function Login({
           )}
           {notice && <div className="form-notice">{notice}</div>}
           {creating && (
+            <>
+            <input type="hidden" name="accountType" value={registrationKind} />
             <div className="name-fields">
               <label>
                 Prénom
@@ -749,6 +790,7 @@ function Login({
                 <input name="lastName" required autoComplete="family-name" />
               </label>
             </div>
+            </>
           )}
           {!resetting && (
             <label>
@@ -811,7 +853,7 @@ function Login({
             {busy || working
               ? "Traitement…"
               : creating
-                ? "Créer mon compte"
+                ? registrationKind === "BOUTIQUE" ? "Créer mon compte Boutique" : "Démarrer mon essai 30 jours"
                 : forgotten
                   ? "Envoyer le lien"
                   : resetting
@@ -845,6 +887,7 @@ function Login({
               );
               setLocalError("");
               setNotice("");
+              if (activeMode === "login") setRegistrationKind("ERP_TRIAL");
             }}
           >
             {activeMode === "register"
@@ -864,7 +907,11 @@ function Login({
             </>
           )}
           <small className="secure-note">
-            {creating ? "Essai complet de 30 jours · aucune carte bancaire demandée" : "Les liens de réinitialisation sont temporaires et à usage unique."}
+            {creating
+              ? registrationKind === "BOUTIQUE"
+                ? "Compte Boutique gratuit · aucun essai ERP déclenché · aucun abonnement automatique"
+                : "Essai complet de 30 jours · aucune carte bancaire demandée"
+              : "Les liens de réinitialisation sont temporaires et à usage unique."}
           </small>
         </form>
       </section>
@@ -872,7 +919,7 @@ function Login({
   );
 }
 
-function PublicAdvertisingShop({ close, startTrial }: { close: () => void; startTrial: () => void }) {
+function PublicAdvertisingShop({ close, startTrial, startBoutique }: { close: () => void; startTrial: () => void; startBoutique: () => void }) {
   return (
     <main className="public-shop-page">
       <header>
@@ -881,13 +928,17 @@ function PublicAdvertisingShop({ close, startTrial }: { close: () => void; start
         </button>
         <div>
           <button type="button" className="secondary compact" onClick={close}>Se connecter</button>
-          <button type="button" className="primary compact" onClick={startTrial}>Essayer KRITIA 30 jours</button>
+          <button type="button" className="primary compact" onClick={startBoutique}>Compte Boutique gratuit</button>
         </div>
       </header>
       <section className="public-shop-hero">
         <p className="eyebrow">BOUTIQUE · COMMUNICATION BTP</p>
         <h1>Votre savoir-faire mérite<br />une image professionnelle.</h1>
         <p>Importez votre logo ou créez-le avec KRITIA. Vos coordonnées remplissent ensuite automatiquement les supports disponibles chez nos imprimeurs connectés.</p>
+        <div className="public-shop-hero-actions">
+          <button type="button" className="primary" onClick={startBoutique}>Commander des supports <span>→</span></button>
+          <button type="button" className="secondary" onClick={startTrial}>Essayer KRITIA BTP 30 jours</button>
+        </div>
         <div className="public-shop-steps">
           <span><b>01</b>Identité préremplie</span>
           <span><b>02</b>Aperçu et BAT</span>
@@ -901,13 +952,15 @@ function PublicAdvertisingShop({ close, startTrial }: { close: () => void; start
             <small>{index < 2 ? "IMPRIMÉS" : product.family === "TEXTILE" ? "TEXTILE" : "CHANTIER & VÉHICULE"}</small>
             <strong>{product.name}</strong>
             <p>Logo, couleurs et coordonnées intégrés depuis votre fiche entreprise.</p>
-            <button type="button" onClick={startTrial}>Personnaliser bientôt →</button>
+            <button type="button" onClick={startBoutique}>Créer mon espace Boutique →</button>
           </article>
         ))}
       </section>
       <section className="public-shop-conversion">
-        <div><small>ESSAI COMPLET</small><strong>Tout KRITIA pendant 30 jours</strong><span>Devis, chantiers, DPGF, bibliothèque, identité et boutique — sans carte bancaire.</span></div>
-        <button type="button" className="primary" onClick={startTrial}>Créer mon compte gratuit <span>→</span></button>
+        <div><small>ACHAT SANS ABONNEMENT</small><strong>La Boutique reste indépendante</strong><span>Commandez vos produits publicitaires sans déclencher d’essai ni souscrire à KRITIA BTP.</span></div>
+        <button type="button" className="primary" onClick={startBoutique}>Ouvrir mon compte Boutique <span>→</span></button>
+        <div><small>ERP BTP · FACULTATIF</small><strong>Essayez tout KRITIA pendant 30 jours</strong><span>Devis, chantiers, DPGF et bibliothèque — uniquement si vous le choisissez.</span></div>
+        <button type="button" className="secondary shop-trial-action" onClick={startTrial}>Démarrer l’essai 30 jours</button>
       </section>
     </main>
   );
@@ -1046,7 +1099,24 @@ const demoAdvertisingProducts = [
   { code: "WORKWEAR", name: "Vêtements professionnels", family: "TEXTILE" },
 ];
 
-function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiRequest; back: () => void }) {
+function BoutiquePortal({ user, request, logout, startTrial, busy, error }: { user: Session["user"]; request: ApiRequest; logout: () => void; startTrial: () => void; busy: boolean; error: string }) {
+  return (
+    <main className="boutique-portal">
+      <header>
+        <div className="public-shop-brand"><span>K</span><strong>KRITIA<small> boutique</small></strong></div>
+        <div><span>{user.firstName} {user.lastName}</span><button type="button" className="secondary compact" onClick={logout}>Se déconnecter</button></div>
+      </header>
+      <section className="boutique-account-banner">
+        <div><small>COMPTE BOUTIQUE GRATUIT</small><strong>Aucun abonnement KRITIA BTP n’est actif.</strong><span>Vous pouvez commander vos supports librement. L’essai ERP ne commence que si vous l’activez.</span></div>
+        <button type="button" className="primary" onClick={startTrial} disabled={busy}>Activer mon essai KRITIA BTP 30 jours <span>→</span></button>
+      </section>
+      {error && <div className="form-error boutique-error">{error}</div>}
+      <AdvertisingShop demo={false} request={request} />
+    </main>
+  );
+}
+
+function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiRequest; back?: () => void }) {
   const [products, setProducts] = useState<RecordValue[]>(demoAdvertisingProducts);
   const [providers, setProviders] = useState<RecordValue[]>([]);
   const [error, setError] = useState("");
@@ -1070,7 +1140,7 @@ function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiR
 
   return (
     <section className="settings-page advertising-shop">
-      <button type="button" className="secondary compact" onClick={back}>← Retour aux paramètres</button>
+      {back && <button type="button" className="secondary compact" onClick={back}>← Retour aux paramètres</button>}
       <div className="settings-intro">
         <p className="eyebrow">IDENTITÉ · IMPRESSION · LIVRAISON</p>
         <h2>Boutique publicitaire</h2>

@@ -9,21 +9,22 @@ datasource db {
 
 // ==================== UTILISATEURS & AUTH ====================
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  password    String
-  firstName   String    @map("first_name")
-  lastName    String    @map("last_name")
-  role        UserRole  @default(USER)
-  isActive    Boolean   @default(true) @map("is_active")
-  avatarUrl   String?   @map("avatar_url")
-  phone       String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  lastLoginAt DateTime? @map("last_login_at")
-  subscriptionStatus String   @default("TRIAL") @map("subscription_status")
-  trialStartedAt      DateTime @default(now()) @map("trial_started_at")
-  trialEndsAt         DateTime? @map("trial_ends_at")
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  password           String
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  role               UserRole  @default(USER)
+  isActive           Boolean   @default(true) @map("is_active")
+  avatarUrl          String?   @map("avatar_url")
+  phone              String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  lastLoginAt        DateTime? @map("last_login_at")
+  accountType        String    @default("ERP_TRIAL") @map("account_type")
+  subscriptionStatus String    @default("TRIAL") @map("subscription_status")
+  trialStartedAt     DateTime? @map("trial_started_at")
+  trialEndsAt        DateTime? @map("trial_ends_at")
 
   // Relations
   devisCreated           Devis[]

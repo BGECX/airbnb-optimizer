@@ -43,6 +43,13 @@ export class AuthController {
     return this.authService.me(userId);
   }
 
+  @Post('start-trial')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  startTrial(@CurrentUser('sub') userId: string) {
+    return this.authService.startTrial(userId);
+  }
+
   @Post('refresh')
   @UseGuards(AuthRateLimitGuard)
   refresh(@Body() dto: RefreshTokenDto, @Req() request: Request) {

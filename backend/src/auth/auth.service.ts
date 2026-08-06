@@ -21,19 +21,21 @@ export class AuthService {
     if (existing) throw new ConflictException('Email déjà utilisé');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const trialStartedAt = new Date();
-    const trialEndsAt = new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60_000);
+    const isBoutique = dto.accountType === 'BOUTIQUE';
+    const trialStartedAt = isBoutique ? null : new Date();
+    const trialEndsAt = trialStartedAt ? new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60_000) : null;
     const user = await this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        subscriptionStatus: 'TRIAL',
+        accountType: isBoutique ? 'BOUTIQUE' : 'ERP_TRIAL',
+        subscriptionStatus: isBoutique ? 'BOUTIQUE' : 'TRIAL',
         trialStartedAt,
         trialEndsAt,
       },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, accountType: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
     });
 
     const tokens = await this.issueTokens(user.id, user.email, user.role, metadata);
@@ -52,7 +54,7 @@ export class AuthService {
       user = await this.prisma.user.update({ where: { id: user.id }, data: { role: UserRole.ADMIN } });
     }
 
-    if (!user.trialEndsAt) {
+    if (user.accountType !== 'BOUTIQUE' && !user.trialEndsAt) {
       const trialStartedAt = new Date();
       user = await this.prisma.user.update({
         where: { id: user.id },
@@ -77,6 +79,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        accountType: user.accountType,
         subscriptionStatus: user.subscriptionStatus,
         trialStartedAt: user.trialStartedAt,
         trialEndsAt: user.trialEndsAt,
@@ -88,7 +91,24 @@ export class AuthService {
   async me(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true, accountType: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
+    });
+  }
+
+  async startTrial(userId: string) {
+    const current = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!current) throw new UnauthorizedException('Compte introuvable');
+    if (current.accountType !== 'BOUTIQUE' || current.trialStartedAt || current.trialEndsAt) return this.me(userId);
+    const trialStartedAt = new Date();
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        accountType: 'ERP_TRIAL',
+        subscriptionStatus: 'TRIAL',
+        trialStartedAt,
+        trialEndsAt: new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60_000),
+      },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, avatarUrl: true, phone: true, accountType: true, subscriptionStatus: true, trialStartedAt: true, trialEndsAt: true },
     });
   }
 
