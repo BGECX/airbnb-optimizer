@@ -2285,11 +2285,10 @@ tbody tr:hover {
 .suite-intro > p { color: #74a9ee; font-size: 8px; font-weight: 900; letter-spacing: .2em; }
 .kritia-exact { position:relative; width:242px; display:grid; justify-items:center; gap:14px; }
 .kritia-wordmark-image { width:242px; height:auto; display:block; object-fit:contain; filter:drop-shadow(0 0 8px rgba(221,235,255,.22)); }
-.kritia-exact > i { position:absolute; z-index:3; right:-1px; top:40px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-bottom:13px solid var(--module-color,#f97316); filter:drop-shadow(0 0 6px color-mix(in srgb,var(--module-color,#f97316) 75%,transparent)); }
+.kritia-wordmark-triangle { fill:var(--module-color,#f97316); filter:drop-shadow(0 0 5px color-mix(in srgb,var(--module-color,#f97316) 80%,transparent)); }
 .kritia-exact small { color:#8db7ee; font-size:14px; font-weight:800; letter-spacing:.25em; line-height:1; text-transform:uppercase; }
 .kritia-exact.compact { width:145px; gap:9px; }
 .kritia-exact.compact .kritia-wordmark-image { width:145px; }
-.kritia-exact.compact > i { right:0; top:24px; border-left-width:4px; border-right-width:4px; border-bottom-width:8px; }
 .kritia-exact.compact small { color:var(--module-color); font-size:9px; letter-spacing:.12em; }
 .suite-intro h1 { margin: 22px 0 8px; font: 400 clamp(32px,4vw,54px)/1.04 Georgia,serif; letter-spacing: -.035em; }
 .suite-intro-copy { max-width: 680px; color: #9fb7d3; font-size: 12px; line-height: 1.65; }

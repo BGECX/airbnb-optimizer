@@ -1049,8 +1049,10 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
 function KritiaExactWordmark({ suffix, compact = false }: { suffix: string; compact?: boolean }) {
   return (
     <span className={`kritia-exact${compact ? " compact" : ""}`} aria-label={`KRITIA ${suffix}`}>
-      <img className="kritia-wordmark-image" src="/kritia-wordmark.svg" alt="" aria-hidden="true" />
-      <i aria-hidden="true" />
+      <svg className="kritia-wordmark-image" viewBox="0 0 660 157" aria-hidden="true">
+        <image href="/kritia-wordmark.svg" width="632" height="157" />
+        <path className="kritia-wordmark-triangle" d="M642 123 L657 157 L627 157 Z" />
+      </svg>
       <small>{suffix}</small>
     </span>
   );
