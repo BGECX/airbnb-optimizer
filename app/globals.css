@@ -2265,6 +2265,59 @@ tbody tr:hover {
 }
 
 /* Acquisition publique, essai et passerelle vers la boutique publicitaire. */
+.suite-landing {
+  --suite-bg: #06152d;
+  min-height: 100vh;
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(43, 112, 216, .24), transparent 28%),
+    linear-gradient(rgba(83, 130, 194, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 130, 194, .06) 1px, transparent 1px),
+    var(--suite-bg);
+  background-size: auto, 52px 52px, 52px 52px, auto;
+}
+.suite-landing > header { min-height: 72px; padding: 0 clamp(22px,5vw,78px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(147,197,253,.14); }
+.suite-mini-brand { font-size: 14px; font-weight: 900; letter-spacing: .16em; }
+.suite-mini-brand span { margin-left: 6px; color: #77aef7; font-size: 9px; letter-spacing: .24em; }
+.suite-login { padding: 10px 15px; border: 1px solid rgba(147,197,253,.35); border-radius: 7px; color: #d9e9ff; background: rgba(255,255,255,.05); font-size: 9px; font-weight: 850; }
+.suite-intro { padding: 64px 24px 42px; display: grid; place-items: center; text-align: center; }
+.suite-intro > p { color: #74a9ee; font-size: 8px; font-weight: 900; letter-spacing: .2em; }
+.suite-wordmark { margin-top: 17px; display: flex; align-items: flex-end; justify-content: center; gap: 12px; }
+.suite-wordmark strong { font-size: clamp(52px,7vw,88px); line-height: .9; letter-spacing: .1em; }
+.suite-wordmark strong span, .module-wordmark > span { position: relative; }
+.suite-wordmark strong span:after, .module-wordmark > span:after { content: ""; position: absolute; left: 50%; bottom: -.11em; width: 0; height: 0; border-left: .11em solid transparent; border-right: .11em solid transparent; border-bottom: .2em solid #f97316; transform: translateX(-50%); }
+.suite-wordmark small { color: #8db7ee; font-size: 14px; font-weight: 800; letter-spacing: .25em; }
+.suite-intro h1 { margin: 30px 0 15px; font: 400 clamp(34px,4.4vw,60px)/1.04 Georgia,serif; letter-spacing: -.035em; }
+.suite-intro-copy { max-width: 680px; color: #9fb7d3; font-size: 12px; line-height: 1.65; }
+.suite-module-grid { width: min(1280px,calc(100% - 44px)); margin: 0 auto; display: grid; grid-template-columns: repeat(4,1fr); gap: 13px; }
+.suite-module { --module-color: #6d86a7; min-height: 190px; padding: 22px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; border: 1px solid rgba(144,174,211,.18); border-radius: 13px; color: #fff; background: rgba(9,31,64,.78); }
+button.suite-module { cursor: pointer; }
+.suite-module.active { border-color: color-mix(in srgb,var(--module-color) 55%,transparent); background: linear-gradient(145deg,rgba(14,43,86,.96),rgba(13,37,72,.88)); transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.suite-module.active:hover { transform: translateY(-4px); border-color: var(--module-color); box-shadow: 0 18px 40px rgba(0,0,0,.22); }
+.module-btp { --module-color: #f97316; }
+.module-immo { --module-color: #34c98f; }
+.module-juridique { --module-color: #a878f0; }
+.module-publicite { --module-color: #338cff; }
+.module-diag { --module-color: #20c9c3; }
+.module-courtage { --module-color: #e6b94f; }
+.module-expertise { --module-color: #ef5f78; }
+.module-horodatage { --module-color: #60a5fa; }
+.module-wordmark { color: #fff; font-size: 22px; font-weight: 900; letter-spacing: .1em; }
+.module-wordmark > span:after { border-bottom-color: var(--module-color); }
+.module-wordmark small { margin-left: 7px; color: var(--module-color); font-size: 10px; letter-spacing: .04em; text-transform: lowercase; }
+.suite-module p { max-width: 270px; margin: 28px 0 20px; color: #9eb3ce; font-size: 11px; line-height: 1.55; }
+.suite-module em { margin-top: auto; color: var(--module-color); font-size: 8px; font-style: normal; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.suite-landing > footer { padding: 36px 24px 44px; text-align: center; color: #7790af; font-size: 9px; }
+.suite-landing > footer span { color: #aac1dd; font-weight: 900; letter-spacing: .14em; }
+.suite-landing > footer p { margin: 7px 0 0; }
+@media (max-width: 1050px) { .suite-module-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) {
+  .suite-landing > header { min-height: 62px; }
+  .suite-intro { padding: 48px 20px 32px; }
+  .suite-wordmark { align-items: center; flex-direction: column; }
+  .suite-module-grid { grid-template-columns: 1fr; }
+  .suite-module { min-height: 165px; }
+}
 .public-shop-callout {
   width: 100%;
   margin-top: 22px;

@@ -622,6 +622,7 @@ function Login({
   const [localError, setLocalError] = useState("");
   const [notice, setNotice] = useState("");
   const [publicShopOpen, setPublicShopOpen] = useState(false);
+  const [suiteOpen, setSuiteOpen] = useState(true);
   const [registrationKind, setRegistrationKind] = useState<"ERP_TRIAL" | "BOUTIQUE">("ERP_TRIAL");
   async function forgot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -684,17 +685,33 @@ function Login({
       : resetting
         ? reset
         : login;
+  if (suiteOpen && !resetToken) {
+    return (
+      <SuiteLanding
+        openBtp={() => setSuiteOpen(false)}
+        openShop={() => {
+          setSuiteOpen(false);
+          setPublicShopOpen(true);
+        }}
+      />
+    );
+  }
   if (publicShopOpen) {
     return (
       <PublicAdvertisingShop
-        close={() => setPublicShopOpen(false)}
+        close={() => {
+          setPublicShopOpen(false);
+          setSuiteOpen(true);
+        }}
         startTrial={() => {
           setPublicShopOpen(false);
+          setSuiteOpen(false);
           setRegistrationKind("ERP_TRIAL");
           setMode("register");
         }}
         startBoutique={() => {
           setPublicShopOpen(false);
+          setSuiteOpen(false);
           setRegistrationKind("BOUTIQUE");
           setMode("register");
         }}
@@ -912,6 +929,42 @@ function Login({
           </small>
         </form>
       </section>
+    </main>
+  );
+}
+
+function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: () => void }) {
+  const modules = [
+    { id: "btp", name: "BTP", description: "Devis, DPGF, chantiers et rentabilité.", status: "Disponible", action: openBtp },
+    { id: "immo", name: "Immo", description: "Transaction, gestion et valorisation immobilière.", status: "En préparation" },
+    { id: "juridique", name: "Juridique", description: "Contrats, documents et assistance professionnelle.", status: "En préparation" },
+    { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", action: openShop },
+    { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation" },
+    { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation" },
+    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation" },
+    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation" },
+  ];
+  return (
+    <main className="suite-landing">
+      <header>
+        <div className="suite-mini-brand">KRITIA <span>ONE</span></div>
+        <button type="button" className="suite-login" onClick={openBtp}>Accéder à mon compte</button>
+      </header>
+      <section className="suite-intro">
+        <p>UN ÉCOSYSTÈME · PLUSIEURS MÉTIERS · UN SEUL COMPTE</p>
+        <div className="suite-wordmark" aria-label="KRITIA One"><strong>KRITI<span>A</span></strong><small>ONE</small></div>
+        <h1>Les outils professionnels<br />réunis autour de votre activité.</h1>
+        <span className="suite-intro-copy">Choisissez votre univers. Chaque application partage la même exigence KRITIA, avec une identité propre à son métier.</span>
+      </section>
+      <section className="suite-module-grid" aria-label="Applications KRITIA One">
+        {modules.map((module) => {
+          const content = <><div className={`module-wordmark module-${module.id}`}>KRITI<span>A</span><small>{module.name}</small></div><p>{module.description}</p><em>{module.status}</em></>;
+          return module.action
+            ? <button type="button" key={module.id} className={`suite-module active module-${module.id}`} onClick={module.action}>{content}</button>
+            : <article key={module.id} className={`suite-module module-${module.id}`}>{content}</article>;
+        })}
+      </section>
+      <footer><span>KRITIA ONE</span><p>Un seul écosystème. Tous vos métiers.</p></footer>
     </main>
   );
 }

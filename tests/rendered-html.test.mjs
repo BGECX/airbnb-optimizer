@@ -10,15 +10,19 @@ async function render() {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("rend la page de connexion KRITIA", async () => {
+test("rend le portail public KRITIA ONE", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>KRITIA btp — Pilotage BTP(?: · KRITIA btp)?<\/title>/i);
-  assert.match(html, /Bienvenue sur KRITIA/);
-  assert.match(html, /Mode démonstration|données de démonstration/);
-  assert.match(html, /Créer un compte/);
-  assert.match(html, /Le chantier avance/);
+  assert.match(html, /<title>KRITIA ONE — L’écosystème des professionnels(?: · KRITIA ONE)?<\/title>/i);
+  assert.match(html, /KRITIA ONE/);
+  assert.match(html, /KRITIA One/);
+  assert.match(html, /BTP/);
+  assert.match(html, /Publicité/);
+  assert.match(html, /Diag/);
+  assert.match(html, /Courtage en travaux/);
+  assert.match(html, /Expertise/);
+  assert.match(html, /Horodatage/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });

@@ -12,10 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const image = `${protocol}://${host}/og.png`;
   return {
-    title: { default: "KRITIA btp — Pilotage BTP", template: "%s · KRITIA btp" },
-    description: "Le cockpit de gestion conçu pour les entreprises de rénovation du bâti.",
-    openGraph: { title: "KRITIA btp — Pilotage BTP", description: "Le pilotage BTP, du métré à la marge.", images: [{ url: image, width: 1200, height: 630 }] },
-    twitter: { card: "summary_large_image", title: "KRITIA btp — Pilotage BTP", description: "Le pilotage BTP, du métré à la marge.", images: [image] },
+    title: { default: "KRITIA ONE — L’écosystème des professionnels", template: "%s · KRITIA ONE" },
+    description: "Un seul écosystème pour piloter les métiers du BTP, de l’immobilier et des services professionnels.",
+    openGraph: { title: "KRITIA ONE — L’écosystème des professionnels", description: "Un seul écosystème. Tous vos métiers.", images: [{ url: image, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title: "KRITIA ONE — L’écosystème des professionnels", description: "Un seul écosystème. Tous vos métiers.", images: [image] },
   };
 }
 
