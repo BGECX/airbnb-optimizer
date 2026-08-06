@@ -4,6 +4,7 @@ import { QuoteStrategy } from "../margin-engine";
 
 export class CompareSupplierQuotesDto {
   @IsString() @Length(3, 180) productUid!: string;
+  @IsOptional() @Type(() => Number) @IsInt() @IsPositive() printfulVariantId?: number;
   @Type(() => Number) @IsInt() @Min(1) @Max(100000) quantity!: number;
   @Type(() => Number) @IsNumber() @IsPositive() salePriceHt!: number;
   @IsString() @Length(2, 2) country!: string;

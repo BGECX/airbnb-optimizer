@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import VectorLogoStudio from "./VectorLogoStudio";
 
 type RecordValue = Record<string, unknown>;
 type Section =
@@ -838,7 +837,7 @@ function SettingsPage({
   demo: boolean;
   request: ApiRequest;
 }) {
-  const [view, setView] = useState<"overview" | "company">("overview");
+  const [view, setView] = useState<"overview" | "company" | "shop">("overview");
   const groups = [
     {
       title: "Mon compte",
@@ -868,6 +867,7 @@ function SettingsPage({
       title: "Personnaliser KRITIA",
       cards: [
         ["◉", "Modèles de documents", "Devis, factures et situations"],
+        ["▤", "Boutique publicitaire", "Imprimés, signalétique et vêtements"],
         ["◇", "Extensions", "Services et intégrations"],
         ["⌁", "Automatisations", "Règles et workflows"],
       ],
@@ -881,6 +881,8 @@ function SettingsPage({
         back={() => setView("overview")}
       />
     );
+  if (view === "shop")
+    return <AdvertisingShop demo={demo} request={request} back={() => setView("overview")} />;
   return (
     <section className="settings-page">
       <div className="settings-intro">
@@ -903,16 +905,18 @@ function SettingsPage({
                 {group.cards.map(([icon, title, description]) => (
                   <button
                     type="button"
-                    className={`settings-card ${title === "Mon entreprise" ? "available" : "planned"}`}
+                    className={`settings-card ${["Mon entreprise", "Boutique publicitaire"].includes(title) ? "available" : "planned"}`}
                     key={title}
                     onClick={() =>
-                      title === "Mon entreprise" && setView("company")
+                      title === "Mon entreprise"
+                        ? setView("company")
+                        : title === "Boutique publicitaire" && setView("shop")
                     }
                   >
                     <span>{icon}</span>
                     <strong>{title}</strong>
                     <small>{description}</small>
-                    {title !== "Mon entreprise" && <em>À venir</em>}
+                    {!["Mon entreprise", "Boutique publicitaire"].includes(title) && <em>À venir</em>}
                   </button>
                 ))}
               </div>
@@ -942,6 +946,133 @@ function SettingsPage({
           </div>
         </aside>
       </div>
+    </section>
+  );
+}
+
+const demoAdvertisingProducts = [
+  { code: "BUSINESS_CARDS", name: "Cartes de visite", family: "IMPRESSION" },
+  { code: "FLYERS", name: "Flyers et dépliants", family: "IMPRESSION" },
+  { code: "SITE_SIGNS", name: "Panneaux de chantier", family: "SIGNAGE" },
+  { code: "SCAFFOLD_BANNERS", name: "Bâches d’échafaudage", family: "SIGNAGE" },
+  { code: "MAGNETIC_VEHICLE_SIGNS", name: "Panneaux magnétiques véhicule", family: "SIGNAGE" },
+  { code: "WORKWEAR", name: "Vêtements professionnels", family: "TEXTILE" },
+];
+
+function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiRequest; back: () => void }) {
+  const [products, setProducts] = useState<RecordValue[]>(demoAdvertisingProducts);
+  const [providers, setProviders] = useState<RecordValue[]>([]);
+  const [selected, setSelected] = useState<RecordValue | null>(null);
+  const [quotes, setQuotes] = useState<RecordValue[]>([]);
+  const [error, setError] = useState("");
+  const [working, setWorking] = useState(false);
+
+  useEffect(() => {
+    if (demo) {
+      setProviders([
+        { code: "GELATO", status: "MISSING_CREDENTIALS", liveQuotes: true },
+        { code: "PRINTFUL", status: "MISSING_CREDENTIALS", liveQuotes: true },
+        { code: "CIMPRESS", status: "CONTRACT_REQUIRED", liveQuotes: false },
+      ]);
+      return;
+    }
+    Promise.all([request("/boutique/catalogue"), request("/boutique/status")])
+      .then(([catalogue, status]) => {
+        setProducts(Array.isArray(catalogue) ? catalogue : demoAdvertisingProducts);
+        setProviders(Array.isArray(status.providers) ? status.providers : []);
+      })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : "Boutique inaccessible"));
+  }, [demo, request]);
+
+  async function compare(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (demo) {
+      setError("Les tarifs réels sont désactivés dans le mode démonstration.");
+      return;
+    }
+    const form = new FormData(event.currentTarget);
+    setWorking(true);
+    setError("");
+    setQuotes([]);
+    try {
+      const result = await request("/boutique/devis/comparer", {
+        method: "POST",
+        body: JSON.stringify({
+          productUid: form.get("productUid"),
+          printfulVariantId: form.get("printfulVariantId") ? Number(form.get("printfulVariantId")) : undefined,
+          quantity: Number(form.get("quantity")),
+          salePriceHt: Number(form.get("salePriceHt")),
+          country: "FR",
+          postCode: form.get("postCode"),
+          city: form.get("city"),
+          strategy: form.get("strategy"),
+        }),
+      });
+      setQuotes(Array.isArray(result.quotes) ? result.quotes : []);
+      if (result.warning) setError(String(result.warning));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Comparaison impossible");
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <section className="settings-page advertising-shop">
+      <button type="button" className="secondary compact" onClick={back}>← Retour aux paramètres</button>
+      <div className="settings-intro">
+        <p className="eyebrow">IDENTITÉ · IMPRESSION · LIVRAISON</p>
+        <h2>Boutique publicitaire</h2>
+        <p>Préparez les supports avec le logo enregistré, puis comparez les coûts, délais et marges avant toute commande.</p>
+      </div>
+      <div className="shop-provider-strip">
+        {providers.map((provider) => (
+          <span key={String(provider.code)} className={provider.status === "ACTIVE" ? "active" : "pending"}>
+            <strong>{String(provider.code)}</strong>
+            {provider.status === "ACTIVE" ? "Tarifs temps réel actifs" : provider.status === "CONTRACT_REQUIRED" ? "Accord commercial requis" : "Clé de connexion à ajouter"}
+          </span>
+        ))}
+      </div>
+      <div className="shop-product-grid">
+        {products.map((product) => (
+          <button type="button" key={String(product.code)} className={selected?.code === product.code ? "selected" : ""} onClick={() => setSelected(product)}>
+            <i>{product.family === "TEXTILE" ? "♙" : product.family === "SIGNAGE" ? "▰" : "▤"}</i>
+            <strong>{String(product.name)}</strong>
+            <small>Personnalisable avec le logo de l’entreprise</small>
+          </button>
+        ))}
+      </div>
+      {selected && (
+        <form className="shop-quote-form" onSubmit={compare}>
+          <div>
+            <h3>Comparer les fournisseurs — {String(selected.name)}</h3>
+            <p>Aucune commande n’est envoyée à ce stade. KRITIA calcule seulement la meilleure offre et la marge prévisionnelle.</p>
+          </div>
+          <label>Référence Gelato<input name="productUid" required placeholder="UID produit Gelato" /></label>
+          <label>Variante Printful<input name="printfulVariantId" type="number" min="1" placeholder="Facultatif" /></label>
+          <label>Quantité<input name="quantity" type="number" min="1" defaultValue="100" required /></label>
+          <label>Prix de vente HT<input name="salePriceHt" type="number" min="1" step="0.01" required /></label>
+          <label>Code postal<input name="postCode" defaultValue="51170" required /></label>
+          <label>Ville<input name="city" defaultValue="Brouillet" required /></label>
+          <label>Priorité<select name="strategy"><option value="BALANCED">Équilibre marge / délai</option><option value="BEST_MARGIN">Meilleure marge</option><option value="FASTEST">Livraison la plus rapide</option></select></label>
+          <button className="primary compact" disabled={working}>{working ? "Comparaison…" : "Comparer les offres"}</button>
+        </form>
+      )}
+      {error && <div className="form-error settings-feedback">{error}</div>}
+      {quotes.length > 0 && (
+        <div className="shop-quotes">
+          {quotes.map((quote, index) => (
+            <article key={String(quote.quoteId)} className={index === 0 && quote.eligible ? "best" : ""}>
+              <strong>{String(quote.provider)}</strong>
+              <span>Coût fournisseur {euro(quote.totalSupplierCost)}</span>
+              <span>Marge nette {euro(quote.netMargin)} · {String(quote.marginRate)} %</span>
+              <span>Livraison estimée {String(quote.minDeliveryDays)}–{String(quote.maxDeliveryDays)} jours</span>
+              <em>{quote.eligible ? "Marge conforme" : "Marge insuffisante"}</em>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="shop-roadmap-note"><strong>Prochaine étape sécurisée</strong><span>Validation du BAT, paiement, création de commande fournisseur, suivi d’expédition et service après-vente. Ces actions resteront désactivées tant que chaque contrat fournisseur n’est pas validé.</span></div>
     </section>
   );
 }
@@ -1042,8 +1173,6 @@ function CompanySettings({
   const [vatVerified, setVatVerified] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [vectorReference, setVectorReference] = useState<string>();
-  const [vectorReferenceVersion, setVectorReferenceVersion] = useState(0);
   useEffect(() => {
     if (demo) return;
     let active = true;
@@ -1191,12 +1320,13 @@ function CompanySettings({
     if (!file) return;
     setMessage("");
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("Le logo doit être un fichier image.");
+    const isSvg = file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
+    if (!file.type.startsWith("image/") && !isSvg) {
+      setError("Le logo doit être un fichier SVG, PNG, JPEG ou WebP.");
       return;
     }
     try {
-      const dataUrl = await resizeLogo(file);
+      const dataUrl = isSvg ? await readSafeSvg(file) : await resizeLogo(file);
       change("logoUrl", dataUrl);
       setMessage(
         "Logo chargé et optimisé. Cliquez sur Enregistrer pour le conserver.",
@@ -1565,14 +1695,14 @@ function CompanySettings({
                   ) : (
                     <div>
                       <strong>Votre logo</strong>
-                      <small>PNG, JPEG ou WebP</small>
+                      <small>SVG, PNG, JPEG ou WebP</small>
                     </div>
                   )}
                   <label className="secondary compact">
                     Choisir un fichier
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept="image/svg+xml,image/png,image/jpeg,image/webp,.svg"
                       onChange={(event) =>
                         void selectLogo(event.target.files?.[0])
                       }
@@ -1622,33 +1752,10 @@ function CompanySettings({
                       />
                     </label>
                   </div>
-                  <VectorLogoStudio
-                    onSendToAi={(svgDataUrl) => {
-                      setMessage("");
-                      setError("");
-                      if (svgDataUrl.length > 150_000) {
-                        setError(
-                          "Ce SVG importé est trop complexe pour l’atelier IA. Simplifiez-le ou utilisez le générateur interne.",
-                        );
-                        return;
-                      }
-                      setVectorReference(svgDataUrl);
-                      setVectorReferenceVersion((version) => version + 1);
-                      setMessage(
-                        "Logo chargé dans l’atelier IA situé juste sous le studio.",
-                      );
-                      window.setTimeout(
-                        () => document.querySelector(".ai-logo-studio")?.scrollIntoView({ behavior: "smooth", block: "center" }),
-                        80,
-                      );
-                    }}
-                  />
                   <LogoAiStudio
-                    key={`logo-ai-${vectorReferenceVersion}`}
                     demo={demo}
                     request={request}
                     company={company}
-                    referenceSvgDataUrl={vectorReference}
                     onSelect={(image, slogan) => void selectGeneratedLogo(image, slogan)}
                   />
                 </div>
@@ -1893,13 +2000,11 @@ function LogoAiStudio({
   demo,
   request,
   company,
-  referenceSvgDataUrl,
   onSelect,
 }: {
   demo: boolean;
   request: ApiRequest;
   company: RecordValue;
-  referenceSvgDataUrl?: string;
   onSelect: (image: string, slogan?: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -1921,10 +2026,6 @@ function LogoAiStudio({
     couleurSecondaire: String(company.couleurSecondary ?? "#f59e0b"),
     symboles: "",
   });
-
-  useEffect(() => {
-    if (referenceSvgDataUrl) setOpen(true);
-  }, [referenceSvgDataUrl]);
 
   useEffect(() => {
     if (!open || demo) return;
@@ -1968,10 +2069,8 @@ function LogoAiStudio({
       setError("La création IA est désactivée dans le mode démonstration.");
       return;
     }
-    const effectiveName = brief.raisonSociale.trim() || String(company.raisonSociale ?? "").trim() || (referenceSvgDataUrl ? "Mon entreprise" : "");
-    const effectiveActivity = brief.activite.trim() || (referenceSvgDataUrl
-      ? "Identité visuelle professionnelle pour une entreprise du bâtiment"
-      : "");
+    const effectiveName = brief.raisonSociale.trim() || String(company.raisonSociale ?? "").trim();
+    const effectiveActivity = brief.activite.trim();
     if (effectiveName.length < 2 || effectiveActivity.length < 3) {
       setError("Indiquez le nom de l’entreprise et décrivez son activité.");
       return;
@@ -1979,9 +2078,6 @@ function LogoAiStudio({
     setWorking(true);
     setError("");
     try {
-      const referenceImageDataUrl = referenceSvgDataUrl
-        ? await rasterizeSvgReference(referenceSvgDataUrl)
-        : undefined;
       const queued = await request("/parametres/logo/ia/generer", {
         method: "POST",
         body: JSON.stringify({
@@ -1990,8 +2086,6 @@ function LogoAiStudio({
           activite: effectiveActivity,
           slogan: brief.slogan.trim() || undefined,
           symboles: brief.symboles.trim() || undefined,
-          referenceImageDataUrl,
-          referenceSvgDataUrl,
         }),
       });
       const generationId = String(queued.generationId ?? "");
@@ -2045,17 +2139,6 @@ function LogoAiStudio({
       </div>
       {open && (
         <div className="ai-logo-workspace">
-          {referenceSvgDataUrl && (
-            <div className="ai-logo-reference">
-              <img src={referenceSvgDataUrl} alt="Logo vectoriel chargé depuis le studio" />
-              <div>
-                <strong>Logo du studio prêt à être amélioré</strong>
-                <span>
-                  Le nom et les formes sont déjà transmis à l’IA. Les réglages ci-dessous sont facultatifs.
-                </span>
-              </div>
-            </div>
-          )}
           {configured === false && !demo && (
             <div className="form-error">
               Le service IA doit être activé sur le serveur avec une clé OpenAI.
@@ -2079,7 +2162,7 @@ function LogoAiStudio({
                 onChange={(event) => setBrief((current) => ({ ...current, activite: event.target.value }))}
                 minLength={3}
                 rows={3}
-                placeholder={referenceSvgDataUrl ? "Facultatif pour une amélioration" : "Rénovation du bâti ancien, pierre, chaux…"}
+                placeholder="Rénovation du bâti ancien, pierre, chaux…"
               />
             </label>
             <div className="ai-logo-grid">
@@ -2142,9 +2225,7 @@ function LogoAiStudio({
               >
                 {working
                   ? "Création en cours… (jusqu’à 2 min)"
-                  : referenceSvgDataUrl
-                    ? "✦ Améliorer ce logo avec l’IA"
-                    : "✦ Générer une proposition"}
+                  : "✦ Générer une proposition"}
               </button>
             </div>
             {credits === 0 && (
@@ -2169,6 +2250,11 @@ function LogoAiStudio({
                   >
                     Utiliser ce logo
                   </button>
+                  <div className="ai-logo-downloads">
+                    <button type="button" onClick={() => void downloadLogo(image, "png", brief.raisonSociale)}>PNG</button>
+                    <button type="button" onClick={() => void downloadLogo(image, "svg", brief.raisonSociale)}>SVG</button>
+                    <button type="button" onClick={() => void downloadLogo(image, "pdf", brief.raisonSociale)}>PDF</button>
+                  </div>
                 </article>
               ))}
             </div>
@@ -2179,19 +2265,36 @@ function LogoAiStudio({
   );
 }
 
-async function rasterizeSvgReference(svgDataUrl: string): Promise<string> {
-  const image = new Image();
-  image.src = svgDataUrl;
-  await image.decode();
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 640;
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Conversion du logo vectoriel indisponible.");
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/webp", 0.82);
+async function readSafeSvg(file: File): Promise<string> {
+  if (file.size > 150_000) throw new Error("Le fichier SVG dépasse 150 Ko.");
+  const source = await file.text();
+  if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/i.test(source) ||
+      /<(?:script|foreignObject|iframe|object|embed)[\s>]/i.test(source) ||
+      /\son\w+\s*=/i.test(source) || /javascript:/i.test(source)) {
+    throw new Error("Ce fichier SVG contient des éléments non autorisés.");
+  }
+  return `data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(source)))}`;
+}
+
+async function downloadLogo(image: string, format: "png" | "svg" | "pdf", name: string) {
+  const safeName = (name || "logo-kritia").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  if (format === "pdf") {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    pdf.addImage(image, "WEBP", 44, 24, 210, 160, undefined, "FAST");
+    pdf.save(`${safeName}.pdf`);
+    return;
+  }
+  let payload = image;
+  if (format === "svg") {
+    const escaped = image.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><image href="${escaped}" width="1024" height="1024" preserveAspectRatio="xMidYMid meet"/></svg>`;
+    payload = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
+  const link = document.createElement("a");
+  link.href = payload;
+  link.download = `${safeName}.${format}`;
+  link.click();
 }
 
 async function prepareGeneratedLogo(dataUrl: string, slogan: string): Promise<string> {

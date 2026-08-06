@@ -1715,6 +1715,83 @@ tbody tr:hover {
     9px -9px,
     -9px 0;
 }
+.ai-logo-downloads {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.ai-logo-downloads button {
+  padding: 6px;
+  border: 1px solid #bfd2eb;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.advertising-shop { display: grid; gap: 20px; }
+.shop-provider-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.shop-provider-strip span {
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d8e4f3;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 10px;
+}
+.shop-provider-strip span.active { border-color: #8bd8b5; background: #effcf5; color: #15734b; }
+.shop-provider-strip strong { color: var(--ink); font-size: 12px; }
+.shop-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.shop-product-grid button {
+  min-height: 130px;
+  padding: 18px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 7px;
+  border: 1px solid #cedcf0;
+  border-radius: 13px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.shop-product-grid button:hover,
+.shop-product-grid button.selected { border-color: #5b96ef; box-shadow: 0 10px 30px rgba(35, 91, 170, .1); }
+.shop-product-grid i { color: var(--blue); font-size: 24px; font-style: normal; }
+.shop-product-grid small { color: var(--muted); }
+.shop-quote-form {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  border: 1px solid #cbdcf1;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f4f8ff, #fff);
+}
+.shop-quote-form > div { grid-column: 1 / -1; }
+.shop-quote-form label { display: grid; gap: 5px; color: #52647b; font-size: 11px; font-weight: 800; }
+.shop-quote-form input,
+.shop-quote-form select { padding: 10px; border: 1px solid #b9cce5; border-radius: 8px; background: #fff; font: inherit; }
+.shop-quote-form button { align-self: end; }
+.shop-quotes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.shop-quotes article { padding: 15px; display: grid; gap: 7px; border: 1px solid #d8e4f3; border-radius: 11px; background: #fff; }
+.shop-quotes article.best { border-color: #55c58e; box-shadow: 0 8px 24px rgba(29, 143, 92, .12); }
+.shop-quotes span { color: var(--muted); font-size: 11px; }
+.shop-quotes em { color: #14734a; font-size: 10px; font-style: normal; font-weight: 900; }
+.shop-roadmap-note { padding: 14px; display: grid; gap: 4px; border-left: 4px solid #f59e0b; background: #fff8e8; color: #66552a; }
+.shop-roadmap-note span { font-size: 11px; line-height: 1.5; }
 @media (max-width: 700px) {
   .ai-logo-intro,
   .ai-logo-actions {
@@ -1728,6 +1805,12 @@ tbody tr:hover {
   .ai-logo-intro button,
   .ai-logo-actions button {
     width: 100%;
+  }
+  .shop-provider-strip,
+  .shop-product-grid,
+  .shop-quote-form,
+  .shop-quotes {
+    grid-template-columns: 1fr;
   }
 }
 .insurance-layout {
