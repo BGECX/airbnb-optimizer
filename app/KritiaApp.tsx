@@ -962,10 +962,7 @@ const demoAdvertisingProducts = [
 function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiRequest; back: () => void }) {
   const [products, setProducts] = useState<RecordValue[]>(demoAdvertisingProducts);
   const [providers, setProviders] = useState<RecordValue[]>([]);
-  const [selected, setSelected] = useState<RecordValue | null>(null);
-  const [quotes, setQuotes] = useState<RecordValue[]>([]);
   const [error, setError] = useState("");
-  const [working, setWorking] = useState(false);
 
   useEffect(() => {
     if (demo) {
@@ -984,95 +981,36 @@ function AdvertisingShop({ demo, request, back }: { demo: boolean; request: ApiR
       .catch((reason) => setError(reason instanceof Error ? reason.message : "Boutique inaccessible"));
   }, [demo, request]);
 
-  async function compare(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (demo) {
-      setError("Les tarifs réels sont désactivés dans le mode démonstration.");
-      return;
-    }
-    const form = new FormData(event.currentTarget);
-    setWorking(true);
-    setError("");
-    setQuotes([]);
-    try {
-      const result = await request("/boutique/devis/comparer", {
-        method: "POST",
-        body: JSON.stringify({
-          productUid: form.get("productUid"),
-          printfulVariantId: form.get("printfulVariantId") ? Number(form.get("printfulVariantId")) : undefined,
-          quantity: Number(form.get("quantity")),
-          salePriceHt: Number(form.get("salePriceHt")),
-          country: "FR",
-          postCode: form.get("postCode"),
-          city: form.get("city"),
-          strategy: form.get("strategy"),
-        }),
-      });
-      setQuotes(Array.isArray(result.quotes) ? result.quotes : []);
-      if (result.warning) setError(String(result.warning));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Comparaison impossible");
-    } finally {
-      setWorking(false);
-    }
-  }
-
   return (
     <section className="settings-page advertising-shop">
       <button type="button" className="secondary compact" onClick={back}>← Retour aux paramètres</button>
       <div className="settings-intro">
         <p className="eyebrow">IDENTITÉ · IMPRESSION · LIVRAISON</p>
         <h2>Boutique publicitaire</h2>
-        <p>Préparez les supports avec le logo enregistré, puis comparez les coûts, délais et marges avant toute commande.</p>
+        <p>Choisissez un support personnalisé avec le logo de l’entreprise. Le prix affiché est le prix de vente KRITIA, livraison calculée avant paiement.</p>
       </div>
-      <div className="shop-provider-strip">
-        {providers.map((provider) => (
-          <span key={String(provider.code)} className={provider.status === "ACTIVE" ? "active" : "pending"}>
-            <strong>{String(provider.code)}</strong>
-            {provider.status === "ACTIVE" ? "Tarifs temps réel actifs" : provider.status === "CONTRACT_REQUIRED" ? "Accord commercial requis" : "Clé de connexion à ajouter"}
-          </span>
-        ))}
+      <div className="shop-customer-promise">
+        <span><strong>BAT avant impression</strong>Vous validez toujours le rendu final.</span>
+        <span><strong>Prix KRITIA transparent</strong>Aucun tarif fournisseur n’est affiché.</span>
+        <span><strong>Livraison suivie</strong>Fabrication et expédition centralisées.</span>
       </div>
       <div className="shop-product-grid">
-        {products.map((product) => (
-          <button type="button" key={String(product.code)} className={selected?.code === product.code ? "selected" : ""} onClick={() => setSelected(product)}>
+        {products.map((product, index) => (
+          <article key={String(product.code)}>
             <i>{product.family === "TEXTILE" ? "♙" : product.family === "SIGNAGE" ? "▰" : "▤"}</i>
             <strong>{String(product.name)}</strong>
-            <small>Personnalisable avec le logo de l’entreprise</small>
-          </button>
+            <small>Logo, couleurs et coordonnées de l’entreprise</small>
+            <b>À partir de {euro([29, 49, 79, 169, 89, 39][index])} HT</b>
+            <button type="button" className="secondary compact" disabled>Configuration bientôt disponible</button>
+          </article>
         ))}
       </div>
-      {selected && (
-        <form className="shop-quote-form" onSubmit={compare}>
-          <div>
-            <h3>Comparer les fournisseurs — {String(selected.name)}</h3>
-            <p>Aucune commande n’est envoyée à ce stade. KRITIA calcule seulement la meilleure offre et la marge prévisionnelle.</p>
-          </div>
-          <label>Référence Gelato<input name="productUid" required placeholder="UID produit Gelato" /></label>
-          <label>Variante Printful<input name="printfulVariantId" type="number" min="1" placeholder="Facultatif" /></label>
-          <label>Quantité<input name="quantity" type="number" min="1" defaultValue="100" required /></label>
-          <label>Prix de vente HT<input name="salePriceHt" type="number" min="1" step="0.01" required /></label>
-          <label>Code postal<input name="postCode" defaultValue="51170" required /></label>
-          <label>Ville<input name="city" defaultValue="Brouillet" required /></label>
-          <label>Priorité<select name="strategy"><option value="BALANCED">Équilibre marge / délai</option><option value="BEST_MARGIN">Meilleure marge</option><option value="FASTEST">Livraison la plus rapide</option></select></label>
-          <button className="primary compact" disabled={working}>{working ? "Comparaison…" : "Comparer les offres"}</button>
-        </form>
-      )}
       {error && <div className="form-error settings-feedback">{error}</div>}
-      {quotes.length > 0 && (
-        <div className="shop-quotes">
-          {quotes.map((quote, index) => (
-            <article key={String(quote.quoteId)} className={index === 0 && quote.eligible ? "best" : ""}>
-              <strong>{String(quote.provider)}</strong>
-              <span>Coût fournisseur {euro(quote.totalSupplierCost)}</span>
-              <span>Marge nette {euro(quote.netMargin)} · {String(quote.marginRate)} %</span>
-              <span>Livraison estimée {String(quote.minDeliveryDays)}–{String(quote.maxDeliveryDays)} jours</span>
-              <em>{quote.eligible ? "Marge conforme" : "Marge insuffisante"}</em>
-            </article>
-          ))}
-        </div>
-      )}
-      <div className="shop-roadmap-note"><strong>Prochaine étape sécurisée</strong><span>Validation du BAT, paiement, création de commande fournisseur, suivi d’expédition et service après-vente. Ces actions resteront désactivées tant que chaque contrat fournisseur n’est pas validé.</span></div>
+      <div className="shop-internal-engine">
+        <div><strong>Optimisation fournisseurs KRITIA</strong><span>Le moteur interne interroge les fournisseurs disponibles, puis retient l’offre qui respecte la marge cible, la qualité et le délai.</span></div>
+        <em>{providers.some((provider) => provider.status === "ACTIVE") ? "Optimisation active" : "Activation des clés fournisseurs en attente"}</em>
+      </div>
+      <div className="shop-roadmap-note"><strong>Comparateur réservé à KRITIA</strong><span>Les coûts d’achat, références fournisseurs et marges ne seront jamais visibles par le client. Le client voit uniquement le produit, le BAT, le prix KRITIA et le délai de livraison.</span></div>
     </section>
   );
 }
@@ -2125,8 +2063,7 @@ function LogoAiStudio({
         <div>
           <strong>Création de logo assistée par IA</strong>
           <span>
-            Décrivez votre identité, générez jusqu’à trois pistes puis retenez
-            votre préférée.
+            L’IA crée le symbole. Le nom, le slogan et les couleurs restent ensuite modifiables gratuitement.
           </span>
         </div>
         <button
@@ -2236,27 +2173,32 @@ function LogoAiStudio({
           </div>
           {error && <div className="form-error">{error}</div>}
           {images.length > 0 && (
-            <div className="ai-logo-results">
-              {images.map((image, index) => (
+            <div className="ai-logo-results-wrap">
+              <div className="ai-logo-free-edit">
+                <strong>Modifier sans utiliser de crédit</strong>
+                <span>Changez le nom, le slogan ou les couleurs dans le questionnaire ci-dessus : la proposition retenue sera recomposée automatiquement.</span>
+              </div>
+              <div className="ai-logo-results">{images.map((image, index) => (
                 <article key={`${image.slice(-24)}-${index}`}>
-                  <img
-                    src={image}
-                    alt={`Proposition de logo IA ${index + 1}`}
-                  />
+                  <div className="ai-logo-composed-preview" style={{ borderColor: brief.couleurSecondaire }}>
+                    <img src={image} alt={`Symbole de logo IA ${index + 1}`} />
+                    <strong style={{ color: brief.couleurPrincipale }}>{brief.raisonSociale || "Nom de l’entreprise"}</strong>
+                    {brief.slogan && <small style={{ color: brief.couleurSecondaire }}>{brief.slogan}</small>}
+                  </div>
                   <button
                     type="button"
                     className="secondary compact"
-                    onClick={() => onSelect(image)}
+                    onClick={() => void composeLogoProposal(image, brief).then((composed) => onSelect(composed))}
                   >
-                    Utiliser ce logo
+                    Choisir et enregistrer
                   </button>
                   <div className="ai-logo-downloads">
-                    <button type="button" onClick={() => void downloadLogo(image, "png", brief.raisonSociale)}>PNG</button>
-                    <button type="button" onClick={() => void downloadLogo(image, "svg", brief.raisonSociale)}>SVG</button>
-                    <button type="button" onClick={() => void downloadLogo(image, "pdf", brief.raisonSociale)}>PDF</button>
+                    <button type="button" onClick={() => void composeLogoProposal(image, brief).then((logo) => downloadLogo(logo, "png", brief.raisonSociale))}>PNG</button>
+                    <button type="button" onClick={() => void composeLogoProposal(image, brief).then((logo) => downloadLogo(logo, "svg", brief.raisonSociale))}>SVG</button>
+                    <button type="button" onClick={() => void composeLogoProposal(image, brief).then((logo) => downloadLogo(logo, "pdf", brief.raisonSociale))}>PDF</button>
                   </div>
                 </article>
-              ))}
+              ))}</div>
             </div>
           )}
         </div>
@@ -2295,6 +2237,61 @@ async function downloadLogo(image: string, format: "png" | "svg" | "pdf", name: 
   link.href = payload;
   link.download = `${safeName}.${format}`;
   link.click();
+}
+
+async function composeLogoProposal(imageUrl: string, brief: {
+  raisonSociale: string;
+  slogan: string;
+  couleurPrincipale: string;
+  couleurSecondaire: string;
+}): Promise<string> {
+  const image = new Image();
+  image.src = imageUrl;
+  await image.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 800;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Composition du logo indisponible.");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  const symbolCanvas = document.createElement("canvas");
+  symbolCanvas.width = 500;
+  symbolCanvas.height = 500;
+  const symbolContext = symbolCanvas.getContext("2d", { willReadFrequently: true });
+  if (!symbolContext) throw new Error("Traitement du symbole indisponible.");
+  symbolContext.drawImage(image, 0, 0, 500, 500);
+  const pixels = symbolContext.getImageData(0, 0, 500, 500);
+  const primary = hexRgb(brief.couleurPrincipale);
+  const secondary = hexRgb(brief.couleurSecondaire);
+  for (let index = 0; index < pixels.data.length; index += 4) {
+    const r = pixels.data[index], g = pixels.data[index + 1], b = pixels.data[index + 2];
+    const luminance = (r + g + b) / 765;
+    if (luminance > 0.94) {
+      pixels.data[index + 3] = 0;
+    } else {
+      const mix = Math.max(0, Math.min(1, luminance));
+      pixels.data[index] = Math.round(primary[0] * (1 - mix) + secondary[0] * mix);
+      pixels.data[index + 1] = Math.round(primary[1] * (1 - mix) + secondary[1] * mix);
+      pixels.data[index + 2] = Math.round(primary[2] * (1 - mix) + secondary[2] * mix);
+    }
+  }
+  symbolContext.putImageData(pixels, 0, 0);
+  context.drawImage(symbolCanvas, 350, 20, 500, 500);
+  context.textAlign = "center";
+  context.fillStyle = brief.couleurPrincipale;
+  context.font = "800 74px Arial, sans-serif";
+  context.fillText(brief.raisonSociale.trim() || "ENTREPRISE", 600, 625, 1050);
+  if (brief.slogan.trim()) {
+    context.fillStyle = brief.couleurSecondaire;
+    context.font = "500 32px Arial, sans-serif";
+    context.fillText(brief.slogan.trim(), 600, 690, 1020);
+  }
+  return canvas.toDataURL("image/png");
+}
+
+function hexRgb(value: string): [number, number, number] {
+  const normalized = /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1) : "2563eb";
+  return [Number.parseInt(normalized.slice(0, 2), 16), Number.parseInt(normalized.slice(2, 4), 16), Number.parseInt(normalized.slice(4, 6), 16)];
 }
 
 async function prepareGeneratedLogo(dataUrl: string, slogan: string): Promise<string> {

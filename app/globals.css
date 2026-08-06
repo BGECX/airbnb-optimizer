@@ -1730,7 +1730,17 @@ tbody tr:hover {
   font-weight: 900;
   cursor: pointer;
 }
+.ai-logo-results-wrap { display: grid; gap: 12px; }
+.ai-logo-free-edit { padding: 11px 13px; display: grid; gap: 3px; border-left: 4px solid #22a66f; background: #effcf6; color: #176242; }
+.ai-logo-free-edit span { font-size: 10px; }
+.ai-logo-composed-preview { min-height: 210px; padding: 12px; display: grid; place-items: center; align-content: center; gap: 4px; border: 2px solid; border-radius: 8px; background: #fff; text-align: center; }
+.ai-logo-composed-preview img { width: 120px; height: 120px; aspect-ratio: 1; }
+.ai-logo-composed-preview strong { max-width: 100%; font-size: 16px; overflow-wrap: anywhere; }
+.ai-logo-composed-preview small { font-size: 9px; }
 .advertising-shop { display: grid; gap: 20px; }
+.shop-customer-promise { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.shop-customer-promise span { padding: 13px; display: grid; gap: 4px; border: 1px solid #d9e5f4; border-radius: 10px; background: #fff; color: var(--muted); font-size: 10px; }
+.shop-customer-promise strong { color: var(--ink); font-size: 12px; }
 .shop-provider-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1753,7 +1763,7 @@ tbody tr:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-.shop-product-grid button {
+.shop-product-grid article {
   min-height: 130px;
   padding: 18px;
   display: grid;
@@ -1765,12 +1775,16 @@ tbody tr:hover {
   background: #fff;
   color: var(--ink);
   text-align: left;
-  cursor: pointer;
 }
-.shop-product-grid button:hover,
-.shop-product-grid button.selected { border-color: #5b96ef; box-shadow: 0 10px 30px rgba(35, 91, 170, .1); }
+.shop-product-grid article:hover { border-color: #5b96ef; box-shadow: 0 10px 30px rgba(35, 91, 170, .1); }
 .shop-product-grid i { color: var(--blue); font-size: 24px; font-style: normal; }
 .shop-product-grid small { color: var(--muted); }
+.shop-product-grid b { margin-top: 4px; color: var(--blue); font-size: 12px; }
+.shop-product-grid button { margin-top: 6px; }
+.shop-internal-engine { padding: 15px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #bdd2ec; border-radius: 12px; background: #eef5ff; }
+.shop-internal-engine div { display: grid; gap: 4px; }
+.shop-internal-engine span { color: var(--muted); font-size: 10px; }
+.shop-internal-engine em { padding: 7px 10px; border-radius: 999px; background: #fff; color: var(--blue); font-size: 9px; font-style: normal; font-weight: 900; white-space: nowrap; }
 .shop-quote-form {
   padding: 18px;
   display: grid;
@@ -1807,11 +1821,13 @@ tbody tr:hover {
     width: 100%;
   }
   .shop-provider-strip,
+  .shop-customer-promise,
   .shop-product-grid,
   .shop-quote-form,
   .shop-quotes {
     grid-template-columns: 1fr;
   }
+  .shop-internal-engine { align-items: flex-start; flex-direction: column; }
 }
 .insurance-layout {
   display: grid;

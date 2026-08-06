@@ -226,21 +226,18 @@ export class LogoGeneratorService {
   }
 
   buildPrompt(data: GenerateLogoDto) {
-    const slogan = data.slogan?.trim()
-      ? `Réserver une zone visuelle sobre sous le logo pour le slogan « ${data.slogan.trim()} », sans écrire ce slogan dans l’image : KRITIA l’ajoutera ensuite avec une typographie exacte.`
-      : "Ne pas ajouter de slogan.";
     const symbols =
       data.symboles?.trim() ||
       "un symbole abstrait lié au bâtiment, sans outil de chantier cliché";
     return [
       data.referenceImageDataUrl || data.referenceSvgDataUrl
-        ? "Améliore le logo fourni en conservant son identité reconnaissable, sa structure générale et le nom de l’entreprise, sur fond transparent."
-        : "Crée un logo d’entreprise original, professionnel et directement exploitable, sur fond transparent.",
-      `Nom exact à écrire, sans faute et une seule fois : « ${data.raisonSociale.trim()} ».`,
+        ? "Améliore uniquement le symbole graphique fourni en conservant son identité reconnaissable et sa structure générale."
+        : "Crée uniquement un symbole de marque original et professionnel, destiné à être associé ensuite au nom d’une entreprise.",
+      `Le nom « ${data.raisonSociale.trim()} » sert uniquement de contexte : ne l’écris pas dans l’image.`,
       `Activité : ${data.activite.trim()}. Style : ${data.style}.`,
       `Palette dominante : ${data.couleurPrincipale || "#2563EB"} et ${data.couleurSecondaire || "#F59E0B"}.`,
-      `Pistes symboliques souhaitées : ${symbols}. ${slogan}`,
-      "Composition simple et mémorisable, lisible en petit format, formes nettes de type vectoriel, sans photographie, sans maquette, sans carte de visite, sans filigrane.",
+      `Pistes symboliques souhaitées : ${symbols}.`,
+      "Composition simple et mémorisable, lisible en petit format, formes nettes de type vectoriel, sans photographie, sans texte, sans lettre, sans slogan, sans maquette, sans carte de visite et sans filigrane.",
       "Ne copie aucune marque existante. Évite les détails fragiles et garde une zone de respiration autour du logo.",
       this.svgReferenceInstruction(data.referenceSvgDataUrl),
     ].join(" ");
