@@ -984,6 +984,10 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
               <feGaussianBlur stdDeviation="3.5" result="blur" />
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
+            <filter id="organicFlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence type="fractalNoise" baseFrequency=".009 .025" numOctaves="2" seed="11" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="13" xChannelSelector="R" yChannelSelector="B" />
+            </filter>
           </defs>
           <g className="neural-filaments">
             {neuralFilaments.map((path, index) => <path key={index} d={path} />)}
@@ -996,10 +1000,26 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
               </g>
             ))}
           </g>
+          <g className="module-dendrites" filter="url(#organicFlow)">
+            <path d="M157 129 C112 105 95 70 61 54 M157 129 C116 143 90 176 42 180 M157 129 C140 82 165 50 148 18" />
+            <path d="M590 77 C548 54 532 24 506 8 M590 77 C630 55 646 22 681 8 M590 77 C600 42 586 25 591 2" />
+            <path d="M1023 129 C1065 105 1088 70 1126 54 M1023 129 C1066 145 1090 179 1148 183 M1023 129 C1045 83 1024 47 1045 13" />
+            <path d="M1070 356 C1110 330 1134 300 1172 294 M1070 356 C1117 371 1134 405 1178 416 M1070 356 C1100 348 1128 355 1154 347" />
+            <path d="M1011 554 C1056 538 1089 512 1132 520 M1011 554 C1049 582 1062 618 1101 640 M1011 554 C1035 598 1016 624 1032 648" />
+            <path d="M590 573 C548 599 530 625 494 646 M590 573 C629 601 646 626 681 647 M590 573 C580 610 596 627 590 650" />
+            <path d="M169 554 C125 538 95 509 49 520 M169 554 C131 584 117 620 79 642 M169 554 C147 599 164 626 147 648" />
+            <path d="M110 356 C69 329 47 297 8 293 M110 356 C65 374 46 406 3 417 M110 356 C79 348 51 357 24 347" />
+          </g>
           <g className="neural-nodes">
             <circle cx="590" cy="325" r="13" />
             <circle cx="410" cy="294" r="3" /><circle cx="770" cy="296" r="3" />
             <circle cx="485" cy="450" r="2.5" /><circle cx="688" cy="205" r="2.5" />
+          </g>
+          <g className="ambient-synapses">
+            <circle cx="245" cy="220" r="3" /><circle cx="335" cy="465" r="4" />
+            <circle cx="456" cy="154" r="2.5" /><circle cx="719" cy="139" r="3.5" />
+            <circle cx="817" cy="468" r="3" /><circle cx="923" cy="245" r="4" />
+            <circle cx="272" cy="84" r="2.5" /><circle cx="940" cy="585" r="2.5" />
           </g>
           {activeModule && (
             <circle className="neural-pulse" r="5">

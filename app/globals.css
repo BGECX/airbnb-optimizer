@@ -2306,9 +2306,14 @@ tbody tr:hover {
 .neural-branches g.active .branch-core { stroke:#86d5ff; stroke-width:2.4; stroke-dasharray:7 5; filter:url(#neuralGlow); animation:neural-signal .48s linear infinite; }
 .neural-nodes circle { fill:#3ba6f5; stroke:#b8e7ff; stroke-width:1; opacity:.7; filter:url(#neuralGlow); }
 .neural-nodes circle:first-child { fill:rgba(91,191,255,.2); stroke:#76caff; stroke-width:2; animation:neural-node-breathe 2.2s ease-in-out infinite; }
+.module-dendrites path { fill:none; stroke:rgba(101,201,255,.38); stroke-width:1.35; stroke-linecap:round; filter:drop-shadow(0 0 4px rgba(58,175,255,.72)); }
+.ambient-synapses circle { fill:#ffefe0; stroke:#ff7a1a; stroke-width:2; filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px #ff6a00); animation:synapse-fire 3.2s ease-in-out infinite; }
+.ambient-synapses circle:nth-child(2n) { animation-delay:-1.1s; }
+.ambient-synapses circle:nth-child(3n) { animation-delay:-2.2s; }
 .neural-pulse { fill:#fff4e8; stroke:#ff7a1a; stroke-width:4; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 13px #ff5a00) drop-shadow(0 0 25px #ff7a1a); }
 @keyframes neural-signal { to { stroke-dashoffset:-24; } }
 @keyframes neural-node-breathe { 50% { r:18px; opacity:1; } }
+@keyframes synapse-fire { 0%,72%,100% { opacity:.08; transform:scale(.65); transform-box:fill-box; transform-origin:center; } 78% { opacity:1; transform:scale(1.55); } 86% { opacity:.32; transform:scale(.9); } }
 .suite-hub { --module-color:#f97316; position: absolute; z-index: 3; left: 50%; top: 50%; width: 330px; height: 330px; padding: 35px; display: grid; place-content: center; justify-items: center; text-align: center; border: 1px solid rgba(186,218,255,.48); border-radius: 50%; background:
   radial-gradient(circle at 30% 22%,rgba(255,255,255,.78) 0 2%,rgba(173,211,255,.24) 3% 11%,transparent 26%),
   radial-gradient(circle at 18% 55%,rgba(32,201,195,.3),transparent 22%),
@@ -2332,11 +2337,11 @@ tbody tr:hover {
 .satellite-expertise { --module-color:#ef5f78; left: 5%; bottom: 3%; }
 .satellite-horodatage { --module-color:#60a5fa; left: 0; top: 43%; }
 .suite-module { --module-color: inherit; position:relative; width: 100%; min-height: 154px; padding: 25px 20px; display: grid; place-items: center; text-align: center; border: 0; color: #fff; background:
-  radial-gradient(circle at 31% 22%,rgba(255,255,255,.24),transparent 18%),
-  linear-gradient(145deg,color-mix(in srgb,var(--module-color) 17%,#183f77),#071a38 73%);
-  clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%); filter:drop-shadow(0 16px 16px rgba(0,0,0,.38)) drop-shadow(0 0 2px var(--module-color)); box-shadow:inset 14px 12px 25px rgba(255,255,255,.12),inset -18px -20px 30px rgba(0,0,0,.4); cursor: pointer; transition: transform .22s ease,filter .22s ease,background .22s ease; }
+  radial-gradient(ellipse at 32% 20%,rgba(222,245,255,.42),transparent 18%),
+  radial-gradient(circle at 50% 48%,color-mix(in srgb,var(--module-color) 21%,#174c85),#071a38 70%);
+  clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%); filter:drop-shadow(0 16px 16px rgba(0,0,0,.38)) drop-shadow(0 0 5px var(--module-color)); box-shadow:inset 14px 12px 25px rgba(255,255,255,.12),inset -18px -20px 30px rgba(0,0,0,.4); cursor: pointer; transition: transform .22s ease,filter .22s ease,background .22s ease; }
 .suite-module:after { content:""; position:absolute; inset:9px 18px 54%; border-radius:50%; background:linear-gradient(180deg,rgba(255,255,255,.18),transparent); pointer-events:none; }
-.suite-module:hover,.suite-module:focus-visible { z-index: 5; transform: scale(1.17) translateY(-3px); background:radial-gradient(circle at 31% 20%,rgba(255,255,255,.34),transparent 19%),linear-gradient(145deg,color-mix(in srgb,var(--module-color) 32%,#184a86),#071d3c 75%); filter:drop-shadow(0 25px 26px rgba(0,0,0,.5)) drop-shadow(0 0 16px color-mix(in srgb,var(--module-color) 75%,transparent)); outline: none; }
+.suite-module:hover,.suite-module:focus-visible { z-index: 5; transform: scale(1.17) translateY(-3px); background:radial-gradient(circle at 31% 20%,rgba(255,255,255,.5),transparent 19%),radial-gradient(circle at 50% 48%,color-mix(in srgb,var(--module-color) 38%,#23609c),#071d3c 74%); filter:drop-shadow(0 25px 26px rgba(0,0,0,.5)) drop-shadow(0 0 20px color-mix(in srgb,var(--module-color) 88%,transparent)); outline: none; }
 .module-btp { --module-color: #f97316; }
 .module-immo { --module-color: #34c98f; }
 .module-juridique { --module-color: #a878f0; }
