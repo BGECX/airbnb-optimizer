@@ -1035,9 +1035,8 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
             <div key={module.id} className={`suite-satellite satellite-${module.id}`} onMouseEnter={() => setActiveModule(module.id)} onMouseLeave={() => setActiveModule(null)} onFocus={() => setActiveModule(module.id)} onBlur={() => setActiveModule(null)}>
               <button type="button" className={`suite-module module-${module.id}${module.action ? " active" : ""}`} onClick={module.action} aria-label={`Ouvrir KRITIA ${module.name}`}>
                 <span className="module-identity" aria-hidden="true">
-                  <span className="module-watermark">KRITIA</span>
+                  <img className="module-watermark" src="/kritia-wordmark.svg" alt="" />
                   <strong>{module.name}</strong>
-                  <i />
                 </span>
                 <em>{module.status}</em>
               </button>
