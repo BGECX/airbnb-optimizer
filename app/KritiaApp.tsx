@@ -729,14 +729,11 @@ function Login({
               <strong>100%</strong>orienté rénovation
             </span>
           </div>
-          <div className="public-shop-callout">
-            <div>
-              <small>NOUVEAU SERVICE</small>
-              <strong>Communication pour artisans du BTP</strong>
-              <span>Cartes, flyers, signalétique et vêtements personnalisés à partir de votre identité KRITIA.</span>
-            </div>
-            <button type="button" onClick={() => setPublicShopOpen(true)}>Découvrir la boutique →</button>
-          </div>
+          <button type="button" className="public-shop-callout" onClick={() => setPublicShopOpen(true)} aria-label="Découvrir la boutique de communication pour artisans du BTP">
+            <small>NOUVEAU SERVICE</small>
+            <strong>Communication pour artisans du BTP</strong>
+            <span>Cartes, flyers, signalétique et vêtements personnalisés à partir de votre identité KRITIA.</span>
+          </button>
         </div>
         <p className="story-quote">
           « La précision du métré. La clarté du pilotage. »

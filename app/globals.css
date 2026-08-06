@@ -2266,22 +2266,33 @@ tbody tr:hover {
 
 /* Acquisition publique, essai et passerelle vers la boutique publicitaire. */
 .public-shop-callout {
+  width: 100%;
   margin-top: 22px;
-  padding: 15px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border: 1px solid rgba(147, 197, 253, .32);
+  padding: 17px 18px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  color: #fff;
+  border: 1px solid #3076d3;
   border-radius: 12px;
-  background: rgba(7, 23, 47, .72);
+  background: linear-gradient(135deg, rgba(14,55,111,.96), rgba(31,103,199,.94));
   backdrop-filter: blur(12px);
+  box-shadow: 0 10px 26px rgba(2,12,30,.22);
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
 }
-.public-shop-callout div { display: grid; gap: 4px; }
+.public-shop-callout:hover { transform: translateY(-2px); box-shadow: 0 15px 32px rgba(2,12,30,.3); }
+.public-shop-callout:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 .public-shop-callout small { color: #60a5fa; font-size: 8px; font-weight: 900; letter-spacing: .15em; }
 .public-shop-callout strong { font-size: 13px; }
 .public-shop-callout span { color: #a9c0dd; font-size: 10px; line-height: 1.45; }
-.public-shop-callout button { flex: 0 0 auto; padding: 10px 12px; border: 0; border-radius: 7px; background: #fff; color: #12366b; font-size: 9px; font-weight: 900; }
+.login-page { grid-template-columns: minmax(0, 1.4fr) minmax(330px, .6fr); }
+.login-panel { padding: 30px; }
+.login-panel form { width: min(320px, 100%); }
+.login-panel h2 { font-size: 27px; }
+.login-panel .muted { margin-bottom: 18px; }
+.login-panel label { margin: 11px 0; }
+.login-panel input { padding: 11px 12px; }
 .public-shop-page { min-height: 100vh; background: #f3f7fc; }
 .public-shop-page > header { height: 76px; padding: 0 clamp(22px, 5vw, 76px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d9e5f2; background: rgba(255,255,255,.94); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(14px); }
 .public-shop-page > header > div { display: flex; gap: 9px; }
