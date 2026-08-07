@@ -47,7 +47,10 @@ export class ExpertiseAssistantService {
     if (!key) return { configured: false, message: "Ajoutez GOOGLE_MAPS_API_KEY sur le serveur pour afficher la vue aérienne Google." };
     const url = new URL("https://maps.googleapis.com/maps/api/staticmap");
     url.searchParams.set("center", `${data.latitude},${data.longitude}`);
-    url.searchParams.set("zoom", "19"); url.searchParams.set("size", "900x520"); url.searchParams.set("scale", "2");
+    // Maps Static accepts a maximum logical size of 640 × 640 for the
+    // standard API. `scale=2` keeps a sharp 1280 × 840 image without using
+    // the restricted large-image entitlement.
+    url.searchParams.set("zoom", "19"); url.searchParams.set("size", "640x420"); url.searchParams.set("scale", "2");
     url.searchParams.set("maptype", "satellite"); url.searchParams.set("markers", `color:red|${data.latitude},${data.longitude}`); url.searchParams.set("key", key);
     const response = await fetch(url);
     if (!response.ok) throw new ServiceUnavailableException("Google Maps n’a pas pu produire la vue aérienne.");
