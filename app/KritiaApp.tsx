@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import PreuveBtp from "./PreuveBtp";
+import ExpertiseWorkspace from "./ExpertiseWorkspace";
 
 type RecordValue = Record<string, unknown>;
 type Section =
@@ -12,7 +13,8 @@ type Section =
   | "factures"
   | "dpgf"
   | "bibliotheque"
-  | "preuve";
+  | "preuve"
+  | "expertise";
 type Session = {
   accessToken: string;
   user: {
@@ -28,7 +30,7 @@ type Session = {
 };
 type ApiRequest = (path: string, options?: RequestInit) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-const demoData: Record<Exclude<Section, "dashboard" | "preuve">, RecordValue[]> = {
+const demoData: Record<Exclude<Section, "dashboard" | "preuve" | "expertise">, RecordValue[]> = {
   clients: [
     {
       id: "1",
@@ -174,9 +176,10 @@ const nav: { id: Section; label: string; glyph: string }[] = [
   { id: "dpgf", label: "DPGF & métrés", glyph: "⌗" },
   { id: "bibliotheque", label: "Bibliothèque", glyph: "▦" },
   { id: "preuve", label: "Preuve BTP", glyph: "◉" },
+  { id: "expertise", label: "Expertise", glyph: "◇" },
 ];
 
-const endpoint: Record<Exclude<Section, "dashboard" | "preuve">, string> = {
+const endpoint: Record<Exclude<Section, "dashboard" | "preuve" | "expertise">, string> = {
   clients: "/clients?limit=50",
   chantiers: "/chantiers?limit=50",
   devis: "/devis?limit=50",
@@ -365,7 +368,7 @@ export default function KritiaApp() {
   async function loadAll() {
     setBusy(true);
     setError("");
-    const sections = Object.keys(endpoint) as Exclude<Section, "dashboard" | "preuve">[];
+    const sections = Object.keys(endpoint) as Exclude<Section, "dashboard" | "preuve" | "expertise">[];
     const results = await Promise.allSettled(
       sections.map((key) => api(endpoint[key])),
     );
@@ -584,6 +587,8 @@ export default function KritiaApp() {
             />
           ) : section === "preuve" ? (
             <PreuveBtp chantiers={data.chantiers} />
+          ) : section === "expertise" ? (
+            <ExpertiseWorkspace chantiers={data.chantiers} />
           ) : (
             <DataView
               section={section}
@@ -947,7 +952,7 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", features: ["Logos", "Cartes", "Flyers", "Vêtements", "Signalétique", "BAT", "Commandes"], action: openShop },
     { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation", features: ["Missions", "Diagnostics", "DPE", "Rapports", "Planning", "Conformité", "Obligations"] },
     { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation", features: ["Prospects", "Projets", "Artisans", "Consultations", "Appels d’offres", "Suivi", "Commissions"] },
-    { id: "constat", name: "Constat BTP", description: "Constatation visuelle et amiable, sans attribution de responsabilité.", status: "Disponible dans BTP", features: ["Faits visibles", "Photos", "Localisation", "Participants", "Observations", "Signatures", "Rapport partagé"], action: openBtp },
+    { id: "expertise", name: "Expertise", description: "Dossiers, constatations et rapports sous la responsabilité du professionnel.", status: "Disponible", features: ["Missions", "Parties", "Constatations", "Photos", "Analyse", "Rapports", "Validation expert"], action: openBtp },
     { id: "preuve", name: "Preuve BTP", description: "Mémoire technique locale et empreinte vérifiable du chantier.", status: "Disponible dans BTP", features: ["Photos", "Documents", "Empreinte SHA-256", "Constats", "Réserves", "Réception", "Rapport local"], action: openBtp },
   ];
   const neuralPaths: Record<string, string> = {
@@ -957,7 +962,7 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     publicite: "M590 325 C745 350 900 315 1070 356",
     diag: "M590 325 C720 410 850 500 1011 554",
     courtage: "M590 325 C625 410 555 490 590 573",
-    constat: "M590 325 C465 410 330 505 169 554",
+    expertise: "M590 325 C465 410 330 505 169 554",
     preuve: "M590 325 C430 350 280 315 110 356",
   };
   const neuralFilaments = [
