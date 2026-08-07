@@ -970,14 +970,14 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
   return (
     <main className="suite-landing">
       <header>
-        <div className="suite-mini-brand">KRITIA <span>ONE</span></div>
+        <div className="suite-mini-brand">KRITIA <span>NEURAL UX</span></div>
         <button type="button" className="suite-login" onClick={openBtp}>Accéder à mon compte</button>
       </header>
       <section className="suite-intro suite-intro-compact">
         <p>UN ÉCOSYSTÈME · PLUSIEURS MÉTIERS · UN SEUL COMPTE</p>
         <h1>Un seul écosystème.<br />Tous vos métiers.</h1>
       </section>
-      <section className="suite-constellation" aria-label="Applications KRITIA One">
+      <section className="suite-constellation" aria-label="Applications KRITIA Neural UX">
         <svg className="neural-network" viewBox="0 0 1180 650" aria-hidden="true">
           <defs>
             <filter id="neuralGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1028,7 +1028,7 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
           )}
         </svg>
         <div className="suite-hub">
-          <KritiaExactWordmark suffix="ONE" />
+          <KritiaExactWordmark suffix="NEURAL UX" />
         </div>
         {modules.map((module) => {
           return (
@@ -1047,7 +1047,7 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
           );
         })}
       </section>
-      <footer><span>KRITIA ONE</span><p>Un seul écosystème. Tous vos métiers.</p></footer>
+      <footer><span>KRITIA NEURAL UX</span><p>Un seul écosystème. Tous vos métiers.</p></footer>
     </main>
   );
 }

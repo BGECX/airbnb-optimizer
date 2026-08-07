@@ -10,14 +10,13 @@ async function render() {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("rend le portail public KRITIA ONE", async () => {
+test("rend le portail public KRITIA Neural UX", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>KRITIA ONE — L’écosystème des professionnels(?: · KRITIA ONE)?<\/title>/i);
-  assert.match(html, /KRITIA ONE/);
-  assert.match(html, /KRITIA One/);
+  assert.match(html, /<title>KRITIA Neural UX — L’écosystème des professionnels(?: · KRITIA Neural UX)?<\/title>/i);
+  assert.match(html, /KRITIA NEURAL UX/i);
   assert.match(html, /BTP/);
   assert.match(html, /Publicité/);
   assert.match(html, /Diag/);
