@@ -53,8 +53,17 @@ export class ExpertiseAssistantService {
     url.searchParams.set("zoom", "19"); url.searchParams.set("size", "640x420"); url.searchParams.set("scale", "2");
     url.searchParams.set("maptype", "satellite"); url.searchParams.set("markers", `color:red|${data.latitude},${data.longitude}`); url.searchParams.set("key", key);
     const response = await fetch(url);
-    if (!response.ok) throw new ServiceUnavailableException("Google Maps n’a pas pu produire la vue aérienne.");
-    const type = response.headers.get("content-type") || "image/png";
+    const type = response.headers.get("content-type") || "";
+    if (!response.ok || !type.startsWith("image/")) {
+      const detail = (await response.text()).toLowerCase();
+      let reason = `requête refusée (HTTP ${response.status})`;
+      if (detail.includes("billing")) reason = "facturation Google Cloud non activée pour ce projet";
+      else if (detail.includes("not authorized") || detail.includes("not enabled")) reason = "Maps Static API non activée ou non autorisée pour cette clé";
+      else if (detail.includes("referer") || detail.includes("ip address") || detail.includes("restriction")) reason = "restriction de clé incompatible avec l’appel depuis le serveur KRITIA";
+      else if (response.status === 429 || detail.includes("quota")) reason = "quota Google Maps dépassé";
+      else if (response.status === 400) reason = "paramètres de carte refusés par Google";
+      throw new ServiceUnavailableException(`Vue aérienne indisponible : ${reason}.`);
+    }
     const image = Buffer.from(await response.arrayBuffer()).toString("base64");
     return { configured: true, image: `data:${type};base64,${image}`, provider: "Google Maps Platform" };
   }
