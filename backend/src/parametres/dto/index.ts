@@ -108,6 +108,23 @@ export class GenerateLogoDto {
   referenceSvgDataUrl?: string;
 }
 
+export class AnalyseExpertisePhotoDto {
+  @ApiProperty({ description: "Photo JPEG, PNG ou WebP redimensionnée dans le navigateur" })
+  @IsString()
+  @MaxLength(6_000_000)
+  @Matches(/^data:image\/(jpeg|jpg|png|webp);base64,/i)
+  imageDataUrl: string;
+
+  @ApiProperty() @IsString() @MinLength(3) @MaxLength(2000) context: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(180) zone?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(180) location?: string;
+}
+
+export class ExpertiseAerialViewDto {
+  @ApiProperty() @Type(() => Number) @IsNumber() @Min(-90) @Max(90) latitude: number;
+  @ApiProperty() @Type(() => Number) @IsNumber() @Min(-180) @Max(180) longitude: number;
+}
+
 export class UpdateNumerotationDto {
   @ApiPropertyOptional() @IsOptional() @IsString() prefixe?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() format?: string;

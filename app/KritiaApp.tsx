@@ -588,7 +588,7 @@ export default function KritiaApp() {
           ) : section === "preuve" ? (
             <PreuveBtp chantiers={data.chantiers} />
           ) : section === "expertise" ? (
-            <ExpertiseWorkspace chantiers={data.chantiers} />
+            <ExpertiseWorkspace chantiers={data.chantiers} request={api} />
           ) : (
             <DataView
               section={section}

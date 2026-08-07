@@ -21,10 +21,13 @@ import {
   UpdateEntrepriseDto,
   UpdateNumerotationDto,
   VerifyVatDto,
+  AnalyseExpertisePhotoDto,
+  ExpertiseAerialViewDto,
 } from "./dto";
 import { LogoGeneratorService } from "./logo-generator.service";
 import { LogoCreditsService } from "./logo-credits.service";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { ExpertiseAssistantService } from "./expertise-assistant.service";
 
 @ApiTags("Paramètres")
 @Controller("parametres")
@@ -35,7 +38,18 @@ export class ParametresController {
     private parametresService: ParametresService,
     private logoGenerator: LogoGeneratorService,
     private logoCredits: LogoCreditsService,
+    private expertiseAssistant: ExpertiseAssistantService,
   ) {}
+
+  @Post("expertise/photo/analyser")
+  analyseExpertisePhoto(@Body() data: AnalyseExpertisePhotoDto) {
+    return this.expertiseAssistant.analysePhoto(data);
+  }
+
+  @Post("expertise/vue-aerienne")
+  getExpertiseAerialView(@Body() data: ExpertiseAerialViewDto) {
+    return this.expertiseAssistant.aerialView(data);
+  }
 
   @Get("logo/ia/status")
   getLogoGeneratorStatus() {
