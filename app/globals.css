@@ -2389,14 +2389,14 @@ tbody tr:hover {
   .suite-constellation:has(.suite-module:focus-visible) .suite-satellite { opacity:.09; filter:saturate(.2) brightness(.25) blur(1px); }
   .suite-constellation:has(.suite-module:hover) .suite-satellite:has(.suite-module:hover),
   .suite-constellation:has(.suite-module:focus-visible) .suite-satellite:has(.suite-module:focus-visible) { z-index:15; opacity:1; filter:none; }
-  .satellite-btp:has(.suite-module:hover),.satellite-btp:has(.suite-module:focus-visible) { transform:translate(calc(46cqw - 105px),191px); }
-  .satellite-immo:has(.suite-module:hover),.satellite-immo:has(.suite-module:focus-visible) { transform:translate(-50%,243px); }
-  .satellite-juridique:has(.suite-module:hover),.satellite-juridique:has(.suite-module:focus-visible) { transform:translate(calc(-46cqw + 105px),191px); }
-  .satellite-publicite:has(.suite-module:hover),.satellite-publicite:has(.suite-module:focus-visible) { transform:translate(calc(-50cqw + 105px),-37px); }
-  .satellite-diag:has(.suite-module:hover),.satellite-diag:has(.suite-module:focus-visible) { transform:translate(calc(-45cqw + 105px),-224px); }
-  .satellite-courtage:has(.suite-module:hover),.satellite-courtage:has(.suite-module:focus-visible) { transform:translate(-50%,-243px); }
-  .satellite-expertise:has(.suite-module:hover),.satellite-expertise:has(.suite-module:focus-visible) { transform:translate(calc(45cqw - 105px),-224px); }
-  .satellite-horodatage:has(.suite-module:hover),.satellite-horodatage:has(.suite-module:focus-visible) { transform:translate(calc(50cqw - 105px),-37px); }
+  .satellite-btp:has(.suite-module:hover),.satellite-btp:has(.suite-module:focus-visible) { transform:translate(55px,35px); }
+  .satellite-immo:has(.suite-module:hover),.satellite-immo:has(.suite-module:focus-visible) { transform:translate(-50%,45px); }
+  .satellite-juridique:has(.suite-module:hover),.satellite-juridique:has(.suite-module:focus-visible) { transform:translate(-55px,35px); }
+  .satellite-publicite:has(.suite-module:hover),.satellite-publicite:has(.suite-module:focus-visible) { transform:translate(-60px,0); }
+  .satellite-diag:has(.suite-module:hover),.satellite-diag:has(.suite-module:focus-visible) { transform:translate(-50px,-35px); }
+  .satellite-courtage:has(.suite-module:hover),.satellite-courtage:has(.suite-module:focus-visible) { transform:translate(-50%,-45px); }
+  .satellite-expertise:has(.suite-module:hover),.satellite-expertise:has(.suite-module:focus-visible) { transform:translate(50px,-35px); }
+  .satellite-horodatage:has(.suite-module:hover),.satellite-horodatage:has(.suite-module:focus-visible) { transform:translate(60px,0); }
   .suite-constellation:has(.suite-module:hover) .suite-hub,
   .suite-constellation:has(.suite-module:focus-visible) .suite-hub { opacity:.2; filter:saturate(.35) brightness(.42) blur(1px); animation-play-state:paused; }
   .suite-constellation:has(.suite-module:hover) .neural-network,
