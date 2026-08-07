@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import PreuveBtp from "./PreuveBtp";
 
 type RecordValue = Record<string, unknown>;
 type Section =
@@ -10,7 +11,8 @@ type Section =
   | "devis"
   | "factures"
   | "dpgf"
-  | "bibliotheque";
+  | "bibliotheque"
+  | "preuve";
 type Session = {
   accessToken: string;
   user: {
@@ -26,7 +28,7 @@ type Session = {
 };
 type ApiRequest = (path: string, options?: RequestInit) => Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-const demoData: Record<Exclude<Section, "dashboard">, RecordValue[]> = {
+const demoData: Record<Exclude<Section, "dashboard" | "preuve">, RecordValue[]> = {
   clients: [
     {
       id: "1",
@@ -171,9 +173,10 @@ const nav: { id: Section; label: string; glyph: string }[] = [
   { id: "factures", label: "Factures", glyph: "€" },
   { id: "dpgf", label: "DPGF & métrés", glyph: "⌗" },
   { id: "bibliotheque", label: "Bibliothèque", glyph: "▦" },
+  { id: "preuve", label: "Preuve BTP", glyph: "◉" },
 ];
 
-const endpoint: Record<Exclude<Section, "dashboard">, string> = {
+const endpoint: Record<Exclude<Section, "dashboard" | "preuve">, string> = {
   clients: "/clients?limit=50",
   chantiers: "/chantiers?limit=50",
   devis: "/devis?limit=50",
@@ -362,7 +365,7 @@ export default function KritiaApp() {
   async function loadAll() {
     setBusy(true);
     setError("");
-    const sections = Object.keys(endpoint) as Exclude<Section, "dashboard">[];
+    const sections = Object.keys(endpoint) as Exclude<Section, "dashboard" | "preuve">[];
     const results = await Promise.allSettled(
       sections.map((key) => api(endpoint[key])),
     );
@@ -579,6 +582,8 @@ export default function KritiaApp() {
               request={api}
               refresh={loadAll}
             />
+          ) : section === "preuve" ? (
+            <PreuveBtp chantiers={data.chantiers} />
           ) : (
             <DataView
               section={section}
@@ -942,8 +947,8 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     { id: "publicite", name: "Publicité", description: "Identité, impressions et supports de communication.", status: "Disponible", features: ["Logos", "Cartes", "Flyers", "Vêtements", "Signalétique", "BAT", "Commandes"], action: openShop },
     { id: "diag", name: "Diag", description: "Diagnostics, rapports et suivi des obligations.", status: "En préparation", features: ["Missions", "Diagnostics", "DPE", "Rapports", "Planning", "Conformité", "Obligations"] },
     { id: "courtage", name: "Courtage en travaux", description: "Mise en relation, consultation et suivi des projets.", status: "En préparation", features: ["Prospects", "Projets", "Artisans", "Consultations", "Appels d’offres", "Suivi", "Commissions"] },
-    { id: "expertise", name: "Expertise", description: "Constats, expertises techniques et rapports structurés.", status: "En préparation", features: ["Constats", "Désordres", "Photos", "Rapports", "Chiffrage", "Préconisations", "Suivi"] },
-    { id: "horodatage", name: "Horodatage", description: "Preuve de date, traçabilité et certification des éléments.", status: "En préparation", features: ["Preuves", "Photos", "Documents", "Signatures", "Archives", "Traçabilité", "Certification"] },
+    { id: "constat", name: "Constat BTP", description: "Constatation visuelle et amiable, sans attribution de responsabilité.", status: "Disponible dans BTP", features: ["Faits visibles", "Photos", "Localisation", "Participants", "Observations", "Signatures", "Rapport partagé"], action: openBtp },
+    { id: "preuve", name: "Preuve BTP", description: "Mémoire technique locale et empreinte vérifiable du chantier.", status: "Disponible dans BTP", features: ["Photos", "Documents", "Empreinte SHA-256", "Constats", "Réserves", "Réception", "Rapport local"], action: openBtp },
   ];
   const neuralPaths: Record<string, string> = {
     btp: "M590 325 C470 290 330 190 157 129",
@@ -952,8 +957,8 @@ function SuiteLanding({ openBtp, openShop }: { openBtp: () => void; openShop: ()
     publicite: "M590 325 C745 350 900 315 1070 356",
     diag: "M590 325 C720 410 850 500 1011 554",
     courtage: "M590 325 C625 410 555 490 590 573",
-    expertise: "M590 325 C465 410 330 505 169 554",
-    horodatage: "M590 325 C430 350 280 315 110 356",
+    constat: "M590 325 C465 410 330 505 169 554",
+    preuve: "M590 325 C430 350 280 315 110 356",
   };
   const neuralFilaments = [
     "M40 92 C170 35 210 205 350 142 S520 36 590 325",

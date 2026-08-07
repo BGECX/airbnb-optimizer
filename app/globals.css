@@ -3123,3 +3123,34 @@ tbody tr:hover {
     display: none;
   }
 }
+
+/* KRITIA Preuve BTP — les originaux restent exclusivement dans le navigateur. */
+.proof-page { display: grid; gap: 18px; }
+.proof-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 8px 2px; }
+.proof-hero h2 { margin: 4px 0 8px; font-family: Georgia, serif; font-size: clamp(28px, 4vw, 46px); color: #071b36; }
+.proof-hero p { margin: 0; color: #607086; }
+.proof-local-badge { padding: 10px 14px; border: 1px solid #3fd6b0; border-radius: 999px; background: #e9fff8; color: #08745d; font-size: 10px; font-weight: 900; letter-spacing: .12em; white-space: nowrap; }
+.proof-notice { display: grid; grid-template-columns: auto 1fr; gap: 16px; padding: 16px 18px; border-left: 4px solid #1d75ff; border-radius: 8px; background: #eaf3ff; color: #16375f; }
+.proof-notice span { color: #536b86; }
+.proof-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 18px; }
+.proof-form, .proof-file { display: grid; align-content: start; gap: 15px; }
+.proof-form h3, .proof-file h3, .proof-result h3 { margin: 0; color: #0b2444; }
+.proof-form textarea { resize: vertical; min-height: 92px; }
+.proof-drop { display: grid; place-items: center; gap: 7px; min-height: 118px; padding: 20px; border: 1.5px dashed #84aee9; border-radius: 10px; background: #f5f9ff; cursor: pointer; text-align: center; }
+.proof-drop input, .proof-verify input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.proof-drop b { color: #155bc2; }.proof-drop span { color: #71829a; font-size: 11px; }
+.proof-preview { width: 100%; height: 220px; border: 1px solid #d9e4f2; border-radius: 8px; background: #eef3f9; object-fit: contain; }
+.proof-hash { display: grid; gap: 6px; padding: 12px; border-radius: 8px; background: #071b36; color: #d7e9ff; }
+.proof-hash small { color: #66b6ff; font-weight: 800; letter-spacing: .1em; }
+.proof-hash code { overflow-wrap: anywhere; font-size: 10px; line-height: 1.5; }
+.proof-message { margin: 0; }
+.proof-result { display: flex; align-items: center; justify-content: space-between; gap: 24px; opacity: .68; }
+.proof-result.ready { opacity: 1; border-color: #8edbc5; box-shadow: 0 15px 40px rgba(20, 115, 91, .08); }
+.proof-result p { margin: 5px 0 0; color: #6b7c92; }.proof-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.proof-verify { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }.proof-verify.disabled { opacity: .45; pointer-events: none; }
+.proof-provider { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 18px; border: 1px solid #e2c36f; border-radius: 10px; background: #fffaf0; color: #604b18; }
+.proof-provider p { margin: 0; color: #766741; }.proof-provider span { padding: 7px 10px; border-radius: 999px; background: #f5e7ba; font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.proof-disclaimer { margin: 0; padding: 0 4px 20px; color: #8290a1; font-size: 10px; line-height: 1.6; }
+.module-preuve { --module-accent: #ff8b32; }
+.module-constat { --module-accent: #ff667f; }
+@media (max-width: 900px) { .proof-grid { grid-template-columns: 1fr; }.proof-result, .proof-provider { align-items: flex-start; grid-template-columns: 1fr; flex-direction: column; }.proof-actions { justify-content: flex-start; } }

@@ -21,7 +21,7 @@ test("rend le portail public KRITIA Neural UX", async () => {
   assert.match(html, /Publicité/);
   assert.match(html, /Diag/);
   assert.match(html, /Courtage en travaux/);
-  assert.match(html, /Expertise/);
-  assert.match(html, /Horodatage/);
+  assert.match(html, /Preuve BTP/);
+  assert.match(html, /Constat BTP/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
